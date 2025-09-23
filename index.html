@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gyan Bharti International School - Dashboard</title>
+    <link rel="stylesheet" href="src/styles/main.css">
+    <link rel="stylesheet" href="src/styles/responsive.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <h1 class="school-name">Gyan Bharti International School</h1>
+            <button class="login-btn">
+                <i class="fas fa-user"></i>
+                Login
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="main-container">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar">
+            <div class="nav-items">
+                <button class="nav-item active" data-tab="notification">
+                    <i class="fas fa-bell"></i>
+                    <span>Notification</span>
+                </button>
+                <button class="nav-item" data-tab="attendance">
+                    <i class="fas fa-user-check"></i>
+                    <span>Attendance</span>
+                </button>
+                <button class="nav-item" data-tab="marks">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Marks</span>
+                </button>
+                <button class="nav-item" data-tab="contacts">
+                    <i class="fas fa-address-book"></i>
+                    <span>Contacts</span>
+                </button>
+            </div>
+        </nav>
+
+        <!-- Content Area -->
+        <main class="content">
+            <!-- Notification Tab -->
+            <div class="tab-content active" id="notification-tab">
+                <div class="split-layout">
+                    <div class="action-section">
+                        <h3>Send Notification</h3>
+                        <div class="search-container">
+                            <input type="text" id="notification-search" placeholder="Search students..." class="search-input">
+                            <i class="fas fa-search search-icon"></i>
+                        </div>
+                        <div class="search-results" id="notification-search-results"></div>
+                        <div class="form-group">
+                            <label for="notification-message">Message:</label>
+                            <textarea id="notification-message" placeholder="Enter your message here..." rows="4"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <button class="attachment-btn">
+                                <i class="fas fa-paperclip"></i>
+                                Add Attachment
+                            </button>
+                            <input type="file" id="attachment-input" style="display: none;">
+                        </div>
+                        <div class="form-group">
+                            <button class="send-btn" id="send-notification">
+                                <i class="fas fa-paper-plane"></i>
+                                Send Notification
+                            </button>
+                            <div class="success-message" id="notification-success"></div>
+                        </div>
+                    </div>
+                    <div class="analytics-section">
+                        <h3>Notification Analytics</h3>
+                        <div class="analytics-content" id="notification-analytics">
+                            <p>Send a notification to see analytics here</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Attendance Tab -->
+            <div class="tab-content" id="attendance-tab">
+                <div class="split-layout">
+                    <div class="action-section">
+                        <h3>Mark Attendance</h3>
+                        <div class="form-group">
+                            <label for="attendance-date">Date (DD/MM/YYYY):</label>
+                            <input type="date" id="attendance-date" class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label for="attendance-class">Class:</label>
+                            <select id="attendance-class" class="form-input">
+                                <option value="">Select Class</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="attendance-rollno">Absent Roll Numbers:</label>
+                            <div class="multi-select-container">
+                                <div class="multi-select-display" id="rollno-display">
+                                    <span class="placeholder">Select absent students</span>
+                                </div>
+                                <div class="multi-select-dropdown" id="rollno-dropdown"></div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <button class="mark-btn" id="mark-attendance">
+                                <i class="fas fa-check"></i>
+                                Mark Attendance
+                            </button>
+                            <div class="success-message" id="attendance-success"></div>
+                        </div>
+                    </div>
+                    <div class="analytics-section">
+                        <h3>Attendance Analytics</h3>
+                        <div class="analytics-content" id="attendance-analytics">
+                            <p>Mark attendance to see analytics here</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Marks Tab -->
+            <div class="tab-content" id="marks-tab">
+                <div class="split-layout">
+                    <div class="action-section">
+                        <h3>Marks Management</h3>
+                        <p class="placeholder-text">This section will be implemented later</p>
+                    </div>
+                    <div class="analytics-section">
+                        <h3>Marks Analytics</h3>
+                        <p class="placeholder-text">Analytics will be shown here</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contacts Tab -->
+            <div class="tab-content" id="contacts-tab">
+                <div class="single-layout">
+                    <h3>Student Contacts</h3>
+                    <div class="contacts-header">
+                        <div class="search-filter-container">
+                            <div class="search-container">
+                                <input type="text" id="contacts-search" placeholder="Search students..." class="search-input">
+                                <i class="fas fa-search search-icon"></i>
+                            </div>
+                            <div class="filter-container">
+                                <select id="class-filter" class="form-input">
+                                    <option value="">All Classes</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="stats-container">
+                            <div class="stat-card">
+                                <div class="stat-number" id="total-classes">0</div>
+                                <div class="stat-label">Total Classes</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-number" id="total-students">0</div>
+                                <div class="stat-label">Total Students</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="students-container" id="students-container">
+                        <div class="loading" id="loading">
+                            <i class="fas fa-spinner fa-spin"></i>
+                            Loading students...
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Mobile Bottom Navigation -->
+    <nav class="bottom-nav">
+        <button class="nav-item active" data-tab="notification">
+            <i class="fas fa-bell"></i>
+            <span>Notification</span>
+        </button>
+        <button class="nav-item" data-tab="attendance">
+            <i class="fas fa-user-check"></i>
+            <span>Attendance</span>
+        </button>
+        <button class="nav-item" data-tab="marks">
+            <i class="fas fa-chart-line"></i>
+            <span>Marks</span>
+        </button>
+        <button class="nav-item" data-tab="contacts">
+            <i class="fas fa-address-book"></i>
+            <span>Contacts</span>
+        </button>
+    </nav>
+
+    <!-- Scripts -->
+    <script src="src/services/dataService.js"></script>
+    <script src="src/components/navigation.js"></script>
+    <script src="src/components/notification.js"></script>
+    <script src="src/components/attendance.js"></script>
+    <script src="src/components/contacts.js"></script>
+    <script src="src/utils/helpers.js"></script>
+    <script src="src/app.js"></script>
+</body>
+</html>
