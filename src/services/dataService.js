@@ -6,9 +6,21 @@
 class DataService {
     constructor() {
         this.baseURL = 'https://primary-production-4a6d8.up.railway.app/webhook';
+        this.apiKey = '2025@urikaDeep@km@lik$$'; // n8n API Key for authentication
         this.students = [];
         this.classes = [];
         this.init();
+    }
+
+    /**
+     * Get default headers for API requests
+     * Includes the n8n API key for authentication
+     */
+    getHeaders() {
+        return {
+            'Content-Type': 'application/json',
+            'x-n8n-apiKey': this.apiKey
+        };
     }
 
     /**
@@ -23,7 +35,7 @@ class DataService {
      */
     async fetchContacts() {
         try {
-            console.log('Fetching contacts...');
+            console.log('Fetching contacts with API authentication...');
             
             // Add timeout to prevent hanging requests
             const controller = new AbortController();
@@ -31,10 +43,7 @@ class DataService {
             
             const response = await fetch(`${this.baseURL}/contact`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'x-n8n-apiKey': '2025@urikaDeep@km@lik$$'
-                },
+                headers: this.getHeaders(),
                 body: JSON.stringify({
                     chatInput: "Fetch Contacts"
                 }),
@@ -356,7 +365,7 @@ class DataService {
      */
     async sendNotification(notificationData) {
         try {
-            console.log('Sending notification:', notificationData);
+            console.log('Sending notification with API authentication:', notificationData);
             
             // Add timeout to prevent hanging requests
             const controller = new AbortController();
@@ -364,9 +373,7 @@ class DataService {
             
             const response = await fetch(`${this.baseURL}/sendWAMessage`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: this.getHeaders(),
                 body: JSON.stringify(notificationData),
                 signal: controller.signal
             });
@@ -410,7 +417,7 @@ class DataService {
      */
     async submitAttendance(attendanceData) {
         try {
-            console.log('Submitting attendance:', attendanceData);
+            console.log('Submitting attendance with API authentication:', attendanceData);
             
             // Add timeout to prevent hanging requests
             const controller = new AbortController();
@@ -418,9 +425,7 @@ class DataService {
             
             const response = await fetch(`${this.baseURL}/Attendance`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: this.getHeaders(),
                 body: JSON.stringify(attendanceData),
                 signal: controller.signal
             });
