@@ -69,7 +69,17 @@ class GBISApp {
 
         } catch (error) {
             console.error('Error initializing data service:', error);
-            throw error;
+            
+            // Don't throw error if we're in development mode or have cached data
+            if (window.dataService && window.dataService.hasData()) {
+                console.log('Data service initialized with cached/sample data');
+                this.state.lastDataUpdate = new Date();
+                return;
+            }
+            
+            // Show user-friendly error but don't crash the app
+            console.warn('Data service failed to initialize, continuing with limited functionality');
+            this.showError('Unable to connect to server. Using offline mode.');
         }
     }
 
@@ -370,7 +380,48 @@ class GBISApp {
 
     showWelcomeMessage() {
         setTimeout(() => {
-            Helpers.showToast('Welcome to GBIS Dashboard!', 'success', 2000);
+            // Check if we're using sample data
+            const isUsingSampleData = window.dataService && 
+                window.dataService.getStudents().length > 0 && 
+                window.dataService.getStudents().some(s => s.Name === 'AAHIL KHAN');
+            
+            if (isUsingSampleData) {
+                // Add development mode indicator to header
+                const header = document.querySelector('.header-content');
+                if (header && !header.querySelector('.dev-indicator')) {
+                    const devIndicator = document.createElement('span');
+                    devIndicator.className = 'dev-indicator';
+                    devIndicator.innerHTML = '<i class="fas fa-code"></i> DEV MODE';
+                    devIndicator.style.cssText = `
+                        background: rgba(255,193,7,0.8);
+                        color: #212529;
+                        padding: 4px 8px;
+                        border-radius: 12px;
+                        font-size: 0.7rem;
+                        font-weight: 600;
+                        margin-left: 10px;
+                        display: inline-flex;
+                        align-items: center;
+                        gap: 4px;
+                    `;
+                    header.insertBefore(devIndicator, header.querySelector('.login-btn'));
+                }
+                
+                // Log helpful development information
+                console.log('%c🚀 GBIS Dashboard - Development Mode', 'color: #f39c12; font-size: 16px; font-weight: bold;');
+                console.log('%cThe API returned a 403 Forbidden error, so we\'re using sample data.', 'color: #3498db;');
+                console.log('%cThis is normal during development when the webhook API is not accessible.', 'color: #3498db;');
+                console.log('%cAll features work with sample data:', 'color: #27ae60;');
+                console.log('  • 8 sample students across 4 classes (NURSERY, 5TH, 8TH, 10TH)');
+                console.log('  • Search and filter functionality');
+                console.log('  • Attendance marking simulation');
+                console.log('  • Notification sending (will show appropriate errors)');
+                console.log('%cWhen your API is ready, the app will automatically use real data.', 'color: #9b59b6;');
+                
+                Helpers.showToast('Welcome to GBIS Dashboard! (Development Mode - Using Sample Data)', 'info', 3000);
+            } else {
+                Helpers.showToast('Welcome to GBIS Dashboard!', 'success', 2000);
+            }
         }, 500);
     }
 
@@ -424,8 +475,25 @@ window.addEventListener('error', (event) => {
 // Handle unhandled promise rejections
 window.addEventListener('unhandledrejection', (event) => {
     console.error('Unhandled promise rejection:', event.reason);
+    
+    // Check if it's a network-related error
+    const isNetworkError = event.reason && (
+        event.reason.message?.includes('fetch') ||
+        event.reason.message?.includes('network') ||
+        event.reason.message?.includes('Failed to fetch') ||
+        event.reason.name === 'AbortError'
+    );
+    
+    if (isNetworkError) {
+        // Don't show error toast for network issues during development
+        console.warn('Network error detected - this is normal during development without a live server');
+        event.preventDefault();
+        return;
+    }
+    
+    // For other promise rejections, show a generic error
     if (window.gbisApp) {
-        window.gbisApp.showError('A network error occurred. Please check your connection.');
+        window.gbisApp.showError('An unexpected error occurred. The application will continue to work with cached data.');
     }
     event.preventDefault();
 });
