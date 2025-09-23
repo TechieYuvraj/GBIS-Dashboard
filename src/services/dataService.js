@@ -9,7 +9,10 @@ class DataService {
         this.apiKey = '2025@urikaDeep@km@lik$$'; // n8n API Key for authentication
         this.students = [];
         this.classes = [];
-        this.init();
+        this.isInitialized = false;
+        this.isFetching = false; // Add fetching state
+        this.fetchPromise = null; // Store ongoing fetch promise
+        // Remove automatic init() call from constructor
     }
 
     /**
@@ -27,15 +30,51 @@ class DataService {
      * Initialize the service and fetch initial data
      */
     async init() {
+        if (this.isInitialized) {
+            console.log('DataService already initialized');
+            return;
+        }
+        
         await this.fetchContacts();
+        this.isInitialized = true;
     }
 
     /**
      * Fetch student contacts from the API
      */
     async fetchContacts() {
+        console.log(`🔍 fetchContacts called - isFetching: ${this.isFetching}, hasData: ${this.hasData()}, isInitialized: ${this.isInitialized}`);
+        
+        // If already fetching, return the existing promise
+        if (this.isFetching && this.fetchPromise) {
+            console.log('⏳ Fetch already in progress, waiting for existing request...');
+            return this.fetchPromise;
+        }
+
+        // If we already have data and not explicitly refreshing, don't fetch again
+        if (this.students.length > 0 && this.isInitialized) {
+            console.log('📚 Data already available, skipping fetch');
+            return this.students;
+        }
+
+        console.log('🚀 Starting new fetch operation...');
+        this.isFetching = true;
+        
+        this.fetchPromise = this._performFetch();
+        
         try {
-            console.log('Fetching contacts with API authentication...');
+            const result = await this.fetchPromise;
+            return result;
+        } finally {
+            this.isFetching = false;
+            this.fetchPromise = null;
+        }
+    }
+
+    async _performFetch() {
+        const fetchId = Date.now(); // Unique ID for this fetch
+        try {
+            console.log(`🔄 [${fetchId}] Starting contact fetch operation...`);
             
             // Add timeout to prevent hanging requests
             const controller = new AbortController();
@@ -78,7 +117,7 @@ class DataService {
             }
 
             const data = await response.json();
-            console.log('Contacts fetched:', data);
+            console.log(`✅ [${fetchId}] Contacts fetched successfully:`, data);
 
             // Process the data
             this.students = Array.isArray(data) ? data : [data];
@@ -87,7 +126,7 @@ class DataService {
             
             return this.students;
         } catch (error) {
-            console.error('Error fetching contacts:', error);
+            console.error(`❌ [${fetchId}] Error fetching contacts:`, error);
             
             // Try to load from localStorage if API fails
             this.loadFromLocalStorage();
@@ -500,7 +539,11 @@ class DataService {
      * Refresh data from server
      */
     async refreshData() {
+        console.log('Refreshing data - clearing cache and fetching fresh data');
         this.clearLocalStorage();
+        this.students = []; // Clear existing data
+        this.classes = [];
+        this.isInitialized = false; // Reset initialization state
         return await this.fetchContacts();
     }
 
@@ -547,6 +590,13 @@ class DataService {
      */
     isLoading() {
         return this.students.length === 0;
+    }
+
+    /**
+     * Check if currently fetching data
+     */
+    isFetchingData() {
+        return this.isFetching;
     }
 }
 

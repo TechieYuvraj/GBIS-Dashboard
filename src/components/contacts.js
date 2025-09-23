@@ -47,12 +47,21 @@ class ContactsManager {
             
             // Wait for data service to be ready
             if (window.dataService) {
+                // First try to get existing students
                 this.students = window.dataService.getStudents();
                 
-                // If no students loaded, try to fetch
-                if (this.students.length === 0) {
+                // Only fetch if no students are available and dataService is not initialized
+                if (this.students.length === 0 && !window.dataService.isInitialized) {
+                    console.log('No students found and service not initialized, fetching...');
                     await window.dataService.fetchContacts();
                     this.students = window.dataService.getStudents();
+                } else if (this.students.length === 0) {
+                    // If initialized but no students, something went wrong - try again
+                    console.log('Service initialized but no students found, attempting fetch...');
+                    await window.dataService.fetchContacts();
+                    this.students = window.dataService.getStudents();
+                } else {
+                    console.log('Students already available, skipping fetch');
                 }
                 
                 // Initialize filtered students with all students
