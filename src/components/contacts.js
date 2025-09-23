@@ -55,6 +55,9 @@ class ContactsManager {
                     this.students = window.dataService.getStudents();
                 }
                 
+                // Initialize filtered students with all students
+                this.filteredStudents = [...this.students];
+                
                 this.populateClassFilter();
             }
         } catch (error) {
@@ -82,9 +85,13 @@ class ContactsManager {
     }
 
     applyFilters() {
-        if (!window.dataService) return;
-
-        this.filteredStudents = window.dataService.filterStudents(this.currentFilters);
+        if (!window.dataService) {
+            // Fallback to show all students if data service not ready
+            this.filteredStudents = [...this.students];
+        } else {
+            this.filteredStudents = window.dataService.filterStudents(this.currentFilters);
+        }
+        
         this.renderStudents();
         this.updateStats();
     }

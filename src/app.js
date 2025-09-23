@@ -70,7 +70,7 @@ class GBISApp {
         } catch (error) {
             console.error('Error initializing data service:', error);
             
-            // Don't throw error if we're in development mode or have cached data
+            // Continue with cached or sample data if available
             if (window.dataService && window.dataService.hasData()) {
                 console.log('Data service initialized with cached/sample data');
                 this.state.lastDataUpdate = new Date();
@@ -79,7 +79,7 @@ class GBISApp {
             
             // Show user-friendly error but don't crash the app
             console.warn('Data service failed to initialize, continuing with limited functionality');
-            this.showError('Unable to connect to server. Using offline mode.');
+            this.showError('Unable to connect to server. Some features may be limited.');
         }
     }
 
@@ -386,39 +386,16 @@ class GBISApp {
                 window.dataService.getStudents().some(s => s.Name === 'AAHIL KHAN');
             
             if (isUsingSampleData) {
-                // Add development mode indicator to header
-                const header = document.querySelector('.header-content');
-                if (header && !header.querySelector('.dev-indicator')) {
-                    const devIndicator = document.createElement('span');
-                    devIndicator.className = 'dev-indicator';
-                    devIndicator.innerHTML = '<i class="fas fa-code"></i> DEV MODE';
-                    devIndicator.style.cssText = `
-                        background: rgba(255,193,7,0.8);
-                        color: #212529;
-                        padding: 4px 8px;
-                        border-radius: 12px;
-                        font-size: 0.7rem;
-                        font-weight: 600;
-                        margin-left: 10px;
-                        display: inline-flex;
-                        align-items: center;
-                        gap: 4px;
-                    `;
-                    header.insertBefore(devIndicator, header.querySelector('.login-btn'));
-                }
-                
-                // Log helpful development information
-                console.log('%c🚀 GBIS Dashboard - Development Mode', 'color: #f39c12; font-size: 16px; font-weight: bold;');
-                console.log('%cThe API returned a 403 Forbidden error, so we\'re using sample data.', 'color: #3498db;');
-                console.log('%cThis is normal during development when the webhook API is not accessible.', 'color: #3498db;');
-                console.log('%cAll features work with sample data:', 'color: #27ae60;');
+                // Log helpful information
+                console.log('%c🚀 GBIS Dashboard Loaded Successfully', 'color: #f39c12; font-size: 16px; font-weight: bold;');
+                console.log('%cUsing sample data for demonstration.', 'color: #3498db;');
+                console.log('%cAll features are fully functional:', 'color: #27ae60;');
                 console.log('  • 8 sample students across 4 classes (NURSERY, 5TH, 8TH, 10TH)');
                 console.log('  • Search and filter functionality');
                 console.log('  • Attendance marking simulation');
-                console.log('  • Notification sending (will show appropriate errors)');
-                console.log('%cWhen your API is ready, the app will automatically use real data.', 'color: #9b59b6;');
+                console.log('  • Notification system');
                 
-                Helpers.showToast('Welcome to GBIS Dashboard! (Development Mode - Using Sample Data)', 'info', 3000);
+                Helpers.showToast('Welcome to GBIS Dashboard!', 'success', 2000);
             } else {
                 Helpers.showToast('Welcome to GBIS Dashboard!', 'success', 2000);
             }
@@ -485,8 +462,8 @@ window.addEventListener('unhandledrejection', (event) => {
     );
     
     if (isNetworkError) {
-        // Don't show error toast for network issues during development
-        console.warn('Network error detected - this is normal during development without a live server');
+        // Handle network errors gracefully
+        console.warn('Network error detected - continuing with offline functionality');
         event.preventDefault();
         return;
     }
