@@ -402,29 +402,73 @@ class DataService {
     /**
      * Send notification via webhook
      */
-    async sendNotification(notificationData) {
+    async sendNotification(notificationData, attachmentFile = null) {
         try {
             console.log('Sending notification with API authentication:', notificationData);
+            console.log('Attachment file:', attachmentFile ? `${attachmentFile.name} (${attachmentFile.size} bytes)` : 'None');
             
             // Add timeout to prevent hanging requests
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+            const timeoutId = setTimeout(() => controller.abort(), 30000); // Increased timeout for file uploads
             
-            const response = await fetch(`${this.baseURL}/sendWAMessage`, {
-                method: 'POST',
-                headers: this.getHeaders(),
-                body: JSON.stringify(notificationData),
-                signal: controller.signal
-            });
+            let requestOptions;
+            
+            if (attachmentFile) {
+                // Use FormData for file uploads
+                const formData = new FormData();
+                
+                // Add JSON data as a string field
+                formData.append('data', JSON.stringify(notificationData));
+                
+                // Add the file
+                formData.append('attachment', attachmentFile, attachmentFile.name);
+                
+                // Add file metadata for easier processing
+                formData.append('fileMetadata', JSON.stringify({
+                    name: attachmentFile.name,
+                    size: attachmentFile.size,
+                    type: attachmentFile.type,
+                    lastModified: attachmentFile.lastModified
+                }));
+                
+                requestOptions = {
+                    method: 'POST',
+                    headers: {
+                        // Remove Content-Type header to let browser set it with boundary for FormData
+                        'x-n8n-apiKey': this.apiKey
+                    },
+                    body: formData,
+                    signal: controller.signal
+                };
+            } else {
+                // Use JSON for text-only notifications
+                requestOptions = {
+                    method: 'POST',
+                    headers: this.getHeaders(),
+                    body: JSON.stringify(notificationData),
+                    signal: controller.signal
+                };
+            }
+
+            const response = await fetch(`${this.baseURL}/sendWAMessage`, requestOptions);
 
             clearTimeout(timeoutId);
 
             console.log('Notification response status:', response.status);
             console.log('Notification response headers:', Object.fromEntries(response.headers.entries()));
+            
+            // Log additional info for file uploads
+            if (attachmentFile) {
+                console.log('File upload completed - Status:', response.status, 'File:', attachmentFile.name);
+            }
 
             if (!response.ok) {
                 // Handle specific HTTP status codes for notifications
-                if (response.status === 403) {
+                if (response.status === 413) {
+                    throw new Error('File too large. Please try a smaller file.');
+                } else if (response.status === 415) {
+                    throw new Error('Unsupported file type. Please try a different file format.');
+                } else if (response.status === 403) {
                     throw new Error('Access forbidden. Please check your API permissions.');
                 } else if (response.status === 404) {
                     throw new Error('Notification service not found. Please contact administrator.');

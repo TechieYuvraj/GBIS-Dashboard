@@ -195,15 +195,57 @@ class NotificationManager {
 
     handleFileAttachment(file) {
         if (file) {
+            // File size validation (25MB limit)
+            const maxSizeInBytes = 25 * 1024 * 1024; // 25MB
+            if (file.size > maxSizeInBytes) {
+                this.showMessage(`File size too large. Maximum allowed size is 25MB. Your file is ${(file.size / (1024 * 1024)).toFixed(1)}MB.`, 'error');
+                return;
+            }
+
+            // File type validation (basic check)
+            const allowedTypes = [
+                'application/pdf',
+                'application/msword',
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                'text/plain',
+                'image/jpeg',
+                'image/jpg',
+                'image/png',
+                'image/gif',
+                'video/mp4',
+                'audio/mp3',
+                'audio/mpeg',
+                'application/zip',
+                'application/vnd.ms-excel',
+                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                'application/vnd.ms-powerpoint',
+                'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+            ];
+
+            if (!allowedTypes.includes(file.type) && file.type !== '') {
+                console.warn('File type not in allowed list, but proceeding:', file.type);
+            }
+
             this.attachedFile = file;
             const attachmentBtn = document.querySelector('.attachment-btn');
             if (attachmentBtn) {
+                const sizeText = file.size < 1024 ? `${file.size}B` : 
+                                file.size < 1024 * 1024 ? `${(file.size / 1024).toFixed(1)}KB` :
+                                `${(file.size / (1024 * 1024)).toFixed(1)}MB`;
+                                
                 attachmentBtn.innerHTML = `
                     <i class="fas fa-paperclip"></i>
-                    ${file.name} (${(file.size / 1024).toFixed(1)}KB)
+                    ${file.name} (${sizeText})
                 `;
-                attachmentBtn.style.background = '#28a745';
+                attachmentBtn.style.background = 'rgba(139, 195, 250, 0.8)';
             }
+            
+            console.log('File attached successfully:', {
+                name: file.name,
+                size: file.size,
+                type: file.type,
+                lastModified: new Date(file.lastModified).toISOString()
+            });
         }
     }
 
@@ -230,7 +272,11 @@ class NotificationManager {
         try {
             // Show loading state
             sendBtn.disabled = true;
-            sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+            const hasAttachment = this.attachedFile !== null;
+            const loadingText = hasAttachment ? 
+                '<i class="fas fa-spinner fa-spin"></i> Uploading file...' : 
+                '<i class="fas fa-spinner fa-spin"></i> Sending...';
+            sendBtn.innerHTML = loadingText;
 
             // Prepare notification data
             const notificationData = {
@@ -242,16 +288,22 @@ class NotificationManager {
                     contact: student.Contact_No,
                     id: student.Serial_No || student.row_number
                 })),
-                attachment: this.attachedFile ? {
-                    name: this.attachedFile.name,
-                    size: this.attachedFile.size,
-                    type: this.attachedFile.type
-                } : null,
                 timestamp: new Date().toISOString()
             };
 
-            // Send notification
-            const response = await window.dataService.sendNotification(notificationData);
+            // Send notification with file attachment if present
+            if (this.attachedFile) {
+                console.log('Sending notification with file attachment:', {
+                    fileName: this.attachedFile.name,
+                    fileSize: this.attachedFile.size,
+                    fileType: this.attachedFile.type,
+                    studentsCount: this.selectedStudents.length
+                });
+            } else {
+                console.log('Sending text-only notification to', this.selectedStudents.length, 'students');
+            }
+            
+            const response = await window.dataService.sendNotification(notificationData, this.attachedFile);
 
             // Show success message
             this.showMessage('Notification sent successfully!', 'success');
@@ -269,13 +321,20 @@ class NotificationManager {
             let errorMessage = 'Failed to send notification. Please try again.';
             
             if (error.message.includes('timeout')) {
-                errorMessage = 'Request timed out. Please check your connection and try again.';
+                errorMessage = 'Request timed out. Please check your connection and try again.' + 
+                              (this.attachedFile ? ' Large files may take longer to upload.' : '');
+            } else if (error.message.includes('File too large')) {
+                errorMessage = error.message;
+            } else if (error.message.includes('Unsupported file type')) {
+                errorMessage = error.message;
             } else if (error.message.includes('forbidden')) {
                 errorMessage = 'Access denied. Please contact administrator.';
             } else if (error.message.includes('not found')) {
                 errorMessage = 'Service temporarily unavailable. Please try again later.';
             } else if (error.message.includes('network') || error.message.includes('fetch')) {
                 errorMessage = 'Network error. Please check your internet connection.';
+            } else if (error.message.includes('HTTP error')) {
+                errorMessage = error.message;
             }
             
             this.showMessage(errorMessage, 'error');
