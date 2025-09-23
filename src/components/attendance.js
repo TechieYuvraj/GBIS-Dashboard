@@ -312,15 +312,43 @@ class AttendanceManager {
                 <div class="chart-bar">
                     <div class="chart-fill" style="width: ${attendancePercentage}%"></div>
                 </div>
-                <div class="chart-label">Attendance: ${attendancePercentage}%</div>
+                <div class="chart-label">Class Attendance: ${attendancePercentage}%</div>
             </div>
             <div class="analytics-details">
-                <h5>Last Attendance Record:</h5>
-                <p><strong>Class:</strong> ${attendanceData.class}</p>
-                <p><strong>Date:</strong> ${attendanceData.date}</p>
-                <p><strong>Absent Students:</strong> ${absentCount > 0 ? attendanceData.absent_records.join(', ') : 'None'}</p>
-                <p><strong>Timestamp:</strong> ${new Date().toLocaleString()}</p>
-                <p><strong>Response:</strong> ${JSON.stringify(response, null, 2)}</p>
+                <h5>Latest Attendance Record</h5>
+                <div class="analytics-info-grid">
+                    <div class="analytics-info-item">
+                        <div class="analytics-info-label">Class</div>
+                        <div class="analytics-info-value">${attendanceData.class}</div>
+                    </div>
+                    <div class="analytics-info-item">
+                        <div class="analytics-info-label">Date</div>
+                        <div class="analytics-info-value">${attendanceData.date}</div>
+                    </div>
+                    <div class="analytics-info-item">
+                        <div class="analytics-info-label">Present Students</div>
+                        <div class="analytics-info-value">${presentCount} out of ${totalStudents}</div>
+                    </div>
+                    <div class="analytics-info-item">
+                        <div class="analytics-info-label">Submitted At</div>
+                        <div class="analytics-info-value">${new Date().toLocaleString()}</div>
+                    </div>
+                    ${absentCount > 0 ? `
+                    <div class="analytics-info-item" style="grid-column: 1 / -1;">
+                        <div class="analytics-info-label">Absent Students</div>
+                        <div class="analytics-info-value">${attendanceData.absent_records.join(', ')}</div>
+                    </div>
+                    ` : `
+                    <div class="analytics-info-item" style="grid-column: 1 / -1;">
+                        <div class="analytics-info-label">Attendance Status</div>
+                        <div class="analytics-info-value">🎉 Perfect Attendance - All students present!</div>
+                    </div>
+                    `}
+                </div>
+                <div class="analytics-response">
+                    <div class="analytics-response-header">Webhook Response</div>
+                    <pre>${JSON.stringify(response, null, 2)}</pre>
+                </div>
             </div>
         `;
     }

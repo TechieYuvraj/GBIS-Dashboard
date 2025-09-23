@@ -419,6 +419,9 @@ class DataService {
 
             clearTimeout(timeoutId);
 
+            console.log('Notification response status:', response.status);
+            console.log('Notification response headers:', Object.fromEntries(response.headers.entries()));
+
             if (!response.ok) {
                 // Handle specific HTTP status codes for notifications
                 if (response.status === 403) {
@@ -432,7 +435,27 @@ class DataService {
                 }
             }
 
-            const result = await response.json();
+            // Check if response has content before trying to parse JSON
+            const contentType = response.headers.get('content-type');
+            let result;
+            
+            if (contentType && contentType.includes('application/json')) {
+                try {
+                    result = await response.json();
+                } catch (jsonError) {
+                    console.warn('Response claimed to be JSON but parsing failed:', jsonError);
+                    result = { success: true, message: 'Notification sent successfully (non-JSON response)' };
+                }
+            } else {
+                // Handle non-JSON responses (like plain text or empty responses)
+                const text = await response.text();
+                result = { 
+                    success: true, 
+                    message: text || 'Notification sent successfully',
+                    rawResponse: text
+                };
+            }
+            
             console.log('Notification sent successfully:', result);
             return result;
         } catch (error) {
@@ -471,6 +494,9 @@ class DataService {
 
             clearTimeout(timeoutId);
 
+            console.log('Attendance response status:', response.status);
+            console.log('Attendance response headers:', Object.fromEntries(response.headers.entries()));
+
             if (!response.ok) {
                 // Handle specific HTTP status codes for attendance
                 if (response.status === 403) {
@@ -484,7 +510,27 @@ class DataService {
                 }
             }
 
-            const result = await response.json();
+            // Check if response has content before trying to parse JSON
+            const contentType = response.headers.get('content-type');
+            let result;
+            
+            if (contentType && contentType.includes('application/json')) {
+                try {
+                    result = await response.json();
+                } catch (jsonError) {
+                    console.warn('Response claimed to be JSON but parsing failed:', jsonError);
+                    result = { success: true, message: 'Attendance submitted successfully (non-JSON response)' };
+                }
+            } else {
+                // Handle non-JSON responses (like plain text or empty responses)
+                const text = await response.text();
+                result = { 
+                    success: true, 
+                    message: text || 'Attendance submitted successfully',
+                    rawResponse: text
+                };
+            }
+            
             console.log('Attendance submitted successfully:', result);
             return result;
         } catch (error) {

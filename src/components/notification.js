@@ -264,7 +264,21 @@ class NotificationManager {
 
         } catch (error) {
             console.error('Error sending notification:', error);
-            this.showMessage('Failed to send notification. Please try again.', 'error');
+            
+            // Provide more specific error messages to users
+            let errorMessage = 'Failed to send notification. Please try again.';
+            
+            if (error.message.includes('timeout')) {
+                errorMessage = 'Request timed out. Please check your connection and try again.';
+            } else if (error.message.includes('forbidden')) {
+                errorMessage = 'Access denied. Please contact administrator.';
+            } else if (error.message.includes('not found')) {
+                errorMessage = 'Service temporarily unavailable. Please try again later.';
+            } else if (error.message.includes('network') || error.message.includes('fetch')) {
+                errorMessage = 'Network error. Please check your internet connection.';
+            }
+            
+            this.showMessage(errorMessage, 'error');
         } finally {
             // Reset button state
             sendBtn.disabled = false;
@@ -292,8 +306,9 @@ class NotificationManager {
         const analytics = {
             totalSent: this.selectedStudents.length,
             timestamp: new Date().toLocaleString(),
-            status: response.status || 'sent',
-            messageLength: document.getElementById('notification-message').value.length
+            status: response.success ? 'SUCCESS' : 'COMPLETED',
+            messageLength: document.getElementById('notification-message').value.length,
+            students: this.selectedStudents.map(s => s.Name).join(', ')
         };
 
         analyticsContainer.innerHTML = `
@@ -306,16 +321,35 @@ class NotificationManager {
                     <div class="analytics-number">${analytics.messageLength}</div>
                     <div class="analytics-label">Message Length</div>
                 </div>
-                <div class="analytics-card">
-                    <div class="analytics-number">${analytics.status.toUpperCase()}</div>
+                <div class="analytics-card present">
+                    <div class="analytics-number">${analytics.status}</div>
                     <div class="analytics-label">Status</div>
                 </div>
             </div>
             <div class="analytics-details">
-                <h5>Last Notification Details:</h5>
-                <p><strong>Sent to:</strong> ${this.selectedStudents.map(s => s.Name).join(', ')}</p>
-                <p><strong>Time:</strong> ${analytics.timestamp}</p>
-                <p><strong>Response:</strong> ${JSON.stringify(response, null, 2)}</p>
+                <h5>Latest Notification Details</h5>
+                <div class="analytics-info-grid">
+                    <div class="analytics-info-item">
+                        <div class="analytics-info-label">Recipients</div>
+                        <div class="analytics-info-value">${analytics.students || 'No students selected'}</div>
+                    </div>
+                    <div class="analytics-info-item">
+                        <div class="analytics-info-label">Sent At</div>
+                        <div class="analytics-info-value">${analytics.timestamp}</div>
+                    </div>
+                    <div class="analytics-info-item">
+                        <div class="analytics-info-label">Message Preview</div>
+                        <div class="analytics-info-value">${document.getElementById('notification-message').value.substring(0, 50)}${analytics.messageLength > 50 ? '...' : ''}</div>
+                    </div>
+                    <div class="analytics-info-item">
+                        <div class="analytics-info-label">Delivery Status</div>
+                        <div class="analytics-info-value">${response.success ? '✅ Delivered Successfully' : '✅ Processing Complete'}</div>
+                    </div>
+                </div>
+                <div class="analytics-response">
+                    <div class="analytics-response-header">Webhook Response</div>
+                    <pre>${JSON.stringify(response, null, 2)}</pre>
+                </div>
             </div>
         `;
     }
