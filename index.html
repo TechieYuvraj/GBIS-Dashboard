@@ -23,7 +23,7 @@
     <!-- Main Container -->
     <div class="main-container">
         <!-- Sidebar Navigation -->
-        <nav class="sidebar">
+    <nav class="sidebar glass-panel">
             <div class="nav-items">
                 <button class="nav-item active" data-tab="notification">
                     <i class="fas fa-bell"></i>
@@ -49,7 +49,7 @@
             <!-- Notification Tab -->
             <div class="tab-content active" id="notification-tab">
                 <div class="split-layout">
-                    <div class="action-section">
+                    <div class="action-section depth-card tilt" data-tilt>
                         <h3>Send Notification</h3>
                         <div class="search-container">
                             <input type="text" id="notification-search" placeholder="Search students..." class="search-input">
@@ -76,7 +76,7 @@
                             <div class="success-message" id="notification-success"></div>
                         </div>
                     </div>
-                    <div class="analytics-section">
+                    <div class="analytics-section depth-card tilt" data-tilt>
                         <h3>Notification Analytics</h3>
                         <div class="analytics-content" id="notification-analytics">
                             <div class="analytics-placeholder">
@@ -91,7 +91,7 @@
             <!-- Attendance Tab -->
             <div class="tab-content" id="attendance-tab">
                 <div class="split-layout">
-                    <div class="action-section">
+                    <div class="action-section depth-card tilt" data-tilt>
                         <h3>Mark Attendance</h3>
                         <div class="form-group">
                             <label for="attendance-date">Date (DD/MM/YYYY):</label>
@@ -120,7 +120,7 @@
                             <div class="success-message" id="attendance-success"></div>
                         </div>
                     </div>
-                    <div class="analytics-section">
+                    <div class="analytics-section depth-card tilt" data-tilt>
                         <h3>Attendance Analytics</h3>
                         <div class="analytics-content" id="attendance-analytics">
                             <div class="analytics-placeholder">
@@ -135,11 +135,11 @@
             <!-- Marks Tab -->
             <div class="tab-content" id="marks-tab">
                 <div class="split-layout">
-                    <div class="action-section">
+                    <div class="action-section depth-card tilt" data-tilt>
                         <h3>Marks Management</h3>
                         <p class="placeholder-text">This section will be implemented later</p>
                     </div>
-                    <div class="analytics-section">
+                    <div class="analytics-section depth-card tilt" data-tilt>
                         <h3>Marks Analytics</h3>
                         <p class="placeholder-text">Analytics will be shown here</p>
                     </div>
@@ -150,27 +150,17 @@
             <div class="tab-content" id="contacts-tab">
                 <div class="single-layout">
                     <h3>Student Contacts</h3>
-                    <div class="contacts-header">
-                        <div class="search-filter-container">
-                            <div class="search-container">
-                                <input type="text" id="contacts-search" placeholder="Search students..." class="search-input">
-                                <i class="fas fa-search search-icon"></i>
-                            </div>
-                            <div class="filter-container">
-                                <select id="class-filter" class="form-input">
-                                    <option value="">All Classes</option>
-                                </select>
-                            </div>
+                    <div class="contacts-header glass-panel contacts-toolbar">
+                        <div class="toolbar-group search-group">
+                            <i class="fas fa-search toolbar-icon"></i>
+                            <input type="text" id="contacts-search" placeholder="Search students" class="search-input compact" aria-label="Search students">
+                            <select id="class-filter" class="form-input compact" aria-label="Filter by class">
+                                <option value="">All Classes</option>
+                            </select>
                         </div>
-                        <div class="stats-container">
-                            <div class="stat-card">
-                                <div class="stat-number" id="total-classes">0</div>
-                                <div class="stat-label">Total Classes</div>
-                            </div>
-                            <div class="stat-card">
-                                <div class="stat-number" id="total-students">0</div>
-                                <div class="stat-label">Total Students</div>
-                            </div>
+                        <div class="toolbar-group stats-group">
+                            <div class="stat-pill" title="Total Classes"><span id="total-classes">0</span><label>Classes</label></div>
+                            <div class="stat-pill" title="Total Students"><span id="total-students">0</span><label>Students</label></div>
                         </div>
                     </div>
                     <div class="students-container" id="students-container">

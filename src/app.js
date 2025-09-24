@@ -11,7 +11,8 @@ class GBISApp {
             isLoading: true,
             currentUser: null,
             lastDataUpdate: null,
-            networkStatus: 'online'
+            networkStatus: 'online',
+            prefersReducedMotion: window.matchMedia('(prefers-reduced-motion: reduce)').matches
         };
         this.init();
     }
@@ -42,6 +43,9 @@ class GBISApp {
             this.initialized = true;
             this.state.isLoading = false;
 
+            // Activate interactive depth effects
+            this.enableTiltEffects();
+
             console.log('GBIS Dashboard initialized successfully!');
 
             // Show welcome message
@@ -51,6 +55,50 @@ class GBISApp {
             console.error('Error initializing application:', error);
             this.showError('Failed to initialize dashboard. Please refresh the page.');
         }
+    }
+
+    enableTiltEffects() {
+        if (this.state.prefersReducedMotion) return; // Respect user preference
+        const tiltEls = document.querySelectorAll('[data-tilt]');
+        const strength = 14; // max deg
+        tiltEls.forEach(el => {
+            el.classList.add('tilt');
+            let currentX = 0, currentY = 0, targetX = 0, targetY = 0, rafId;
+
+            const apply = () => {
+                currentX += (targetX - currentX) * 0.12;
+                currentY += (targetY - currentY) * 0.12;
+                el.style.transform = `perspective(1100px) rotateX(${currentY}deg) rotateY(${currentX}deg) translateZ(0)`;
+                rafId = requestAnimationFrame(apply);
+            };
+
+            const onPointerMove = e => {
+                const rect = el.getBoundingClientRect();
+                const x = (e.clientX - rect.left) / rect.width; // 0..1
+                const y = (e.clientY - rect.top) / rect.height; // 0..1
+                targetX = (x - 0.5) * strength; // rotateY
+                targetY = -(y - 0.5) * strength; // rotateX
+            };
+
+            const reset = () => {
+                targetX = 0; targetY = 0;
+            };
+
+            el.addEventListener('pointerenter', () => {
+                if (!rafId) rafId = requestAnimationFrame(apply);
+            });
+            el.addEventListener('pointermove', onPointerMove);
+            el.addEventListener('pointerleave', () => { reset(); });
+            el.addEventListener('pointerdown', () => { strength * 0.8; });
+        });
+
+        // Cancel on preference change
+        const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+        mq.addEventListener('change', (e) => {
+            if (e.matches) {
+                document.querySelectorAll('[data-tilt]').forEach(el => { el.style.transform = 'none'; });
+            }
+        });
     }
 
     async initializeDataService() {
@@ -400,6 +448,20 @@ class GBISApp {
                 Helpers.showToast('Welcome to GBIS Dashboard!', 'success', 2000);
             }
         }, 500);
+    }
+
+    /* Accessibility: High Contrast Toggle */
+    enableHighContrast() {
+        document.body.classList.add('high-contrast');
+        Helpers.showToast('High contrast enabled', 'info');
+    }
+    disableHighContrast() {
+        document.body.classList.remove('high-contrast');
+        Helpers.showToast('High contrast disabled', 'info');
+    }
+    toggleHighContrast() {
+        document.body.classList.toggle('high-contrast');
+        Helpers.showToast(`High contrast ${document.body.classList.contains('high-contrast') ? 'enabled' : 'disabled'}`, 'info');
     }
 
     // Public API methods

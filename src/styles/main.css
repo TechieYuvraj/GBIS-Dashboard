@@ -1,4 +1,162 @@
 /* CSS Reset and Base Styles */
+/* =============================================================
+   Unified Uni‑colour Vision Pro Theme Layer
+   - Centralized design tokens
+   - Reusable glass + depth utilities
+   - Motion-safe defaults
+   ============================================================= */
+:root {
+    /* Core Palette (single accent family derived tints) */
+    --accent-h: 258; /* purple-indigo hue */
+    --accent-s: 82%;
+    --accent-l: 63%;
+    --accent: hsl(var(--accent-h) var(--accent-s) var(--accent-l));
+    --accent-50: hsl(var(--accent-h) 100% 97% / 0.9);
+    --accent-100: hsl(var(--accent-h) 95% 92% / 0.85);
+    --accent-200: hsl(var(--accent-h) 90% 85% / 0.8);
+    --accent-300: hsl(var(--accent-h) 85% 75% / 0.75);
+    --accent-400: hsl(var(--accent-h) 80% 68% / 0.9);
+    --accent-500: var(--accent);
+    --accent-600: hsl(var(--accent-h) 72% 54%);
+    --accent-700: hsl(var(--accent-h) 65% 45%);
+    --accent-800: hsl(var(--accent-h) 55% 38%);
+    --accent-900: hsl(var(--accent-h) 50% 28%);
+
+    /* Elevated Surfaces */
+    --surface-glass: linear-gradient(145deg, hsl(var(--accent-h) 60% 96% / 0.55) 0%, hsl(var(--accent-h) 70% 90% / 0.35) 60%, hsl(var(--accent-h) 80% 85% / 0.25) 100%);
+    --surface-deep: linear-gradient(155deg, hsl(var(--accent-h) 55% 18% / 0.85) 0%, hsl(var(--accent-h) 65% 14% / 0.92) 60%, hsl(var(--accent-h) 70% 10% / 0.95) 100%);
+    --surface-soft: hsl(var(--accent-h) 70% 98% / 0.65);
+
+    /* Shadows & Glows */
+    --shadow-color: 258deg 65% 40%;
+    --shadow-sm: 0 4px 12px hsl(var(--shadow-color) / 0.18);
+    --shadow-md: 0 8px 28px hsl(var(--shadow-color) / 0.28);
+    --shadow-lg: 0 14px 48px hsl(var(--shadow-color) / 0.36);
+    --inner-glow: inset 0 1px 0 hsl(var(--accent-h) 95% 98% / 0.6), inset 0 0 0 1px hsl(var(--accent-h) 70% 75% / 0.35);
+
+    /* Backdrop / Blur */
+    --blur-sm: 12px;
+    --blur-md: 28px;
+    --blur-lg: 60px;
+    --backdrop-filter: saturate(180%) contrast(115%);
+
+    /* Radiance Highlights */
+    --radiance: radial-gradient(circle at 35% 25%, hsl(var(--accent-h) 95% 88% / 0.9), transparent 55%);
+
+    /* Typography */
+    --font-stack: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+    --font-weight-regular: 400;
+    --font-weight-medium: 500;
+    --font-weight-bold: 600;
+
+    /* Motion */
+    --ease-emerge: cubic-bezier(0.4, 0.0, 0.2, 1);
+    --ease-squish: cubic-bezier(.65,.05,.36,1);
+    --duration-xs: 120ms;
+    --duration-sm: 200ms;
+    --duration-md: 340ms;
+    --duration-lg: 560ms;
+
+    /* Radiant Borders */
+    --border-glass: 1px solid hsl(var(--accent-h) 80% 85% / 0.35);
+    --border-strong: 1px solid hsl(var(--accent-h) 65% 45% / 0.55);
+
+    /* Focus Ring */
+    --focus-ring: 0 0 0 3px hsl(var(--accent-h) 95% 92% / 0.85), 0 0 0 6px hsl(var(--accent-h) 70% 45% / 0.35);
+
+    /* Text Semantics */
+    --text-primary: hsl(var(--accent-h) 32% 14%);
+    --text-secondary: hsl(var(--accent-h) 28% 28% / 0.78);
+    --text-tertiary: hsl(var(--accent-h) 25% 32% / 0.6);
+    --text-inverse: #ffffff;
+    --text-on-accent: #ffffff;
+    --text-accent: var(--accent-700);
+
+    /* Contrast Elevated Surfaces */
+    --surface-accent-strong: linear-gradient(145deg, hsl(var(--accent-h) 68% 34% / 0.92), hsl(var(--accent-h) 72% 30% / 0.95));
+    --surface-accent-solid: hsl(var(--accent-h) 68% 28%);
+}
+
+/* High Contrast Mode Toggle Class */
+.high-contrast {
+    --accent-l: 55%;
+    --surface-glass: linear-gradient(160deg, hsl(var(--accent-h) 60% 22% / 0.9), hsl(var(--accent-h) 65% 18% / 0.85));
+    --text-secondary: hsl(var(--accent-h) 18% 92% / 0.85);
+    --text-tertiary: hsl(var(--accent-h) 18% 92% / 0.65);
+}
+
+/* Glass & Depth Utilities */
+.glass-panel {
+    position: relative;
+    background: var(--surface-glass);
+    backdrop-filter: blur(var(--blur-md)) var(--backdrop-filter);
+    -webkit-backdrop-filter: blur(var(--blur-md)) var(--backdrop-filter);
+    border: var(--border-glass);
+    border-radius: 28px;
+    box-shadow: var(--shadow-md), var(--inner-glow);
+    overflow: hidden;
+    transition: transform var(--duration-md) var(--ease-emerge), box-shadow var(--duration-md) var(--ease-emerge), background var(--duration-md) var(--ease-emerge);
+}
+.glass-panel::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: var(--radiance);
+    mix-blend-mode: screen;
+    opacity: 0.35;
+    pointer-events: none;
+    transition: opacity var(--duration-sm) var(--ease-emerge);
+}
+.glass-panel:hover::before { opacity: 0.55; }
+.glass-panel:hover { box-shadow: var(--shadow-lg), var(--inner-glow); }
+
+.depth-card {
+    position: relative;
+    background: linear-gradient(160deg, hsl(var(--accent-h) 65% 92% / 0.65), hsl(var(--accent-h) 70% 80% / 0.35));
+    border: var(--border-glass);
+    border-radius: 24px;
+    backdrop-filter: blur(var(--blur-sm)) saturate(160%);
+    -webkit-backdrop-filter: blur(var(--blur-sm)) saturate(160%);
+    box-shadow: var(--shadow-sm), var(--inner-glow);
+    padding: 24px 26px 26px;
+    transition: transform var(--duration-sm) var(--ease-emerge), box-shadow var(--duration-md) var(--ease-emerge);
+}
+.depth-card:hover { transform: translateY(-6px) scale(1.02); box-shadow: var(--shadow-md), var(--inner-glow); }
+.depth-card:active { transform: translateY(-2px) scale(.99); }
+
+/* Pointer Tilt (applied via JS with .tilt) */
+.tilt {
+    transform-style: preserve-3d;
+    will-change: transform;
+    transition: transform var(--duration-md) var(--ease-squish);
+}
+.tilt-layer { position:absolute; inset:0; transform: translateZ(40px); pointer-events:none; }
+
+/* Focus Accessibility */
+.focus-visible:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+
+@media (prefers-reduced-motion: reduce) {
+    .tilt, .glass-panel, .depth-card { transition: none !important; transform: none !important; }
+}
+
+/* High Contrast Mode Detection (forced-colors) */
+@media (forced-colors: active) {
+    .glass-panel, .depth-card, .sidebar, .header { 
+        background: Canvas !important; 
+        color: CanvasText !important; 
+        border: 1px solid CanvasText !important;
+        box-shadow: none !important;
+    }
+    .nav-item.active { border-left-color: Highlight !important; }
+    .login-btn, button { forced-color-adjust: none; }
+}
+
+/* Improve focus visibility for keyboard navigation */
+:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+
+/* Utility spacing helpers (optional future use) */
+.stack-md > * + * { margin-top: 1.25rem; }
+.stack-sm > * + * { margin-top: .75rem; }
 * {
     margin: 0;
     padding: 0;
@@ -7,9 +165,9 @@
 
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
-    background: linear-gradient(135deg, #f8f6ff 0%, #ede8ff 25%, #e4dcff 50%, #dcd0ff 75%, #d4c4ff 100%);
+    background: linear-gradient(130deg, hsl(var(--accent-h) 55% 6%), hsl(var(--accent-h) 55% 10%) 35%, hsl(var(--accent-h) 55% 14%) 70%);
     background-attachment: fixed;
-    color: #1d1b20;
+    color: var(--text-primary);
     line-height: 1.6;
     min-height: 100vh;
     font-weight: 400;
@@ -39,14 +197,13 @@ body::before {
     top: 0;
     left: 0;
     right: 0;
-    background: rgba(167, 139, 250, 0.8);
-    backdrop-filter: blur(40px) saturate(180%);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-    color: white;
+    background: linear-gradient(145deg, hsl(var(--accent-h) 80% 65% / .85), hsl(var(--accent-h) 72% 55% / .9));
+    backdrop-filter: blur(var(--blur-md)) saturate(200%);
+    -webkit-backdrop-filter: blur(var(--blur-md)) saturate(200%);
+    border-bottom: 1px solid hsl(var(--accent-h) 90% 85% / 0.35);
+    color: var(--text-inverse);
     padding: 0;
-    box-shadow: 
-        0 8px 32px rgba(147, 51, 234, 0.15),
-        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    box-shadow: 0 6px 26px hsl(var(--accent-h) 65% 40% / 0.35), inset 0 1px 0 hsl(var(--accent-h) 95% 96% / 0.4);
     z-index: 1000;
     height: 70px;
 }
@@ -61,20 +218,13 @@ body::before {
     height: 100%;
 }
 
-.school-name {
-    font-size: 1.5rem;
-    font-weight: 600;
-    margin: 0;
-    text-shadow: none;
-    color: rgba(255, 255, 255, 0.95);
-    letter-spacing: -0.5px;
-}
+.school-name { font-size: 1.5rem; font-weight: 600; margin:0; text-shadow:none; color: var(--text-inverse); letter-spacing:-0.5px; }
 
 .login-btn {
-    background: rgba(255, 255, 255, 0.15);
-    backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    color: rgba(255, 255, 255, 0.9);
+    background: hsl(var(--accent-h) 65% 32% / 0.85);
+    backdrop-filter: blur(18px) saturate(180%);
+    border: 1px solid hsl(var(--accent-h) 70% 45% / 0.65);
+    color: var(--text-inverse);
     padding: 10px 20px;
     border-radius: 20px;
     font-size: 0.9rem;
@@ -84,12 +234,7 @@ body::before {
     letter-spacing: 0.3px;
 }
 
-.login-btn:hover {
-    background: rgba(255, 255, 255, 0.25);
-    border-color: rgba(255, 255, 255, 0.3);
-    transform: translateY(-1px);
-    box-shadow: 0 8px 25px rgba(147, 51, 234, 0.2);
-}
+.login-btn:hover { background: hsl(var(--accent-h) 70% 36% / 0.95); border-color: hsl(var(--accent-h) 80% 65% / 0.65); transform: translateY(-1px); box-shadow: 0 8px 25px hsl(var(--accent-h) 65% 40% / 0.45); }
 
 /* Main Container */
 .main-container {
@@ -101,17 +246,17 @@ body::before {
 /* Sidebar Navigation */
 .sidebar {
     width: 250px;
-    background: rgba(167, 139, 250, 0.6);
-    backdrop-filter: blur(40px) saturate(180%);
-    box-shadow: 0 8px 32px rgba(123, 97, 255, 0.3);
+    background: var(--surface-glass);
+    backdrop-filter: blur(var(--blur-lg)) var(--backdrop-filter);
+    -webkit-backdrop-filter: blur(var(--blur-lg)) var(--backdrop-filter);
+    box-shadow: var(--shadow-md), var(--inner-glow);
     position: fixed;
     left: 0;
     top: 70px;
     height: calc(100vh - 70px);
     z-index: 100;
-    border-radius: 0 20px 20px 0;
-    border: 1px solid rgba(167, 139, 250, 0.2);
-    -webkit-backdrop-filter: blur(40px) saturate(180%);
+    border-radius: 0 26px 26px 0;
+    border: var(--border-glass);
 }
 
 .nav-items {
@@ -126,7 +271,7 @@ body::before {
     text-align: left;
     cursor: pointer;
     font-size: 1rem;
-    color: rgba(255, 255, 255, 0.9);
+    color: var(--text-inverse);
     transition: all 0.4s cubic-bezier(0.4, 0.0, 0.2, 1);
     display: flex;
     align-items: center;
@@ -138,20 +283,14 @@ body::before {
 }
 
 .nav-item:hover {
-    background: rgba(255, 255, 255, 0.15);
-    color: white;
+    background: hsl(var(--accent-h) 65% 35% / 0.55);
+    color: var(--text-inverse);
     transform: translateX(8px);
     backdrop-filter: blur(20px);
     border-left: 3px solid rgba(255, 255, 255, 0.6);
 }
 
-.nav-item.active {
-    background: rgba(255, 255, 255, 0.2);
-    color: white;
-    border-left: 3px solid #ffffff;
-    box-shadow: 0 4px 20px rgba(167, 139, 250, 0.4);
-    backdrop-filter: blur(30px);
-}
+.nav-item.active { background: var(--surface-accent-strong); color: var(--text-inverse); border-left:3px solid var(--accent-400); box-shadow: 0 4px 24px hsl(var(--accent-h) 65% 35% / 0.55), inset 0 1px 0 hsl(var(--accent-h) 95% 96% / 0.4); backdrop-filter: blur(var(--blur-sm)); }
 
 .nav-item i {
     width: 20px;
@@ -534,19 +673,19 @@ textarea {
 }
 
 .stat-card {
-    background: rgba(167, 139, 250, 0.6);
-    color: white;
+    background: var(--surface-accent-strong);
+    color: var(--text-inverse);
     padding: 25px;
     border-radius: 24px;
     text-align: center;
     flex: 1;
-    box-shadow: 0 12px 35px rgba(167, 139, 250, 0.2);
-    transition: all 0.4s cubic-bezier(0.4, 0.0, 0.2, 1);
+    box-shadow: var(--shadow-sm);
+    transition: all 0.4s var(--ease-emerge);
     position: relative;
     overflow: hidden;
-    backdrop-filter: blur(30px) saturate(180%);
-    border: 1px solid rgba(167, 139, 250, 0.3);
-    -webkit-backdrop-filter: blur(30px) saturate(180%);
+    backdrop-filter: blur(var(--blur-sm)) saturate(160%);
+    border: 1px solid hsl(var(--accent-h) 70% 55% / 0.55);
+    -webkit-backdrop-filter: blur(var(--blur-sm)) saturate(160%);
 }
 
 .stat-card::before {
@@ -565,36 +704,13 @@ textarea {
     transform: rotate(45deg) translateX(100%);
 }
 
-.stat-card:hover {
-    transform: translateY(-8px) scale(1.02);
-    box-shadow: 0 16px 45px rgba(167, 139, 250, 0.35);
-    background: rgba(167, 139, 250, 0.8);
-    border-color: rgba(167, 139, 250, 0.5);
-}
+.stat-card:hover { transform: translateY(-6px) scale(1.02); box-shadow: var(--shadow-md); background: var(--surface-accent-solid); border-color: hsl(var(--accent-h) 80% 65% / 0.65); }
 
-.stat-card:nth-child(2) {
-    background: rgba(139, 195, 250, 0.6);
-    box-shadow: 0 12px 35px rgba(139, 195, 250, 0.2);
-    border: 1px solid rgba(139, 195, 250, 0.3);
-}
+.stat-card:nth-child(2) { background: linear-gradient(145deg, hsl(199 68% 34% / 0.92), hsl(199 72% 30% / 0.95)); border: 1px solid hsl(199 70% 55% / 0.55); }
+.stat-card:nth-child(2):hover { background: hsl(199 68% 28%); box-shadow: var(--shadow-md); border-color: hsl(199 80% 65% / 0.65); }
 
-.stat-card:nth-child(2):hover {
-    background: rgba(139, 195, 250, 0.8);
-    box-shadow: 0 16px 45px rgba(139, 195, 250, 0.35);
-    border-color: rgba(139, 195, 250, 0.5);
-}
-
-.stat-card:nth-child(3) {
-    background: rgba(250, 139, 167, 0.6);
-    box-shadow: 0 12px 35px rgba(250, 139, 167, 0.2);
-    border: 1px solid rgba(250, 139, 167, 0.3);
-}
-
-.stat-card:nth-child(3):hover {
-    background: rgba(250, 139, 167, 0.8);
-    box-shadow: 0 16px 45px rgba(250, 139, 167, 0.35);
-    border-color: rgba(250, 139, 167, 0.5);
-}
+.stat-card:nth-child(3) { background: linear-gradient(145deg, hsl(345 68% 34% / 0.92), hsl(345 72% 30% / 0.95)); border: 1px solid hsl(345 70% 55% / 0.55); }
+.stat-card:nth-child(3):hover { background: hsl(345 68% 28%); box-shadow: var(--shadow-md); border-color: hsl(345 80% 65% / 0.65); }
 
 .stat-number {
     font-size: 2.5rem;
@@ -617,6 +733,44 @@ textarea {
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     gap: 15px;
 }
+
+/* Contacts Tab Unicolour Overrides */
+#contacts-tab { --c-accent-h: 270; --c-accent-s: 68%; --c-accent-l: 78%; --c-accent: hsl(var(--c-accent-h) var(--c-accent-s) var(--c-accent-l)); --c-bg-deep: hsl(var(--c-accent-h) 42% 14%); --c-bg-card: linear-gradient(150deg, hsl(var(--c-accent-h) 55% 26% / 0.85), hsl(var(--c-accent-h) 48% 20% / 0.9)); --c-border: hsl(var(--c-accent-h) 70% 65% / 0.45); --c-text-primary: #fff; --c-text-dim: hsl(var(--c-accent-h) 35% 88% / 0.75); --c-highlight-pink: #ff9ddf; --c-highlight-cyan: #9de2ff; --c-highlight-lime: #d4ff8e; }
+
+#contacts-tab .contacts-header.contacts-toolbar { display:flex; align-items:center; justify-content:space-between; gap:28px; padding:18px 26px; border-radius:30px; background:linear-gradient(140deg, hsl(var(--c-accent-h) 52% 32% / .8), hsl(var(--c-accent-h) 48% 24% / .9)); backdrop-filter:blur(40px) saturate(180%); -webkit-backdrop-filter:blur(40px) saturate(180%); border:1px solid var(--c-border); box-shadow:0 10px 32px hsl(var(--c-accent-h) 60% 25% / .35), inset 0 1px 0 hsl(var(--c-accent-h) 85% 85% / .4); }
+
+.contacts-toolbar .toolbar-group { display:flex; align-items:center; gap:14px; }
+.contacts-toolbar .search-group { flex:1; }
+.contacts-toolbar .search-input.compact { max-width:500px; padding:8px 16px; font-size:.9rem; border-radius:18px; background:hsl(var(--c-accent-h) 40% 18% / .6); border:1px solid hsl(var(--c-accent-h) 55% 45% / .4); color:var(--c-text-primary); }
+.contacts-toolbar .search-input.compact:focus { outline:none; box-shadow:0 0 0 3px hsl(var(--c-accent-h) 75% 65% / .45); }
+.contacts-toolbar .toolbar-icon { position:relative; left:18px; font-size:.85rem; color:var(--c-highlight-cyan); }
+.contacts-toolbar select.compact { padding:8px 12px; font-size:.85rem; border-radius:18px; background:hsl(var(--c-accent-h) 40% 18% / .6); border:1px solid hsl(var(--c-accent-h) 55% 45% / .4); color:var(--c-text-primary); min-width:130px; }
+.contacts-toolbar select.compact:focus { outline:none; box-shadow:0 0 0 3px hsl(var(--c-accent-h) 75% 65% / .45); }
+
+.stats-group { display:flex; gap:14px; }
+.stat-pill { display:flex; align-items:center; gap:6px; padding:8px 16px; background:linear-gradient(135deg, hsl(var(--c-accent-h) 55% 30% / .85), hsl(var(--c-accent-h) 55% 24% / .85)); border:1px solid var(--c-border); border-radius:20px; font-size:.75rem; letter-spacing:.5px; text-transform:uppercase; color:var(--c-text-dim); backdrop-filter:blur(24px) saturate(160%); box-shadow:0 4px 14px hsl(var(--c-accent-h) 60% 20% / .45), inset 0 1px 0 hsl(var(--c-accent-h) 85% 85% / .35); }
+.stat-pill span { font-size:1rem; font-weight:600; color:var(--c-highlight-cyan); }
+.stat-pill:nth-child(2) span { color:var(--c-highlight-pink); }
+.stat-pill label { font-weight:600; }
+
+/* Redesigned Student Card */
+#contacts-tab .student-card { background:var(--c-bg-card); border:1px solid var(--c-border); border-radius:26px; padding:18px 18px 20px; display:flex; flex-direction:column; gap:10px; color:var(--c-text-primary); position:relative; overflow:hidden; backdrop-filter:blur(34px) saturate(180%); -webkit-backdrop-filter:blur(34px) saturate(180%); box-shadow:0 14px 40px hsl(var(--c-accent-h) 60% 20% / .45), inset 0 1px 0 hsl(var(--c-accent-h) 85% 85% / .3); }
+#contacts-tab .student-card::before { content:""; position:absolute; inset:0; background:radial-gradient(circle at 25% 20%, hsl(var(--c-accent-h) 75% 55% / .35), transparent 60%); mix-blend-mode:screen; opacity:.5; }
+#contacts-tab .student-card:hover { transform:translateY(-6px) scale(1.015); box-shadow:0 18px 54px hsl(var(--c-accent-h) 60% 18% / .55); }
+#contacts-tab .student-header { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+#contacts-tab .student-name { font-size:1rem; font-weight:600; letter-spacing:.3px; background:linear-gradient(90deg, var(--c-highlight-cyan), var(--c-highlight-pink)); -webkit-background-clip:text; color:transparent; }
+#contacts-tab .student-class { font-size:.65rem; font-weight:700; letter-spacing:.8px; padding:4px 10px; border-radius:14px; background:hsl(var(--c-accent-h) 55% 34% / .85); border:1px solid hsl(var(--c-accent-h) 70% 65% / .45); color:var(--c-text-primary); text-transform:uppercase; }
+#contacts-tab .student-meta { display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:6px 12px; margin-top:2px; }
+#contacts-tab .meta { display:flex; flex-direction:column; gap:2px; }
+#contacts-tab .meta-label { font-size:.55rem; letter-spacing:.9px; text-transform:uppercase; color:var(--c-text-dim); font-weight:600; }
+#contacts-tab .meta-value { font-size:.72rem; font-weight:500; color:var(--c-text-primary); line-height:1.25; }
+#contacts-tab .meta-value.em { color:var(--c-highlight-lime); font-weight:600; }
+
+/* Remove old internal detail-item grid look */
+#contacts-tab .student-details, #contacts-tab .detail-item { all:unset; display:contents; }
+
+/* Compact layout tweaks */
+@media (max-width: 900px) { #contacts-tab .contacts-toolbar { flex-direction:column; align-items:stretch; gap:18px; } .stats-group { align-self:flex-start; } #contacts-tab .student-meta { grid-template-columns:repeat(auto-fill,minmax(46%,1fr)); } }
 
 .student-card {
     background: rgba(255, 255, 255, 0.7);
@@ -679,30 +833,6 @@ textarea {
     box-shadow: 0 2px 8px rgba(255, 107, 107, 0.3);
 }
 
-.student-details {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-    font-size: 0.85rem;
-}
-
-.detail-item {
-    display: flex;
-    flex-direction: column;
-    background: rgba(255, 255, 255, 0.6);
-    padding: 8px;
-    border-radius: 10px;
-    border: 1px solid rgba(102, 126, 234, 0.1);
-}
-
-.detail-label {
-    font-weight: 600;
-    color: #667eea;
-    font-size: 0.7rem;
-    margin-bottom: 2px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
 
 .detail-value {
     color: #2c3e50;
@@ -1266,4 +1396,13 @@ textarea {
 /* Bottom Navigation - Hidden by default */
 .bottom-nav {
     display: none;
+}
+
+/* User requests higher contrast */
+@media (prefers-contrast: more) {
+    body { color: var(--text-inverse); background: hsl(var(--accent-h) 50% 8%); }
+    .header, .sidebar { background: hsl(var(--accent-h) 65% 28% / 0.95); }
+    .glass-panel, .depth-card { background: hsl(var(--accent-h) 58% 18% / 0.88); box-shadow: none; }
+    .stat-card { filter: brightness(1.1) contrast(1.15); }
+    a, .nav-item, .nav-item span { color: var(--text-inverse); }
 }

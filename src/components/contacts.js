@@ -132,49 +132,23 @@ class ContactsManager {
     createStudentCard(student) {
         const card = document.createElement('div');
         card.className = 'student-card';
-        
+
+        const safe = (v) => v || '—';
         card.innerHTML = `
             <div class="student-header">
-                <h4 class="student-name">${student.Name || 'N/A'}</h4>
-                <span class="student-class">${student.Class || 'N/A'}</span>
+                <h4 class="student-name">${safe(student.Name)}</h4>
+                <span class="student-class">${safe(student.Class)}</span>
             </div>
-            <div class="student-details">
-                <div class="detail-item">
-                    <span class="detail-label">Roll No.</span>
-                    <span class="detail-value">${student.Roll_No || 'N/A'}</span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">Serial No.</span>
-                    <span class="detail-value">${student.Serial_No || 'N/A'}</span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">Father's Name</span>
-                    <span class="detail-value">${student.Father_Name || 'N/A'}</span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">Mother's Name</span>
-                    <span class="detail-value">${student.Mother_Name || 'N/A'}</span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">Date of Birth</span>
-                    <span class="detail-value">${student.DOB || 'N/A'}</span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">Admission Date</span>
-                    <span class="detail-value">${student.Admission_Date || 'N/A'}</span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">Address</span>
-                    <span class="detail-value">${student.Address || 'N/A'}</span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">Contact No.</span>
-                    <span class="detail-value">${student.Contact_No || 'N/A'}</span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">Transportation Fees</span>
-                    <span class="detail-value">${student.Transportaion_Fees || 'N/A'}</span>
-                </div>
+            <div class="student-meta">
+                <div class="meta"><span class="meta-label">Roll</span><span class="meta-value">${safe(student.Roll_No)}</span></div>
+                <div class="meta"><span class="meta-label">Serial</span><span class="meta-value">${safe(student.Serial_No)}</span></div>
+                <div class="meta"><span class="meta-label">Father</span><span class="meta-value">${safe(student.Father_Name)}</span></div>
+                <div class="meta"><span class="meta-label">Mother</span><span class="meta-value">${safe(student.Mother_Name)}</span></div>
+                <div class="meta"><span class="meta-label">DOB</span><span class="meta-value">${safe(student.DOB)}</span></div>
+                <div class="meta"><span class="meta-label">Admission</span><span class="meta-value">${safe(student.Admission_Date)}</span></div>
+                <div class="meta" style="grid-column: span 2"><span class="meta-label">Address</span><span class="meta-value">${safe(student.Address)}</span></div>
+                <div class="meta"><span class="meta-label">Contact</span><span class="meta-value em">${safe(student.Contact_No)}</span></div>
+                <div class="meta"><span class="meta-label">Transport Fees</span><span class="meta-value">${safe(student.Transportaion_Fees)}</span></div>
             </div>
         `;
 
