@@ -8,12 +8,14 @@ class NotificationManager {
         this.selectedStudents = [];
         this.attachedFile = null;
         this.searchTimeout = null;
+        this.selectedClass = '';
         this.init();
     }
 
     init() {
         this.bindEvents();
         this.initializeSearch();
+        this.initializeClassDropdown();
     }
 
     bindEvents() {
@@ -27,10 +29,15 @@ class NotificationManager {
                 }, 300);
             });
 
-            // Clear search results when clicking outside
+            // Clear search results when clicking outside (but keep selected students visible)
             document.addEventListener('click', (e) => {
-                if (!e.target.closest('.search-container')) {
-                    this.hideSearchResults();
+                if (!e.target.closest('.search-results') && 
+                    !e.target.closest('#notification-search') && 
+                    !e.target.closest('#notification-class')) {
+                    // Only hide if no students are selected, otherwise keep showing selected students
+                    if (this.selectedStudents.length === 0) {
+                        this.hideSearchResults();
+                    }
                 }
             });
         }
@@ -56,11 +63,54 @@ class NotificationManager {
                 this.sendNotification();
             });
         }
+
+        // Class dropdown
+        const classSelect = document.getElementById('notification-class');
+        if (classSelect) {
+            classSelect.addEventListener('change', (e) => {
+                this.selectedClass = e.target.value;
+                console.log('Selected class:', this.selectedClass);
+                
+                // Refresh search results if there's an active search
+                const searchInput = document.getElementById('notification-search');
+                if (searchInput && searchInput.value.trim()) {
+                    this.handleSearch(searchInput.value.trim());
+                }
+            });
+        }
     }
 
     initializeSearch() {
         // Initialize search functionality
         this.hideSearchResults();
+    }
+
+    async initializeClassDropdown() {
+        const classSelect = document.getElementById('notification-class');
+        if (!classSelect || !window.dataService) return;
+
+        try {
+            // Ensure data service is initialized
+            await window.dataService.init();
+            
+            // Get classes from data service
+            const classes = window.dataService.getClasses();
+            
+            // Clear existing options (except "All Classes")
+            classSelect.innerHTML = '<option value="">All Classes</option>';
+            
+            // Add class options
+            classes.forEach(className => {
+                const option = document.createElement('option');
+                option.value = className;
+                option.textContent = className;
+                classSelect.appendChild(option);
+            });
+            
+            console.log('Class dropdown initialized with classes:', classes);
+        } catch (error) {
+            console.error('Error initializing class dropdown:', error);
+        }
     }
 
     handleSearch(query) {
@@ -74,7 +124,13 @@ class NotificationManager {
             return;
         }
 
-        const results = window.dataService.searchStudents(query);
+        let results = window.dataService.searchStudents(query);
+        
+        // Filter results by selected class if a specific class is selected
+        if (this.selectedClass && this.selectedClass !== '') {
+            results = results.filter(student => student.Class === this.selectedClass);
+        }
+        
         this.displaySearchResults(results, query);
     }
 
@@ -285,6 +341,7 @@ class NotificationManager {
             // Prepare notification data
             const notificationData = {
                 message: message,
+                selectedClass: this.selectedClass || 'All Classes',
                 students: this.selectedStudents.map(student => ({
                     name: student.Name,
                     class: student.Class,

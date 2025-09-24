@@ -101,9 +101,10 @@ class Navigation {
                 }
                 break;
             case 'notification':
-                // Initialize notification search if needed
+                // Initialize notification components if needed
                 if (window.notificationManager) {
                     window.notificationManager.initializeSearch();
+                    window.notificationManager.initializeClassDropdown();
                 }
                 break;
             case 'attendance':

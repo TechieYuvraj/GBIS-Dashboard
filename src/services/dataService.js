@@ -420,6 +420,7 @@ class DataService {
                 
                 // Add each field from notificationData as separate form fields for proper JSON structure
                 formData.append('message', notificationData.message);
+                formData.append('selectedClass', notificationData.selectedClass || 'All Classes');
                 formData.append('students', JSON.stringify(notificationData.students));
                 formData.append('timestamp', notificationData.timestamp);
                 
