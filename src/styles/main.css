@@ -397,6 +397,16 @@ textarea:focus {
     background: rgba(255, 255, 255, 0.85);
 }
 
+.form-input:hover,
+.search-input:hover,
+textarea:hover {
+    border: 1px solid rgba(167, 139, 250, 0.3);
+    box-shadow: 0 8px 25px rgba(167, 139, 250, 0.15);
+    transform: translateY(-1px);
+    background: rgba(255, 255, 255, 0.9);
+    color: #2c3e50;
+}
+
 textarea {
     resize: vertical;
     min-height: 120px;
@@ -885,7 +895,7 @@ textarea {
 .toolbar-group { display: flex; align-items: center; gap: 14px; }
 .search-group { flex: 1; display: flex; align-items: center; gap: 14px; }
 .search-group .search-input.compact { flex: 1; min-width: 200px; max-width: 400px; }
-.search-group .form-input.compact { min-width: 120px; flex-shrink: 0; }
+.search-group .form-input.compact { min-width: 120px; max-width: 250px; flex-shrink: 0; }
 .search-group .toolbar-icon { flex-shrink: 0; position: relative; left: 8px; }
 
 /* Deduplicated toolbar rules now rely on unified + original single set above */
