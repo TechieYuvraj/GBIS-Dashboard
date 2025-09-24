@@ -399,13 +399,14 @@ class DataService {
         };
     }
 
-    /**
-     * Send notification via webhook
-     */
     async sendNotification(notificationData, attachmentFile = null) {
         try {
             console.log('Sending notification with API authentication:', notificationData);
-            console.log('Attachment file:', attachmentFile ? `${attachmentFile.name} (${attachmentFile.size} bytes)` : 'None');
+            console.log('Attachment file:', attachmentFile ? `${attachmentFile.name} (${attachmentFile.size} bytes, ${attachmentFile.type})` : 'None');
+            
+            if (attachmentFile) {
+                console.log('File will be sent as binary data with separate JSON fields');
+            }
             
             // Add timeout to prevent hanging requests
             const controller = new AbortController();
@@ -414,22 +415,22 @@ class DataService {
             let requestOptions;
             
             if (attachmentFile) {
-                // Use FormData for file uploads
+                // Use FormData for file uploads with proper JSON data and binary file
                 const formData = new FormData();
                 
-                // Add JSON data as a string field
-                formData.append('data', JSON.stringify(notificationData));
+                // Add each field from notificationData as separate form fields for proper JSON structure
+                formData.append('message', notificationData.message);
+                formData.append('students', JSON.stringify(notificationData.students));
+                formData.append('timestamp', notificationData.timestamp);
                 
-                // Add the file
+                // Add the file as binary data
                 formData.append('attachment', attachmentFile, attachmentFile.name);
                 
-                // Add file metadata for easier processing
-                formData.append('fileMetadata', JSON.stringify({
-                    name: attachmentFile.name,
-                    size: attachmentFile.size,
-                    type: attachmentFile.type,
-                    lastModified: attachmentFile.lastModified
-                }));
+                // Add individual file metadata fields instead of stringified JSON
+                formData.append('fileName', attachmentFile.name);
+                formData.append('fileSize', attachmentFile.size.toString());
+                formData.append('fileType', attachmentFile.type);
+                formData.append('fileLastModified', attachmentFile.lastModified.toString());
                 
                 requestOptions = {
                     method: 'POST',
