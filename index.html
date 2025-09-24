@@ -48,40 +48,48 @@
         <main class="content">
             <!-- Notification Tab -->
             <div class="tab-content active" id="notification-tab">
-                <div class="split-layout">
-                    <div class="action-section depth-card tilt" data-tilt>
-                        <h3>Send Notification</h3>
-                        <div class="search-container">
-                            <input type="text" id="notification-search" placeholder="Search students..." class="search-input">
-                            <i class="fas fa-search search-icon"></i>
+                <div class="single-layout">
+                    <h3>Notifications</h3>
+                    <div class="unified-toolbar glass-panel">
+                        <div class="toolbar-group search-group">
+                            <i class="fas fa-search toolbar-icon"></i>
+                            <input type="text" id="notification-search" placeholder="Search students" class="search-input compact" aria-label="Search students for notification">
                         </div>
-                        <div class="search-results" id="notification-search-results"></div>
-                        <div class="form-group">
-                            <label for="notification-message">Message:</label>
-                            <textarea id="notification-message" placeholder="Enter your message here..." rows="4"></textarea>
-                        </div>
-                        <div class="form-group">
-                            <button class="attachment-btn">
-                                <i class="fas fa-paperclip"></i>
-                                Add Attachment
-                            </button>
-                            <input type="file" id="attachment-input" style="display: none;" 
-                                   accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif,.mp4,.mp3,.zip,.xlsx,.xls,.ppt,.pptx">
-                        </div>
-                        <div class="form-group">
-                            <button class="send-btn" id="send-notification">
-                                <i class="fas fa-paper-plane"></i>
-                                Send Notification
-                            </button>
-                            <div class="success-message" id="notification-success"></div>
+                        <div class="toolbar-group stats-group">
+                            <div class="stat-pill pill-accent" title="Selected Students"><span id="notification-selected-count">0</span><label>Selected</label></div>
                         </div>
                     </div>
-                    <div class="analytics-section depth-card tilt" data-tilt>
-                        <h3>Notification Analytics</h3>
-                        <div class="analytics-content" id="notification-analytics">
-                            <div class="analytics-placeholder">
-                                <i class="fas fa-chart-bar"></i>
-                                <p>Send a notification to see analytics here</p>
+                    <div class="search-results" id="notification-search-results"></div>
+                    <div class="split-layout">
+                        <div class="action-section depth-card panel-card tilt" data-tilt>
+                            <h3>Compose</h3>
+                            <div class="form-group">
+                                <label for="notification-message">Message:</label>
+                                <textarea id="notification-message" placeholder="Enter your message here..." rows="4"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <button class="attachment-btn btn-primary-glass">
+                                    <i class="fas fa-paperclip"></i>
+                                    Add Attachment
+                                </button>
+                                <input type="file" id="attachment-input" style="display: none;" 
+                                       accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif,.mp4,.mp3,.zip,.xlsx,.xls,.ppt,.pptx">
+                            </div>
+                            <div class="form-group">
+                                <button class="send-btn btn-primary-glass" id="send-notification">
+                                    <i class="fas fa-paper-plane"></i>
+                                    Send
+                                </button>
+                                <div class="success-message" id="notification-success"></div>
+                            </div>
+                        </div>
+                        <div class="analytics-section depth-card panel-card tilt" data-tilt>
+                            <h3>Analytics</h3>
+                            <div class="analytics-content" id="notification-analytics">
+                                <div class="analytics-placeholder">
+                                    <i class="fas fa-chart-bar"></i>
+                                    <p>Send a notification to see analytics here</p>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -90,42 +98,48 @@
 
             <!-- Attendance Tab -->
             <div class="tab-content" id="attendance-tab">
-                <div class="split-layout">
-                    <div class="action-section depth-card tilt" data-tilt>
-                        <h3>Mark Attendance</h3>
-                        <div class="form-group">
-                            <label for="attendance-date">Date (DD/MM/YYYY):</label>
-                            <input type="date" id="attendance-date" class="form-input">
-                        </div>
-                        <div class="form-group">
-                            <label for="attendance-class">Class:</label>
-                            <select id="attendance-class" class="form-input">
-                                <option value="">Select Class</option>
+                <div class="single-layout">
+                    <h3>Attendance</h3>
+                    <div class="unified-toolbar glass-panel">
+                        <div class="toolbar-group">
+                            <label for="attendance-date" class="toolbar-icon" title="Date"><i class="fas fa-calendar"></i></label>
+                            <input type="date" id="attendance-date" class="search-input compact" aria-label="Attendance date">
+                            <select id="attendance-class" class="form-input compact" aria-label="Select class for attendance">
+                                <option value="">Class</option>
                             </select>
                         </div>
-                        <div class="form-group">
-                            <label for="attendance-rollno">Absent Roll Numbers:</label>
-                            <div class="multi-select-container">
-                                <div class="multi-select-display" id="rollno-display">
-                                    <span class="placeholder">Select absent students</span>
-                                </div>
-                                <div class="multi-select-dropdown" id="rollno-dropdown"></div>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <button class="mark-btn" id="mark-attendance">
-                                <i class="fas fa-check"></i>
-                                Mark Attendance
-                            </button>
-                            <div class="success-message" id="attendance-success"></div>
+                        <div class="toolbar-group stats-group">
+                            <div class="stat-pill pill-accent" title="Total Students"><span id="attendance-total-students">0</span><label>Total</label></div>
+                            <div class="stat-pill pill-accent" title="Absent Students"><span id="attendance-absent-count">0</span><label>Absent</label></div>
                         </div>
                     </div>
-                    <div class="analytics-section depth-card tilt" data-tilt>
-                        <h3>Attendance Analytics</h3>
-                        <div class="analytics-content" id="attendance-analytics">
-                            <div class="analytics-placeholder">
-                                <i class="fas fa-chart-pie"></i>
-                                <p>Mark attendance to see analytics here</p>
+                    <div class="split-layout">
+                        <div class="action-section depth-card panel-card tilt" data-tilt>
+                            <h3>Mark</h3>
+                            <div class="form-group">
+                                <label for="attendance-rollno">Absent Roll Numbers:</label>
+                                <div class="multi-select-container">
+                                    <div class="multi-select-display" id="rollno-display">
+                                        <span class="placeholder">Select absent students</span>
+                                    </div>
+                                    <div class="multi-select-dropdown" id="rollno-dropdown"></div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <button class="mark-btn btn-primary-glass" id="mark-attendance">
+                                    <i class="fas fa-check"></i>
+                                    Submit
+                                </button>
+                                <div class="success-message" id="attendance-success"></div>
+                            </div>
+                        </div>
+                        <div class="analytics-section depth-card panel-card tilt" data-tilt>
+                            <h3>Analytics</h3>
+                            <div class="analytics-content" id="attendance-analytics">
+                                <div class="analytics-placeholder">
+                                    <i class="fas fa-chart-pie"></i>
+                                    <p>Mark attendance to see analytics here</p>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -134,14 +148,26 @@
 
             <!-- Marks Tab -->
             <div class="tab-content" id="marks-tab">
-                <div class="split-layout">
-                    <div class="action-section depth-card tilt" data-tilt>
-                        <h3>Marks Management</h3>
-                        <p class="placeholder-text">This section will be implemented later</p>
+                <div class="single-layout">
+                    <h3>Marks</h3>
+                    <div class="unified-toolbar glass-panel">
+                        <div class="toolbar-group search-group">
+                            <i class="fas fa-search toolbar-icon"></i>
+                            <input type="text" id="marks-search" placeholder="Search students" class="search-input compact" aria-label="Search students for marks" disabled>
+                        </div>
+                        <div class="toolbar-group stats-group">
+                            <div class="stat-pill pill-accent" title="Planned Feature"><span>-</span><label>Pending</label></div>
+                        </div>
                     </div>
-                    <div class="analytics-section depth-card tilt" data-tilt>
-                        <h3>Marks Analytics</h3>
-                        <p class="placeholder-text">Analytics will be shown here</p>
+                    <div class="split-layout">
+                        <div class="action-section depth-card panel-card tilt" data-tilt>
+                            <h3>Management</h3>
+                            <p class="placeholder-text">Marks management coming soon</p>
+                        </div>
+                        <div class="analytics-section depth-card panel-card tilt" data-tilt>
+                            <h3>Analytics</h3>
+                            <p class="placeholder-text">Analytics will be shown here</p>
+                        </div>
                     </div>
                 </div>
             </div>

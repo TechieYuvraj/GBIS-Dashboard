@@ -95,6 +95,7 @@ class AttendanceManager {
             this.availableStudents = [];
             this.absentStudents = [];
             this.updateDisplay();
+            this.updateStatPills();
             return;
         }
 
@@ -120,6 +121,7 @@ class AttendanceManager {
         });
 
         this.updateDisplay();
+        this.updateStatPills();
     }
 
     handleRollSelection(rollNo, isSelected) {
@@ -134,6 +136,7 @@ class AttendanceManager {
         }
 
         this.updateDisplay();
+        this.updateStatPills();
         this.validateForm();
     }
 
@@ -173,6 +176,7 @@ class AttendanceManager {
         }
         
         this.updateDisplay();
+        this.updateStatPills();
         this.validateForm();
     }
 
@@ -257,6 +261,7 @@ class AttendanceManager {
 
             // Reset form
             this.resetForm();
+            this.updateStatPills();
 
         } catch (error) {
             console.error('Error marking attendance:', error);
@@ -264,7 +269,7 @@ class AttendanceManager {
         } finally {
             // Reset button state
             markBtn.disabled = false;
-            markBtn.innerHTML = '<i class="fas fa-check"></i> Mark Attendance';
+            markBtn.innerHTML = '<i class="fas fa-check"></i> Submit';
         }
     }
 
@@ -288,6 +293,9 @@ class AttendanceManager {
         const absentCount = this.absentStudents.length;
         const presentCount = totalStudents - absentCount;
         const attendancePercentage = totalStudents > 0 ? ((presentCount / totalStudents) * 100).toFixed(1) : 0;
+
+        // Update stat pills too
+        this.updateStatPills();
 
         analyticsContainer.innerHTML = `
             <div class="analytics-cards">
@@ -351,6 +359,13 @@ class AttendanceManager {
                 </div>
             </div>
         `;
+    }
+
+    updateStatPills() {
+        const totalEl = document.getElementById('attendance-total-students');
+        const absentEl = document.getElementById('attendance-absent-count');
+        if (totalEl) totalEl.textContent = this.availableStudents.length;
+        if (absentEl) absentEl.textContent = this.absentStudents.length;
     }
 
     resetForm() {

@@ -142,6 +142,8 @@ class NotificationManager {
 
     updateSelectedStudentsDisplay() {
         const resultsContainer = document.getElementById('notification-search-results');
+        const countEl = document.getElementById('notification-selected-count');
+        if (countEl) countEl.textContent = this.selectedStudents.length;
         if (!resultsContainer) return;
 
         if (this.selectedStudents.length > 0) {
@@ -177,6 +179,8 @@ class NotificationManager {
     clearAllStudents() {
         this.selectedStudents = [];
         this.hideSearchResults();
+        const countEl = document.getElementById('notification-selected-count');
+        if (countEl) countEl.textContent = '0';
     }
 
     showSearchResults() {

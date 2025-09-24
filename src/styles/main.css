@@ -737,18 +737,170 @@ textarea {
 /* Contacts Tab Unicolour Overrides */
 #contacts-tab { --c-accent-h: 270; --c-accent-s: 68%; --c-accent-l: 78%; --c-accent: hsl(var(--c-accent-h) var(--c-accent-s) var(--c-accent-l)); --c-bg-deep: hsl(var(--c-accent-h) 42% 14%); --c-bg-card: linear-gradient(150deg, hsl(var(--c-accent-h) 55% 26% / 0.85), hsl(var(--c-accent-h) 48% 20% / 0.9)); --c-border: hsl(var(--c-accent-h) 70% 65% / 0.45); --c-text-primary: #fff; --c-text-dim: hsl(var(--c-accent-h) 35% 88% / 0.75); --c-highlight-pink: #ff9ddf; --c-highlight-cyan: #9de2ff; --c-highlight-lime: #d4ff8e; }
 
-#contacts-tab .contacts-header.contacts-toolbar { display:flex; align-items:center; justify-content:space-between; gap:28px; padding:18px 26px; border-radius:30px; background:linear-gradient(140deg, hsl(var(--c-accent-h) 52% 32% / .8), hsl(var(--c-accent-h) 48% 24% / .9)); backdrop-filter:blur(40px) saturate(180%); -webkit-backdrop-filter:blur(40px) saturate(180%); border:1px solid var(--c-border); box-shadow:0 10px 32px hsl(var(--c-accent-h) 60% 25% / .35), inset 0 1px 0 hsl(var(--c-accent-h) 85% 85% / .4); }
+/* Unified panel card styling for all tabs */
+.panel-card { background:linear-gradient(150deg, hsl(var(--accent-h) 35% 26% / .78), hsl(var(--accent-h) 30% 18% / .82)); border:1px solid hsl(var(--accent-h) 70% 65% / 0.35); border-radius:28px; padding:20px 22px 24px; position:relative; overflow:hidden; backdrop-filter:blur(34px) saturate(180%); -webkit-backdrop-filter:blur(34px) saturate(180%); box-shadow:0 14px 40px hsl(var(--accent-h) 60% 18% / .42), inset 0 1px 0 hsl(var(--accent-h) 80% 85% / .28); transition:transform .4s, box-shadow .4s; }
+.panel-card:hover { transform:translateY(-6px) scale(1.015); box-shadow:0 20px 56px hsl(var(--accent-h) 60% 18% / .55); }
+.panel-card h3 { margin-top:0; font-size:1.05rem; letter-spacing:.5px; font-weight:600; }
 
-.contacts-toolbar .toolbar-group { display:flex; align-items:center; gap:14px; }
-.contacts-toolbar .search-group { flex:1; }
-.contacts-toolbar .search-input.compact { max-width:500px; padding:8px 16px; font-size:.9rem; border-radius:18px; background:hsl(var(--c-accent-h) 40% 18% / .6); border:1px solid hsl(var(--c-accent-h) 55% 45% / .4); color:var(--c-text-primary); }
-.contacts-toolbar .search-input.compact:focus { outline:none; box-shadow:0 0 0 3px hsl(var(--c-accent-h) 75% 65% / .45); }
-.contacts-toolbar .toolbar-icon { position:relative; left:18px; font-size:.85rem; color:var(--c-highlight-cyan); }
-.contacts-toolbar select.compact { padding:8px 12px; font-size:.85rem; border-radius:18px; background:hsl(var(--c-accent-h) 40% 18% / .6); border:1px solid hsl(var(--c-accent-h) 55% 45% / .4); color:var(--c-text-primary); min-width:130px; }
-.contacts-toolbar select.compact:focus { outline:none; box-shadow:0 0 0 3px hsl(var(--c-accent-h) 75% 65% / .45); }
+/* ===================================================== */
+/* Vision Pro Inspired Global Light Purple Theme (Tabs)  */
+/* Applies to notification, attendance, marks tabs only  */
+/* ===================================================== */
+#notification-tab, #attendance-tab, #marks-tab {
+    /* Core hue chosen to harmonize with contacts tab but lighter */
+    --u-accent-h: 268;
+    --u-accent-s: 62%;
+    --u-accent-l: 74%;
+    --u-surface-glass: linear-gradient(140deg, hsl(var(--u-accent-h) 45% 88% / .55), hsl(var(--u-accent-h) 55% 72% / .50) 40%, hsl(var(--u-accent-h) 55% 62% / .55));
+    --u-surface-solid: linear-gradient(160deg, hsl(var(--u-accent-h) 50% 34% / .82), hsl(var(--u-accent-h) 42% 24% / .88));
+    --u-surface-soft: hsl(var(--u-accent-h) 55% 85% / .25);
+    --u-border: hsl(var(--u-accent-h) 80% 65% / .45);
+    --u-border-strong: hsl(var(--u-accent-h) 85% 80% / .65);
+    --u-text-primary: #ffffff;
+    --u-text-dim: hsl(var(--u-accent-h) 40% 90% / .72);
+    --u-glow-cyan: #9de2ff;
+    --u-glow-pink: #ff9df5;
+    --u-glow-lime: #d4ff8e;
+    --u-glow-magenta: #f69dff;
+    --u-shadow-lg: 0 22px 64px hsl(var(--u-accent-h) 70% 18% / .55);
+    --u-shadow-md: 0 12px 36px hsl(var(--u-accent-h) 65% 22% / .45);
+    --u-specular: radial-gradient(circle at 20% 15%, hsl(var(--u-accent-h) 95% 85% / .35), transparent 60%);
+}
+
+/* Toolbars adopt lighter translucent blend */
+#notification-tab .unified-toolbar, #attendance-tab .unified-toolbar, #marks-tab .unified-toolbar {
+    background: var(--u-surface-glass);
+    border: 1px solid var(--u-border);
+    box-shadow: 0 10px 34px hsl(var(--u-accent-h) 60% 30% / .35), inset 0 1px 0 hsl(var(--u-accent-h) 95% 95% / .55);
+}
+
+#notification-tab .panel-card, #attendance-tab .panel-card, #marks-tab .panel-card {
+    background: var(--u-surface-solid);
+    border: 1px solid var(--u-border);
+    box-shadow: var(--u-shadow-md), inset 0 1px 0 hsl(var(--u-accent-h) 90% 88% / .42);
+}
+
+#notification-tab .panel-card:hover, #attendance-tab .panel-card:hover, #marks-tab .panel-card:hover {
+    box-shadow: var(--u-shadow-lg), inset 0 1px 0 hsl(var(--u-accent-h) 95% 95% / .5);
+}
+
+/* Inputs & selects within these tabs */
+#notification-tab .search-input.compact, #attendance-tab .search-input.compact, #marks-tab .search-input.compact,
+#attendance-tab select.compact, #notification-tab select.compact, #marks-tab select.compact,
+#attendance-tab .form-input, #notification-tab .form-input {
+    background: hsl(var(--u-accent-h) 40% 26% / .55);
+    border: 1px solid hsl(var(--u-accent-h) 65% 65% / .35);
+    color: var(--u-text-primary);
+}
+
+#notification-tab .search-input.compact:focus, #attendance-tab .search-input.compact:focus, #marks-tab .search-input.compact:focus,
+#attendance-tab select.compact:focus, #notification-tab select.compact:focus {
+    box-shadow: 0 0 0 3px hsl(var(--u-accent-h) 75% 75% / .45);
+    outline: none;
+}
+
+/* Stat pills unify colours */
+#notification-tab .stat-pill, #attendance-tab .stat-pill, #marks-tab .stat-pill {
+    background: linear-gradient(135deg, hsl(var(--u-accent-h) 55% 40% / .85), hsl(var(--u-accent-h) 50% 30% / .85));
+    border: 1px solid var(--u-border);
+    color: var(--u-text-dim);
+}
+#notification-tab .stat-pill span, #attendance-tab .stat-pill span, #marks-tab .stat-pill span { color: var(--u-glow-cyan); }
+#notification-tab .stat-pill:nth-child(2) span, #attendance-tab .stat-pill:nth-child(2) span { color: var(--u-glow-pink); }
+#attendance-tab .stat-pill:nth-child(3) span { color: var(--u-glow-lime); }
+
+/* Gradient multi-color text highlights */
+#notification-tab h3, #attendance-tab h3, #marks-tab h3 { background: linear-gradient(90deg, var(--u-glow-cyan), var(--u-glow-pink), var(--u-glow-magenta)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+
+/* Notification selected tags and roll display alignment */
+#notification-tab .selected-tag, #attendance-tab .selected-tag { background: hsl(var(--u-accent-h) 55% 34% / .55); border:1px solid var(--u-border); color: var(--u-text-primary); }
+
+/* Search results glass unify */
+#notification-search-results { background: linear-gradient(150deg, hsl(var(--u-accent-h) 52% 32% / .9), hsl(var(--u-accent-h) 46% 26% / .92)); border: 1px solid var(--u-border); }
+#notification-search-results .search-result-item { color: var(--u-text-primary); }
+
+/* Button Utility */
+.btn-primary-glass {
+    --_btn-grad: linear-gradient(145deg, hsl(var(--u-accent-h) 65% 58% / .9), hsl(var(--u-accent-h) 55% 48% / .92));
+    background: var(--_btn-grad);
+    border: 1px solid var(--u-border-strong, hsl(var(--u-accent-h) 85% 80% / .65));
+    color: #fff;
+    font-weight:600;
+    letter-spacing:.5px;
+    border-radius:18px;
+    padding:10px 20px;
+    display:inline-flex; align-items:center; gap:8px;
+    cursor:pointer;
+    transition:background .4s, box-shadow .4s, transform .35s;
+    box-shadow: 0 6px 22px hsl(var(--u-accent-h) 70% 30% / .45), inset 0 1px 0 hsl(var(--u-accent-h) 95% 95% / .6);
+    backdrop-filter:blur(18px) saturate(180%);
+    -webkit-backdrop-filter:blur(18px) saturate(180%);
+}
+.btn-primary-glass:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 34px hsl(var(--u-accent-h) 70% 28% / .55), inset 0 1px 0 hsl(var(--u-accent-h) 95% 95% / .7);
+}
+.btn-primary-glass:focus-visible { outline:2px solid hsl(var(--u-accent-h) 85% 80% / .9); outline-offset:2px; }
+.btn-primary-glass:active { transform:translateY(0); box-shadow:0 4px 18px hsl(var(--u-accent-h) 70% 28% / .55), inset 0 1px 0 hsl(var(--u-accent-h) 95% 95% / .7); }
+
+/* Pill Utility */
+.stat-pill { display:flex; align-items:center; gap:6px; padding:8px 16px; border-radius:20px; font-size:.75rem; letter-spacing:.5px; text-transform:uppercase; font-weight:500; }
+.pill-accent {
+    background: linear-gradient(135deg, hsl(var(--u-accent-h, var(--c-accent-h)) 55% 40% / .85), hsl(var(--u-accent-h, var(--c-accent-h)) 50% 30% / .85));
+    border: 1px solid var(--u-border, var(--c-border));
+    color: var(--u-text-dim, var(--c-text-dim));
+    backdrop-filter:blur(24px) saturate(160%);
+    -webkit-backdrop-filter:blur(24px) saturate(160%);
+    box-shadow:0 4px 14px hsl(var(--u-accent-h, var(--c-accent-h)) 60% 20% / .45), inset 0 1px 0 hsl(var(--u-accent-h, var(--c-accent-h)) 85% 85% / .35);
+    transition:box-shadow .35s, transform .35s;
+}
+.pill-accent:hover { transform:translateY(-3px); box-shadow:0 8px 22px hsl(var(--u-accent-h, var(--c-accent-h)) 60% 18% / .55), inset 0 1px 0 hsl(var(--u-accent-h, var(--c-accent-h)) 90% 90% / .4); }
+.pill-accent span { color: var(--u-glow-cyan, var(--c-highlight-cyan)); }
+.stats-group .pill-accent:nth-child(2) span { color: var(--u-glow-pink, var(--c-highlight-pink)); }
+.stats-group .pill-accent:nth-child(3) span { color: var(--u-glow-lime, var(--c-highlight-lime)); }
+
+/* Analytics placeholders */
+#notification-tab .analytics-placeholder, #attendance-tab .analytics-placeholder, #marks-tab .placeholder-text {
+    color: var(--u-text-dim);
+}
+
+/* Notification search results glass styling */
+#notification-search-results { background:linear-gradient(160deg, hsl(var(--accent-h) 45% 26% / .85), hsl(var(--accent-h) 35% 18% / .9)); border:1px solid hsl(var(--accent-h) 70% 65% / .35); backdrop-filter:blur(30px) saturate(170%); -webkit-backdrop-filter:blur(30px) saturate(170%); border-radius:22px; box-shadow:0 10px 32px hsl(var(--accent-h) 60% 20% / .45), inset 0 1px 0 hsl(var(--accent-h) 80% 85% / .35); }
+#notification-search-results .search-result-item { padding:10px 16px; border-bottom:1px solid hsl(var(--accent-h) 55% 45% / .25); cursor:pointer; }
+#notification-search-results .search-result-item:last-child { border-bottom:none; }
+#notification-search-results .search-result-item:hover { background:hsl(var(--accent-h) 55% 30% / .4); }
+#notification-search-results .selected-students { padding:14px 16px; }
+
+#contacts-tab .contacts-header.contacts-toolbar { display:flex; align-items:center; justify-content:space-between; gap:28px; padding:18px 26px; border-radius:30px; background:linear-gradient(140deg, hsl(var(--c-accent-h) 52% 32% / .8), hsl(var(--c-accent-h) 48% 24% / .9)); backdrop-filter:blur(40px) saturate(180%); -webkit-backdrop-filter:blur(40px) saturate(180%); border:1px solid var(--c-border); box-shadow:0 10px 32px hsl(var(--c-accent-h) 60% 25% / .35), inset 0 1px 0 hsl(var(--c-accent-h) 85% 85% / .4); }
+.unified-toolbar { display:flex; align-items:center; justify-content:space-between; gap:28px; padding:18px 26px; border-radius:30px; background:linear-gradient(140deg, hsl(var(--c-accent-h, var(--accent-h)) 52% 32% / .8), hsl(var(--c-accent-h, var(--accent-h)) 48% 24% / .9)); backdrop-filter:blur(40px) saturate(180%); -webkit-backdrop-filter:blur(40px) saturate(180%); border:1px solid var(--c-border, hsl(var(--accent-h) 70% 65% / 0.35)); box-shadow:0 10px 32px hsl(var(--c-accent-h, var(--accent-h)) 60% 25% / .35), inset 0 1px 0 hsl(var(--c-accent-h, var(--accent-h)) 85% 85% / .4); }
+
+/* Deduplicated toolbar rules now rely on unified + original single set above */
+
+/* Dark mode (prefers-color-scheme: dark) inversion for Vision Pro theme */
+@media (prefers-color-scheme: dark) {
+    #notification-tab, #attendance-tab, #marks-tab {
+        --u-accent-l: 68%;
+        --u-surface-glass: linear-gradient(145deg, hsl(var(--u-accent-h) 55% 20% / .55), hsl(var(--u-accent-h) 50% 16% / .55));
+        --u-surface-solid: linear-gradient(160deg, hsl(var(--u-accent-h) 48% 22% / .88), hsl(var(--u-accent-h) 42% 14% / .9));
+        --u-text-dim: hsl(var(--u-accent-h) 35% 85% / .6);
+        --u-shadow-md: 0 12px 34px hsl(var(--u-accent-h) 65% 8% / .55);
+        --u-shadow-lg: 0 22px 60px hsl(var(--u-accent-h) 70% 10% / .6);
+    }
+    #notification-tab .panel-card, #attendance-tab .panel-card, #marks-tab .panel-card {
+        background: var(--u-surface-solid);
+    }
+    #notification-tab .unified-toolbar, #attendance-tab .unified-toolbar, #marks-tab .unified-toolbar {
+        background: var(--u-surface-glass);
+    }
+    #notification-tab h3, #attendance-tab h3, #marks-tab h3 {
+        filter: drop-shadow(0 4px 10px hsl(var(--u-accent-h) 80% 6% / .65));
+    }
+    #notification-search-results {
+        background: linear-gradient(150deg, hsl(var(--u-accent-h) 48% 20% / .9), hsl(var(--u-accent-h) 45% 16% / .92));
+    }
+}
 
 .stats-group { display:flex; gap:14px; }
-.stat-pill { display:flex; align-items:center; gap:6px; padding:8px 16px; background:linear-gradient(135deg, hsl(var(--c-accent-h) 55% 30% / .85), hsl(var(--c-accent-h) 55% 24% / .85)); border:1px solid var(--c-border); border-radius:20px; font-size:.75rem; letter-spacing:.5px; text-transform:uppercase; color:var(--c-text-dim); backdrop-filter:blur(24px) saturate(160%); box-shadow:0 4px 14px hsl(var(--c-accent-h) 60% 20% / .45), inset 0 1px 0 hsl(var(--c-accent-h) 85% 85% / .35); }
 .stat-pill span { font-size:1rem; font-weight:600; color:var(--c-highlight-cyan); }
 .stat-pill:nth-child(2) span { color:var(--c-highlight-pink); }
 .stat-pill label { font-weight:600; }
@@ -758,7 +910,7 @@ textarea {
 #contacts-tab .student-card::before { content:""; position:absolute; inset:0; background:radial-gradient(circle at 25% 20%, hsl(var(--c-accent-h) 75% 55% / .35), transparent 60%); mix-blend-mode:screen; opacity:.5; }
 #contacts-tab .student-card:hover { transform:translateY(-6px) scale(1.015); box-shadow:0 18px 54px hsl(var(--c-accent-h) 60% 18% / .55); }
 #contacts-tab .student-header { display:flex; align-items:center; justify-content:space-between; gap:12px; }
-#contacts-tab .student-name { font-size:1rem; font-weight:600; letter-spacing:.3px; background:linear-gradient(90deg, var(--c-highlight-cyan), var(--c-highlight-pink)); -webkit-background-clip:text; color:transparent; }
+#contacts-tab .student-name { font-size:1rem; font-weight:600; letter-spacing:.3px; background:linear-gradient(90deg, var(--c-highlight-cyan), var(--c-highlight-pink)); -webkit-background-clip:text; background-clip:text; color:transparent; }
 #contacts-tab .student-class { font-size:.65rem; font-weight:700; letter-spacing:.8px; padding:4px 10px; border-radius:14px; background:hsl(var(--c-accent-h) 55% 34% / .85); border:1px solid hsl(var(--c-accent-h) 70% 65% / .45); color:var(--c-text-primary); text-transform:uppercase; }
 #contacts-tab .student-meta { display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:6px 12px; margin-top:2px; }
 #contacts-tab .meta { display:flex; flex-direction:column; gap:2px; }
@@ -770,7 +922,7 @@ textarea {
 #contacts-tab .student-details, #contacts-tab .detail-item { all:unset; display:contents; }
 
 /* Compact layout tweaks */
-@media (max-width: 900px) { #contacts-tab .contacts-toolbar { flex-direction:column; align-items:stretch; gap:18px; } .stats-group { align-self:flex-start; } #contacts-tab .student-meta { grid-template-columns:repeat(auto-fill,minmax(46%,1fr)); } }
+@media (max-width: 900px) { #contacts-tab .contacts-toolbar, .unified-toolbar { flex-direction:column; align-items:stretch; gap:18px; } .stats-group { align-self:flex-start; } #contacts-tab .student-meta { grid-template-columns:repeat(auto-fill,minmax(46%,1fr)); } }
 
 .student-card {
     background: rgba(255, 255, 255, 0.7);
