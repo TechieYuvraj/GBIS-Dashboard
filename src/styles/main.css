@@ -872,7 +872,21 @@ textarea {
 #notification-search-results .selected-students { padding:14px 16px; }
 
 #contacts-tab .contacts-header.contacts-toolbar { display:flex; align-items:center; justify-content:space-between; gap:28px; padding:18px 26px; border-radius:30px; background:linear-gradient(140deg, hsl(var(--c-accent-h) 52% 32% / .8), hsl(var(--c-accent-h) 48% 24% / .9)); backdrop-filter:blur(40px) saturate(180%); -webkit-backdrop-filter:blur(40px) saturate(180%); border:1px solid var(--c-border); box-shadow:0 10px 32px hsl(var(--c-accent-h) 60% 25% / .35), inset 0 1px 0 hsl(var(--c-accent-h) 85% 85% / .4); }
+
+/* Contacts toolbar specific styles */
+.contacts-toolbar .toolbar-group { display: flex; align-items: center; gap: 14px; }
+.contacts-toolbar .search-group { flex: 1; display: flex; align-items: center; gap: 14px; }
+.contacts-toolbar .search-input.compact { flex: 1; min-width: 200px; max-width: 400px; }
+.contacts-toolbar .form-input.compact { min-width: 120px; flex-shrink: 0; }
+.contacts-toolbar .toolbar-icon { flex-shrink: 0; position: relative; left: 8px; }
 .unified-toolbar { display:flex; align-items:center; justify-content:space-between; gap:28px; padding:18px 26px; border-radius:30px; background:linear-gradient(140deg, hsl(var(--c-accent-h, var(--accent-h)) 52% 32% / .8), hsl(var(--c-accent-h, var(--accent-h)) 48% 24% / .9)); backdrop-filter:blur(40px) saturate(180%); -webkit-backdrop-filter:blur(40px) saturate(180%); border:1px solid var(--c-border, hsl(var(--accent-h) 70% 65% / 0.35)); box-shadow:0 10px 32px hsl(var(--c-accent-h, var(--accent-h)) 60% 25% / .35), inset 0 1px 0 hsl(var(--c-accent-h, var(--accent-h)) 85% 85% / .4); }
+
+/* Toolbar group alignment styles */
+.toolbar-group { display: flex; align-items: center; gap: 14px; }
+.search-group { flex: 1; display: flex; align-items: center; gap: 14px; }
+.search-group .search-input.compact { flex: 1; min-width: 200px; max-width: 400px; }
+.search-group .form-input.compact { min-width: 120px; flex-shrink: 0; }
+.search-group .toolbar-icon { flex-shrink: 0; position: relative; left: 8px; }
 
 /* Deduplicated toolbar rules now rely on unified + original single set above */
 
@@ -900,7 +914,7 @@ textarea {
     }
 }
 
-.stats-group { display:flex; gap:14px; }
+.stats-group { display:flex; gap:14px; align-items: center; flex-shrink: 0; }
 .stat-pill span { font-size:1rem; font-weight:600; color:var(--c-highlight-cyan); }
 .stat-pill:nth-child(2) span { color:var(--c-highlight-pink); }
 .stat-pill label { font-weight:600; }
@@ -922,7 +936,34 @@ textarea {
 #contacts-tab .student-details, #contacts-tab .detail-item { all:unset; display:contents; }
 
 /* Compact layout tweaks */
-@media (max-width: 900px) { #contacts-tab .contacts-toolbar, .unified-toolbar { flex-direction:column; align-items:stretch; gap:18px; } .stats-group { align-self:flex-start; } #contacts-tab .student-meta { grid-template-columns:repeat(auto-fill,minmax(46%,1fr)); } }
+@media (max-width: 900px) { 
+    #contacts-tab .contacts-toolbar, .unified-toolbar { 
+        flex-direction:column; 
+        align-items:stretch; 
+        gap:18px; 
+    } 
+    .search-group { 
+        justify-content: flex-start;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+    .search-group .search-input.compact {
+        min-width: 150px;
+        max-width: none;
+        flex: 1 1 200px;
+    }
+    .search-group .form-input.compact {
+        flex: 0 0 auto;
+        min-width: 100px;
+    }
+    .stats-group { 
+        align-self:flex-start;
+        flex-wrap: wrap;
+    } 
+    #contacts-tab .student-meta { 
+        grid-template-columns:repeat(auto-fill,minmax(46%,1fr)); 
+    } 
+}
 
 .student-card {
     background: rgba(255, 255, 255, 0.7);
