@@ -301,6 +301,7 @@ body::before {
     flex: 1;
     margin-left: 250px;
     padding: 30px;
+    overflow: overlay;
     background: rgba(248, 246, 255, 0.3);
     backdrop-filter: blur(30px) saturate(120%);
     min-height: calc(100vh - 70px);
@@ -545,20 +546,18 @@ textarea {
 }
 
 .multi-select-dropdown {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
+    /* Inline dropdown so the panel grows with it */
+    position: static;
+    width: 100%;
     background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(20px);
     border: 2px solid rgba(102, 126, 234, 0.2);
     border-radius: 15px;
-    max-height: 200px;
-    overflow-y: auto;
-    z-index: 10;
+    /* Overflow handled by inner .dropdown-options to cap visual height */
+    overflow: visible;
     display: none;
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-    margin-top: 5px;
+    margin-top: 8px;
 }
 
 .multi-select-dropdown.show {
@@ -573,6 +572,67 @@ textarea {
     to {
         opacity: 1;
     }
+}
+
+/* Dropdown Search Container */
+.dropdown-search-container {
+    position: relative;
+    padding: 12px 15px;
+    border-bottom: 1px solid rgba(102, 126, 234, 0.2);
+    background: rgba(255, 255, 255, 0.98);
+    border-radius: 15px 15px 0 0;
+}
+
+.dropdown-search {
+    width: 100%;
+    padding: 8px 12px 8px 35px;
+    border: 1px solid rgba(102, 126, 234, 0.3);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.95);
+    font-size: 0.85rem;
+    color: #2c3e50;
+    transition: all 0.2s ease;
+}
+
+.dropdown-search:focus {
+    outline: none;
+    border-color: rgba(102, 126, 234, 0.6);
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.dropdown-search-container i {
+    position: absolute;
+    left: 25px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #6c757d;
+    font-size: 0.8rem;
+}
+
+.dropdown-options {
+    /* Fit roughly 10 options before scrolling */
+    max-height: 420px;
+    overflow-y: auto;
+}
+
+/* Allow dropdown to overflow in attendance tab */
+#attendance-tab .multi-select-container {
+    position: relative;
+    z-index: 1001;
+}
+
+/* Force dropdown to be above all containers */
+#attendance-tab .multi-select-dropdown {
+    z-index: 9999 !important;
+    position: absolute !important;
+}
+
+#attendance-tab .split-layout {
+    overflow: visible !important;
+}
+
+#attendance-tab .depth-card {
+    overflow: visible !important;
 }
 
 .multi-select-option {
@@ -737,7 +797,7 @@ textarea {
 #contacts-tab { --c-accent-h: 270; --c-accent-s: 68%; --c-accent-l: 78%; --c-accent: hsl(var(--c-accent-h) var(--c-accent-s) var(--c-accent-l)); --c-bg-deep: hsl(var(--c-accent-h) 42% 14%); --c-bg-card: linear-gradient(150deg, hsl(var(--c-accent-h) 55% 26% / 0.85), hsl(var(--c-accent-h) 48% 20% / 0.9)); --c-border: hsl(var(--c-accent-h) 70% 65% / 0.45); --c-text-primary: #fff; --c-text-dim: hsl(var(--c-accent-h) 35% 88% / 0.75); --c-highlight-pink: #ff9ddf; --c-highlight-cyan: #9de2ff; --c-highlight-lime: #d4ff8e; }
 
 /* Unified panel card styling for all tabs */
-.panel-card { background:linear-gradient(150deg, hsl(var(--accent-h) 35% 26% / .78), hsl(var(--accent-h) 30% 18% / .82)); border:1px solid hsl(var(--accent-h) 70% 65% / 0.35); border-radius:28px; padding:20px 22px 24px; position:relative; overflow:hidden; backdrop-filter:blur(34px) saturate(180%); -webkit-backdrop-filter:blur(34px) saturate(180%); box-shadow:0 14px 40px hsl(var(--accent-h) 60% 18% / .42), inset 0 1px 0 hsl(var(--accent-h) 80% 85% / .28); transition:box-shadow .4s; }
+.panel-card { background:linear-gradient(150deg, hsl(var(--accent-h) 35% 26% / .78), hsl(var(--accent-h) 30% 18% / .82)); border:1px solid hsl(var(--accent-h) 70% 65% / 0.35); border-radius:28px; padding:20px 22px 24px; position:relative; overflow:auto; backdrop-filter:blur(34px) saturate(180%); -webkit-backdrop-filter:blur(34px) saturate(180%); box-shadow:0 14px 40px hsl(var(--accent-h) 60% 18% / .42), inset 0 1px 0 hsl(var(--accent-h) 80% 85% / .28); transition:box-shadow .4s; }
 .panel-card:hover { box-shadow:0 20px 56px hsl(var(--accent-h) 60% 18% / .55); }
 .panel-card h3 { margin-top:0; font-size:1.05rem; letter-spacing:.5px; font-weight:600; }
 

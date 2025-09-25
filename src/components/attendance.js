@@ -58,6 +58,8 @@ class AttendanceManager {
                 this.hideDropdown();
             }
         });
+
+        // Inline dropdown no longer needs scroll/resize listeners
     }
 
     setDefaultDate() {
@@ -103,15 +105,34 @@ class AttendanceManager {
         this.availableStudents = window.dataService.getClassRollNumbers(this.selectedClass);
         this.absentStudents = []; // Reset absent students
 
-        // Populate dropdown
-        dropdown.innerHTML = this.availableStudents.map(student => `
-            <div class="multi-select-option">
-                <input type="checkbox" id="roll-${student.rollNo}" value="${student.rollNo}">
-                <label for="roll-${student.rollNo}">
-                    Roll No. ${student.rollNo} - ${student.name}
-                </label>
+        // Create dropdown content with search bar
+        dropdown.innerHTML = `
+            <div class="dropdown-search-container">
+                <input type="text" 
+                       class="dropdown-search" 
+                       placeholder="Search by name or roll number..." 
+                       id="attendance-student-search">
+                <i class="fas fa-search"></i>
             </div>
-        `).join('');
+            <div class="dropdown-options" id="attendance-dropdown-options">
+                ${this.availableStudents.map(student => `
+                    <div class="multi-select-option" data-student-name="${student.name.toLowerCase()}" data-roll-no="${student.rollNo}">
+                        <input type="checkbox" id="roll-${student.rollNo}" value="${student.rollNo}">
+                        <label for="roll-${student.rollNo}">
+                            Roll No. ${student.rollNo} - ${student.name}
+                        </label>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+
+        // Bind search functionality
+        const searchInput = dropdown.querySelector('#attendance-student-search');
+        if (searchInput) {
+            searchInput.addEventListener('input', (e) => {
+                this.filterStudentOptions(e.target.value);
+            });
+        }
 
         // Bind checkbox events
         dropdown.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
@@ -138,6 +159,26 @@ class AttendanceManager {
         this.updateDisplay();
         this.updateStatPills();
         this.validateForm();
+    }
+
+    filterStudentOptions(searchTerm) {
+        const options = document.querySelectorAll('#attendance-dropdown-options .multi-select-option');
+        const lowercaseSearch = searchTerm.toLowerCase().trim();
+
+        options.forEach(option => {
+            const studentName = option.getAttribute('data-student-name');
+            const rollNo = option.getAttribute('data-roll-no');
+            
+            // Check if search term matches name or roll number
+            const nameMatch = studentName.includes(lowercaseSearch);
+            const rollMatch = rollNo.toString().includes(lowercaseSearch);
+            
+            if (nameMatch || rollMatch || lowercaseSearch === '') {
+                option.style.display = 'flex';
+            } else {
+                option.style.display = 'none';
+            }
+        });
     }
 
     updateDisplay() {
@@ -185,6 +226,16 @@ class AttendanceManager {
         if (dropdown) {
             if (this.selectedClass) {
                 dropdown.classList.toggle('show');
+
+                // Focus on search input when opening dropdown
+                if (dropdown.classList.contains('show')) {
+                    setTimeout(() => {
+                        const searchInput = dropdown.querySelector('#attendance-student-search');
+                        if (searchInput) {
+                            searchInput.focus();
+                        }
+                    }, 50);
+                }
             }
         }
     }
@@ -193,8 +244,18 @@ class AttendanceManager {
         const dropdown = document.getElementById('rollno-dropdown');
         if (dropdown) {
             dropdown.classList.remove('show');
+
+            // Clear search when hiding dropdown
+            const searchInput = dropdown.querySelector('#attendance-student-search');
+            if (searchInput) {
+                searchInput.value = '';
+                this.filterStudentOptions(''); // Show all options
+            }
         }
     }
+
+    // No repositioning needed in inline layout
+    repositionDropdown() { /* noop */ }
 
     validateForm() {
         const markBtn = document.getElementById('mark-attendance');
