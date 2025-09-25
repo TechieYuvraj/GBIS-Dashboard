@@ -95,7 +95,7 @@
     border-radius: 28px;
     box-shadow: var(--shadow-md), var(--inner-glow);
     overflow: hidden;
-    transition: transform var(--duration-md) var(--ease-emerge), box-shadow var(--duration-md) var(--ease-emerge), background var(--duration-md) var(--ease-emerge);
+    transition: box-shadow var(--duration-md) var(--ease-emerge), background var(--duration-md) var(--ease-emerge);
 }
 .glass-panel::before {
     content: "";
@@ -119,18 +119,16 @@
     -webkit-backdrop-filter: blur(var(--blur-sm)) saturate(160%);
     box-shadow: var(--shadow-sm), var(--inner-glow);
     padding: 24px 26px 26px;
-    transition: transform var(--duration-sm) var(--ease-emerge), box-shadow var(--duration-md) var(--ease-emerge);
+    transition: box-shadow var(--duration-md) var(--ease-emerge);
 }
-.depth-card:hover { transform: translateY(-6px) scale(1.02); box-shadow: var(--shadow-md), var(--inner-glow); }
-.depth-card:active { transform: translateY(-2px) scale(.99); }
+.depth-card:hover { box-shadow: var(--shadow-md), var(--inner-glow); }
+.depth-card:active { box-shadow: var(--shadow-sm); }
 
-/* Pointer Tilt (applied via JS with .tilt) */
+/* Pointer Tilt (disabled) */
 .tilt {
-    transform-style: preserve-3d;
-    will-change: transform;
-    transition: transform var(--duration-md) var(--ease-squish);
+    transform: none !important;
 }
-.tilt-layer { position:absolute; inset:0; transform: translateZ(40px); pointer-events:none; }
+.tilt-layer { display: none; }
 
 /* Focus Accessibility */
 .focus-visible:focus-visible { outline: none; box-shadow: var(--focus-ring); }
@@ -234,7 +232,7 @@ body::before {
     letter-spacing: 0.3px;
 }
 
-.login-btn:hover { background: hsl(var(--accent-h) 70% 36% / 0.95); border-color: hsl(var(--accent-h) 80% 65% / 0.65); transform: translateY(-1px); box-shadow: 0 8px 25px hsl(var(--accent-h) 65% 40% / 0.45); }
+.login-btn:hover { background: hsl(var(--accent-h) 70% 36% / 0.95); border-color: hsl(var(--accent-h) 80% 65% / 0.65); box-shadow: 0 8px 25px hsl(var(--accent-h) 65% 40% / 0.45); }
 
 /* Main Container */
 .main-container {
@@ -393,7 +391,6 @@ textarea:focus {
     outline: none;
     border: 1px solid rgba(167, 139, 250, 0.5);
     box-shadow: 0 0 0 4px rgba(167, 139, 250, 0.1), 0 12px 35px rgba(167, 139, 250, 0.2);
-    transform: translateY(-2px) scale(1.02);
     background: rgba(255, 255, 255, 0.85);
 }
 
@@ -402,7 +399,6 @@ textarea:focus {
 textarea:hover {
     border: 1px solid rgba(167, 139, 250, 0.3);
     box-shadow: 0 8px 25px rgba(167, 139, 250, 0.15);
-    transform: translateY(-1px);
     background: rgba(255, 255, 255, 0.9);
     color: #2c3e50;
 }
@@ -473,7 +469,6 @@ textarea {
 .send-btn:hover,
 .mark-btn:hover,
 .attachment-btn:hover {
-    transform: translateY(-3px) scale(1.02);
     box-shadow: 0 12px 35px rgba(167, 139, 250, 0.4);
     background: rgba(167, 139, 250, 0.9);
     border-color: rgba(167, 139, 250, 0.5);
@@ -515,11 +510,9 @@ textarea {
 @keyframes slideIn {
     from {
         opacity: 0;
-        transform: translateY(-10px);
     }
     to {
         opacity: 1;
-        transform: translateY(0);
     }
 }
 
@@ -544,7 +537,6 @@ textarea {
 
 .multi-select-display:hover {
     border-color: #4ecdc4;
-    transform: translateY(-2px);
 }
 
 .multi-select-display .placeholder {
@@ -577,11 +569,9 @@ textarea {
 @keyframes slideDown {
     from {
         opacity: 0;
-        transform: translateY(-10px);
     }
     to {
         opacity: 1;
-        transform: translateY(0);
     }
 }
 
@@ -598,7 +588,6 @@ textarea {
 
 .multi-select-option:hover {
     background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(78, 205, 196, 0.1) 100%);
-    transform: translateX(5px);
 }
 
 .multi-select-option input[type="checkbox"] {
@@ -631,7 +620,6 @@ textarea {
 }
 
 .selected-tag:hover {
-    transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
 }
 
@@ -650,7 +638,6 @@ textarea {
 
 .selected-tag .remove:hover {
     background: rgba(255, 255, 255, 0.3);
-    transform: scale(1.1);
 }
 
 /* Contacts Tab Styles */
@@ -706,15 +693,17 @@ textarea {
     width: 200%;
     height: 200%;
     background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-    transition: transform 0.6s;
+    transition: none;
     transform: rotate(45deg) translateX(-100%);
+    display: none;
 }
 
 .stat-card:hover::before {
     transform: rotate(45deg) translateX(100%);
+    display: none;
 }
 
-.stat-card:hover { transform: translateY(-6px) scale(1.02); box-shadow: var(--shadow-md); background: var(--surface-accent-solid); border-color: hsl(var(--accent-h) 80% 65% / 0.65); }
+.stat-card:hover { box-shadow: var(--shadow-md); background: var(--surface-accent-solid); border-color: hsl(var(--accent-h) 80% 65% / 0.65); }
 
 .stat-card:nth-child(2) { background: linear-gradient(145deg, hsl(199 68% 34% / 0.92), hsl(199 72% 30% / 0.95)); border: 1px solid hsl(199 70% 55% / 0.55); }
 .stat-card:nth-child(2):hover { background: hsl(199 68% 28%); box-shadow: var(--shadow-md); border-color: hsl(199 80% 65% / 0.65); }
@@ -748,8 +737,8 @@ textarea {
 #contacts-tab { --c-accent-h: 270; --c-accent-s: 68%; --c-accent-l: 78%; --c-accent: hsl(var(--c-accent-h) var(--c-accent-s) var(--c-accent-l)); --c-bg-deep: hsl(var(--c-accent-h) 42% 14%); --c-bg-card: linear-gradient(150deg, hsl(var(--c-accent-h) 55% 26% / 0.85), hsl(var(--c-accent-h) 48% 20% / 0.9)); --c-border: hsl(var(--c-accent-h) 70% 65% / 0.45); --c-text-primary: #fff; --c-text-dim: hsl(var(--c-accent-h) 35% 88% / 0.75); --c-highlight-pink: #ff9ddf; --c-highlight-cyan: #9de2ff; --c-highlight-lime: #d4ff8e; }
 
 /* Unified panel card styling for all tabs */
-.panel-card { background:linear-gradient(150deg, hsl(var(--accent-h) 35% 26% / .78), hsl(var(--accent-h) 30% 18% / .82)); border:1px solid hsl(var(--accent-h) 70% 65% / 0.35); border-radius:28px; padding:20px 22px 24px; position:relative; overflow:hidden; backdrop-filter:blur(34px) saturate(180%); -webkit-backdrop-filter:blur(34px) saturate(180%); box-shadow:0 14px 40px hsl(var(--accent-h) 60% 18% / .42), inset 0 1px 0 hsl(var(--accent-h) 80% 85% / .28); transition:transform .4s, box-shadow .4s; }
-.panel-card:hover { transform:translateY(-6px) scale(1.015); box-shadow:0 20px 56px hsl(var(--accent-h) 60% 18% / .55); }
+.panel-card { background:linear-gradient(150deg, hsl(var(--accent-h) 35% 26% / .78), hsl(var(--accent-h) 30% 18% / .82)); border:1px solid hsl(var(--accent-h) 70% 65% / 0.35); border-radius:28px; padding:20px 22px 24px; position:relative; overflow:hidden; backdrop-filter:blur(34px) saturate(180%); -webkit-backdrop-filter:blur(34px) saturate(180%); box-shadow:0 14px 40px hsl(var(--accent-h) 60% 18% / .42), inset 0 1px 0 hsl(var(--accent-h) 80% 85% / .28); transition:box-shadow .4s; }
+.panel-card:hover { box-shadow:0 20px 56px hsl(var(--accent-h) 60% 18% / .55); }
 .panel-card h3 { margin-top:0; font-size:1.05rem; letter-spacing:.5px; font-weight:600; }
 
 /* ===================================================== */
@@ -798,7 +787,6 @@ textarea {
 #attendance-tab .action-section:hover, #attendance-tab .analytics-section:hover,
 #notification-tab .action-section:hover, #notification-tab .analytics-section:hover,
 #marks-tab .action-section:hover, #marks-tab .analytics-section:hover {
-    transform: translateY(-2px) scale(1.005);
     box-shadow: var(--u-shadow-md), inset 0 1px 0 hsl(var(--u-accent-h) 95% 95% / .4);
 }
 
@@ -849,17 +837,16 @@ textarea {
     padding:10px 20px;
     display:inline-flex; align-items:center; gap:8px;
     cursor:pointer;
-    transition:background .4s, box-shadow .4s, transform .35s;
+    transition:background .4s, box-shadow .4s;
     box-shadow: 0 6px 22px hsl(var(--u-accent-h) 70% 30% / .45), inset 0 1px 0 hsl(var(--u-accent-h) 95% 95% / .6);
     backdrop-filter:blur(18px) saturate(180%);
     -webkit-backdrop-filter:blur(18px) saturate(180%);
 }
 .btn-primary-glass:hover {
-    transform: translateY(-3px);
     box-shadow: 0 12px 34px hsl(var(--u-accent-h) 70% 28% / .55), inset 0 1px 0 hsl(var(--u-accent-h) 95% 95% / .7);
 }
 .btn-primary-glass:focus-visible { outline:2px solid hsl(var(--u-accent-h) 85% 80% / .9); outline-offset:2px; }
-.btn-primary-glass:active { transform:translateY(0); box-shadow:0 4px 18px hsl(var(--u-accent-h) 70% 28% / .55), inset 0 1px 0 hsl(var(--u-accent-h) 95% 95% / .7); }
+.btn-primary-glass:active { box-shadow:0 4px 18px hsl(var(--u-accent-h) 70% 28% / .55), inset 0 1px 0 hsl(var(--u-accent-h) 95% 95% / .7); }
 
 /* Pill Utility */
 .stat-pill { display:flex; align-items:center; gap:6px; padding:8px 16px; border-radius:20px; font-size:.75rem; letter-spacing:.5px; text-transform:uppercase; font-weight:500; }
@@ -870,9 +857,9 @@ textarea {
     backdrop-filter:blur(24px) saturate(160%);
     -webkit-backdrop-filter:blur(24px) saturate(160%);
     box-shadow:0 4px 14px hsl(var(--u-accent-h, var(--c-accent-h)) 60% 20% / .45), inset 0 1px 0 hsl(var(--u-accent-h, var(--c-accent-h)) 85% 85% / .35);
-    transition:box-shadow .35s, transform .35s;
+    transition:box-shadow .35s;
 }
-.pill-accent:hover { transform:translateY(-3px); box-shadow:0 8px 22px hsl(var(--u-accent-h, var(--c-accent-h)) 60% 18% / .55), inset 0 1px 0 hsl(var(--u-accent-h, var(--c-accent-h)) 90% 90% / .4); }
+.pill-accent:hover { box-shadow:0 8px 22px hsl(var(--u-accent-h, var(--c-accent-h)) 60% 18% / .55), inset 0 1px 0 hsl(var(--u-accent-h, var(--c-accent-h)) 90% 90% / .4); }
 .pill-accent span { color: var(--u-glow-cyan, var(--c-highlight-cyan)); }
 .stats-group .pill-accent:nth-child(2) span { color: var(--u-glow-pink, var(--c-highlight-pink)); }
 .stats-group .pill-accent:nth-child(3) span { color: var(--u-glow-lime, var(--c-highlight-lime)); }
@@ -940,7 +927,7 @@ textarea {
 /* Redesigned Student Card */
 #contacts-tab .student-card { background:var(--c-bg-card); border:1px solid var(--c-border); border-radius:26px; padding:18px 18px 20px; display:flex; flex-direction:column; gap:10px; color:var(--c-text-primary); position:relative; overflow:hidden; backdrop-filter:blur(34px) saturate(180%); -webkit-backdrop-filter:blur(34px) saturate(180%); box-shadow:0 14px 40px hsl(var(--c-accent-h) 60% 20% / .45), inset 0 1px 0 hsl(var(--c-accent-h) 85% 85% / .3); }
 #contacts-tab .student-card::before { content:""; position:absolute; inset:0; background:radial-gradient(circle at 25% 20%, hsl(var(--c-accent-h) 75% 55% / .35), transparent 60%); mix-blend-mode:screen; opacity:.5; }
-#contacts-tab .student-card:hover { transform:translateY(-6px) scale(1.015); box-shadow:0 18px 54px hsl(var(--c-accent-h) 60% 18% / .55); }
+#contacts-tab .student-card:hover { box-shadow:0 18px 54px hsl(var(--c-accent-h) 60% 18% / .55); }
 #contacts-tab .student-header { display:flex; align-items:center; justify-content:space-between; gap:12px; }
 #contacts-tab .student-name { font-size:1rem; font-weight:600; letter-spacing:.3px; background:linear-gradient(90deg, var(--c-highlight-cyan), var(--c-highlight-pink)); -webkit-background-clip:text; background-clip:text; color:transparent; }
 #contacts-tab .student-class { font-size:.65rem; font-weight:700; letter-spacing:.8px; padding:4px 10px; border-radius:14px; background:hsl(var(--c-accent-h) 55% 34% / .85); border:1px solid hsl(var(--c-accent-h) 70% 65% / .45); color:var(--c-text-primary); text-transform:uppercase; }
@@ -1007,7 +994,6 @@ textarea {
 }
 
 .student-card:hover {
-    transform: translateY(-8px) scale(1.02);
     box-shadow: 0 16px 40px rgba(167, 139, 250, 0.25);
     border-color: rgba(167, 139, 250, 0.4);
     background: rgba(255, 255, 255, 0.85);
@@ -1179,16 +1165,17 @@ textarea {
     width: 200%;
     height: 200%;
     background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-    transition: transform 0.6s;
+    transition: none;
     transform: rotate(45deg) translateX(-100%);
+    display: none;
 }
 
 .analytics-card:hover::before {
     transform: rotate(45deg) translateX(100%);
+    display: none;
 }
 
 .analytics-card:hover {
-    transform: translateY(-8px) scale(1.02);
     box-shadow: 0 16px 45px rgba(167, 139, 250, 0.35);
     background: rgba(167, 139, 250, 0.8);
     border-color: rgba(167, 139, 250, 0.5);
@@ -1290,7 +1277,6 @@ textarea {
 
 .analytics-info-item:hover {
     background: rgba(255, 255, 255, 0.9);
-    transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(102, 126, 234, 0.1);
 }
 
@@ -1464,7 +1450,6 @@ textarea {
 
 .retry-btn:hover {
     background: #c82333;
-    transform: translateY(-2px);
 }
 
 /* Selected Students Display */
@@ -1677,7 +1662,6 @@ textarea {
 .btn-secondary-glass:hover {
     background: rgba(167, 139, 250, 0.15);
     border-color: rgba(167, 139, 250, 0.5);
-    transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(167, 139, 250, 0.2);
 }
 
@@ -1754,7 +1738,6 @@ textarea {
 .student-item:hover {
     background: rgba(167, 139, 250, 0.2);
     border-color: rgba(167, 139, 250, 0.5);
-    transform: translateY(-1px);
     box-shadow: 0 2px 8px rgba(167, 139, 250, 0.2);
 }
 
@@ -1805,7 +1788,6 @@ textarea {
 .remove-student:hover {
     background: rgba(220, 53, 69, 0.1);
     color: #dc3545;
-    transform: scale(1.1);
 }
 
 /* Search results in notification tab */
