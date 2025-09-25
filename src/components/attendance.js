@@ -15,6 +15,8 @@ class AttendanceManager {
         this.bindEvents();
         this.initializeDropdowns();
         this.setDefaultDate();
+        // Fetch and render today's analytics on load
+        this.loadTodayAnalytics();
     }
 
     bindEvents() {
@@ -23,6 +25,12 @@ class AttendanceManager {
         if (dateInput) {
             dateInput.addEventListener('change', () => {
                 this.validateForm();
+                // Also refresh analytics for the selected date
+                if (window.dataService && dateInput.value) {
+                    const d = new Date(dateInput.value);
+                    const dateStr = window.dataService.formatDate(d);
+                    this.loadTodayAnalytics(dateStr);
+                }
             });
         }
 
@@ -347,79 +355,108 @@ class AttendanceManager {
     }
 
     updateAnalytics(attendanceData, response) {
+        // After submitting attendance, refresh analytics from server for the selected date
+        this.loadTodayAnalytics(attendanceData.date);
+    }
+
+    /**
+     * Load analytics for given date (DD/MM/YYYY). If not provided, use today's date.
+     * Renders a list of class bars with Class, Total, Present, Absent and Present %.
+     * Bars are green for the classes returned by Attendance_fetch.
+     */
+    async loadTodayAnalytics(dateDDMMYYYY) {
         const analyticsContainer = document.getElementById('attendance-analytics');
-        if (!analyticsContainer) return;
+        if (!analyticsContainer || !window.dataService) return;
 
-        const totalStudents = this.availableStudents.length;
-        const absentCount = this.absentStudents.length;
-        const presentCount = totalStudents - absentCount;
-        const attendancePercentage = totalStudents > 0 ? ((presentCount / totalStudents) * 100).toFixed(1) : 0;
+        // Derive today's date if not provided
+        let dateStr = dateDDMMYYYY;
+        if (!dateStr) {
+            const today = new Date();
+            dateStr = window.dataService.formatDate(today);
+        }
 
-        // Update stat pills too
-        this.updateStatPills();
-
+        // Show loading state
         analyticsContainer.innerHTML = `
-            <div class="analytics-cards">
-                <div class="analytics-card">
-                    <div class="analytics-number">${totalStudents}</div>
-                    <div class="analytics-label">Total Students</div>
-                </div>
-                <div class="analytics-card present">
-                    <div class="analytics-number">${presentCount}</div>
-                    <div class="analytics-label">Present</div>
-                </div>
-                <div class="analytics-card absent">
-                    <div class="analytics-number">${absentCount}</div>
-                    <div class="analytics-label">Absent</div>
-                </div>
-                <div class="analytics-card percentage">
-                    <div class="analytics-number">${attendancePercentage}%</div>
-                    <div class="analytics-label">Attendance Rate</div>
-                </div>
-            </div>
-            <div class="attendance-chart">
-                <div class="chart-bar">
-                    <div class="chart-fill" style="width: ${attendancePercentage}%"></div>
-                </div>
-                <div class="chart-label">Class Attendance: ${attendancePercentage}%</div>
-            </div>
-            <div class="analytics-details">
-                <h5>Latest Attendance Record</h5>
-                <div class="analytics-info-grid">
-                    <div class="analytics-info-item">
-                        <div class="analytics-info-label">Class</div>
-                        <div class="analytics-info-value">${attendanceData.class}</div>
-                    </div>
-                    <div class="analytics-info-item">
-                        <div class="analytics-info-label">Date</div>
-                        <div class="analytics-info-value">${attendanceData.date}</div>
-                    </div>
-                    <div class="analytics-info-item">
-                        <div class="analytics-info-label">Present Students</div>
-                        <div class="analytics-info-value">${presentCount} out of ${totalStudents}</div>
-                    </div>
-                    <div class="analytics-info-item">
-                        <div class="analytics-info-label">Submitted At</div>
-                        <div class="analytics-info-value">${new Date().toLocaleString()}</div>
-                    </div>
-                    ${absentCount > 0 ? `
-                    <div class="analytics-info-item" style="grid-column: 1 / -1;">
-                        <div class="analytics-info-label">Absent Students</div>
-                        <div class="analytics-info-value">${attendanceData.absent_records.join(', ')}</div>
-                    </div>
-                    ` : `
-                    <div class="analytics-info-item" style="grid-column: 1 / -1;">
-                        <div class="analytics-info-label">Attendance Status</div>
-                        <div class="analytics-info-value">🎉 Perfect Attendance - All students present!</div>
-                    </div>
-                    `}
-                </div>
-                <div class="analytics-response">
-                    <div class="analytics-response-header">Webhook Response</div>
-                    <pre>${JSON.stringify(response, null, 2)}</pre>
-                </div>
-            </div>
+            <div class="analytics-loading">Loading analytics for ${dateStr}...</div>
         `;
+
+        try {
+            const summary = await window.dataService.fetchAttendanceSummary(dateStr);
+
+            // Map summary by class
+            const summaryMap = new Map();
+            (summary || []).forEach(s => {
+                if (s && s.class) summaryMap.set(String(s.class), s);
+            });
+
+            // Build union of all classes (dataService classes + any from summary)
+            const classes = (window.dataService.getClasses ? window.dataService.getClasses() : []) || [];
+            const classSet = new Set(classes);
+            (summary || []).forEach(s => { if (s && s.class && !classSet.has(String(s.class))) classSet.add(String(s.class)); });
+            const allClasses = Array.from(classSet);
+
+            // Build bars list for all classes
+            const barsHtml = allClasses.length > 0
+                ? allClasses.map(cls => {
+                    const item = summaryMap.get(cls);
+                    const totalFromRoster = (window.dataService.getStudentsByClass) ? window.dataService.getStudentsByClass(cls).length : (item?.total || 0);
+                    if (item) {
+                        const present = item.present || 0;
+                        const total = item.total || (present + (item.absent || 0) || totalFromRoster || 0);
+                        const absent = item.absent ?? Math.max(0, total - present);
+                        const pct = total > 0 ? Math.round((present / total) * 100) : 0;
+                        return `
+                            <div class="class-bar fetched">
+                                <div class="class-bar-header">
+                                    <span class="class-name">${cls}</span>
+                                    <span class="class-ratio">${pct}%</span>
+                                </div>
+                                <div class="class-bar-track" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100" role="progressbar">
+                                    <div class="class-bar-fill" style="width:${pct}%"></div>
+                                </div>
+                                <div class="class-bar-details">
+                                    <span>Total: ${total}</span>
+                                    <span>Present: ${present}</span>
+                                    <span>Absent: ${absent}</span>
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        // No data fetched for this class
+                        const total = totalFromRoster || 0;
+                        return `
+                            <div class="class-bar no-data">
+                                <div class="class-bar-header">
+                                    <span class="class-name">${cls}</span>
+                                    <span class="class-ratio">—</span>
+                                </div>
+                                <div class="class-bar-track" aria-valuemin="0" aria-valuemax="100" role="progressbar">
+                                    <div class="class-bar-fill" style="width:0%"></div>
+                                </div>
+                                <div class="class-bar-details">
+                                    <span>Total: ${total}</span>
+                                    <span>Present: —</span>
+                                    <span>Absent: —</span>
+                                </div>
+                            </div>
+                        `;
+                    }
+                }).join('')
+                : `<div class="analytics-empty">No classes available.</div>`;
+
+            analyticsContainer.innerHTML = `
+                <div class="analytics-header-row">
+                    <div class="analytics-title">Attendance Analytics</div>
+                    <div class="analytics-subtitle">Date: ${dateStr}</div>
+                </div>
+                <div class="class-bars-list">${barsHtml}</div>
+            `;
+        } catch (err) {
+            console.error('Failed to load analytics:', err);
+            analyticsContainer.innerHTML = `
+                <div class="analytics-error">Failed to load analytics. ${err.message || ''}</div>
+            `;
+        }
     }
 
     updateStatPills() {

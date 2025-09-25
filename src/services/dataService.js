@@ -596,6 +596,93 @@ class DataService {
     }
 
     /**
+     * Fetch attendance summary for a given date (DD/MM/YYYY)
+     * Expected to return a list of classes with present/absent counts
+     * Example normalized item: { class: '5TH', present: 25, absent: 5, total: 30 }
+     */
+    async fetchAttendanceSummary(dateDDMMYYYY) {
+        const endpoint = `${this.baseURL}/Attendance_fetch`;
+        const payload = { date: dateDDMMYYYY };
+        console.log('Fetching attendance summary for date:', dateDDMMYYYY);
+
+        // Add timeout to prevent hanging requests
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s
+
+        try {
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: this.getHeaders(),
+                body: JSON.stringify(payload),
+                signal: controller.signal
+            });
+
+            clearTimeout(timeoutId);
+
+            if (!response.ok) {
+                // Handle specific HTTP status codes
+                if (response.status === 403) {
+                    throw new Error('Access forbidden for attendance summary');
+                } else if (response.status === 404) {
+                    throw new Error('Attendance summary endpoint not found');
+                } else if (response.status >= 500) {
+                    throw new Error('Server error while fetching attendance summary');
+                } else {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+            }
+
+            // Try to parse JSON; fallback to text if needed
+            const contentType = response.headers.get('content-type');
+            let raw = null;
+            if (contentType && contentType.includes('application/json')) {
+                raw = await response.json();
+            } else {
+                const text = await response.text();
+                try { raw = JSON.parse(text); } catch { raw = text; }
+            }
+
+            // Normalize into a list of { class, present, absent, total }
+            const normalized = this._normalizeAttendanceSummary(raw);
+            console.log('Attendance summary (normalized):', normalized);
+            return normalized;
+        } catch (error) {
+            console.error('Error fetching attendance summary:', error);
+            if (error.name === 'AbortError') {
+                throw new Error('Attendance summary request timeout');
+            }
+            throw error;
+        }
+    }
+
+    /**
+     * Normalize various possible response shapes to unified items
+     */
+    _normalizeAttendanceSummary(raw) {
+        // If server already returns array of objects
+        const arr = Array.isArray(raw) ? raw : (raw && raw.data ? raw.data : []);
+        const out = [];
+        arr.forEach(item => {
+            if (!item) return;
+            const className = item.class || item.Class || item.className || item.ClassName;
+            const present =
+                item.present ?? item.present_count ?? item.Present ?? item.presentStudents ?? 0;
+            const absent =
+                item.absent ?? item.absent_count ?? item.Absent ?? item.absentStudents ?? 0;
+            let total = item.total ?? item.total_students ?? item.Total ?? 0;
+            if (!total && (present || absent)) total = Number(present) + Number(absent);
+            if (!className) return;
+            out.push({
+                class: String(className),
+                present: Number(present) || 0,
+                absent: Number(absent) || 0,
+                total: Number(total) || (Number(present) + Number(absent)) || 0
+            });
+        });
+        return out;
+    }
+
+    /**
      * Format date to DD/MM/YYYY
      */
     formatDate(date) {

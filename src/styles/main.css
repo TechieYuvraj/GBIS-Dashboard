@@ -1939,3 +1939,75 @@ textarea {
     width: 14px;
     display: inline-block;
 }
+
+/* === Attendance Analytics Bars === */
+.class-bars-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 8px;
+}
+
+.class-bar {
+    background: rgba(255, 255, 255, 0.6);
+    border: 1px solid rgba(0,0,0,0.08);
+    border-radius: 10px;
+    padding: 10px 12px;
+}
+
+.class-bar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+    font-weight: 600;
+}
+
+.class-name { opacity: 0.9; }
+.class-ratio { opacity: 0.8; font-variant-numeric: tabular-nums; }
+
+.class-bar-track {
+    position: relative;
+    width: 100%;
+    height: 10px;
+    background: rgba(0,0,0,0.06);
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.class-bar-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #22c55e, #16a34a);
+}
+
+.class-bar-details {
+    display: flex;
+    gap: 12px;
+    margin-top: 6px;
+    font-size: 12px;
+    opacity: 0.85;
+}
+
+.class-bar.fetched .class-bar-fill { background: linear-gradient(90deg, #22c55e, #16a34a); }
+.class-bar.no-data .class-bar-fill { background: linear-gradient(90deg, #a1a1aa, #71717a); }
+
+.analytics-loading,
+.analytics-empty,
+.analytics-error {
+    padding: 12px;
+    border-radius: 10px;
+    background: rgba(0,0,0,0.04);
+    border: 1px dashed rgba(0,0,0,0.1);
+    font-size: 14px;
+}
+
+.analytics-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 8px;
+}
+
+.analytics-title { font-weight: 700; }
+.analytics-subtitle { font-size: 12px; opacity: 0.75; }
