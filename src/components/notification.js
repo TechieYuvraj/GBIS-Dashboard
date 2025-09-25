@@ -78,6 +78,30 @@ class NotificationManager {
                 }
             });
         }
+
+        // Select by class button
+        const selectByClassBtn = document.getElementById('select-by-class');
+        if (selectByClassBtn) {
+            selectByClassBtn.addEventListener('click', () => {
+                this.selectStudentsByClass();
+            });
+        }
+
+        // Select all students button
+        const selectAllBtn = document.getElementById('select-all-students');
+        if (selectAllBtn) {
+            selectAllBtn.addEventListener('click', () => {
+                this.selectAllStudents();
+            });
+        }
+
+        // Clear all students button
+        const clearAllBtn = document.getElementById('clear-all-students');
+        if (clearAllBtn) {
+            clearAllBtn.addEventListener('click', () => {
+                this.clearAllStudents();
+            });
+        }
     }
 
     initializeSearch() {
@@ -141,28 +165,40 @@ class NotificationManager {
         if (students.length === 0) {
             resultsContainer.innerHTML = `
                 <div class="search-result-item">
-                    <i class="fas fa-search"></i>
-                    No students found for "${query}"
+                    <div class="student-info">
+                        <strong>No students found</strong>
+                        <div class="student-details">No results for "${query}"</div>
+                    </div>
                 </div>
             `;
         } else {
-            resultsContainer.innerHTML = students.map(student => `
-                <div class="search-result-item" data-student-id="${student.Serial_No || student.row_number}">
-                    <div class="student-info">
-                        <strong>${student.Name}</strong>
-                        <span class="student-details">
-                            Class: ${student.Class} | Roll No: ${student.Roll_No} | Contact: ${student.Contact_No}
-                        </span>
+            resultsContainer.innerHTML = students.map(student => {
+                const isSelected = this.selectedStudents.some(s => 
+                    (s.Serial_No && s.Serial_No == student.Serial_No) || 
+                    (s.row_number && s.row_number == student.row_number)
+                );
+                
+                return `
+                    <div class="search-result-item ${isSelected ? 'selected' : ''}" data-student-id="${student.Serial_No || student.row_number}">
+                        <div class="student-info">
+                            <strong>${student.Name}</strong>
+                            <div class="student-details">
+                                Class: ${student.Class} | Roll No: ${student.Roll_No} | Contact: ${student.Contact_No}
+                            </div>
+                        </div>
+                        ${isSelected ? '<i class="fas fa-check-circle" style="color: #28a745;"></i>' : '<i class="fas fa-plus-circle" style="color: rgba(167, 139, 250, 0.6);"></i>'}
                     </div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
 
             // Bind click events to search results
             resultsContainer.querySelectorAll('.search-result-item').forEach(item => {
-                item.addEventListener('click', (e) => {
-                    const studentId = e.currentTarget.getAttribute('data-student-id');
-                    this.selectStudent(studentId);
-                });
+                if (!item.classList.contains('selected')) {
+                    item.addEventListener('click', (e) => {
+                        const studentId = e.currentTarget.getAttribute('data-student-id');
+                        this.selectStudent(studentId);
+                    });
+                }
             });
         }
 
@@ -185,58 +221,125 @@ class NotificationManager {
             if (!isAlreadySelected) {
                 this.selectedStudents.push(student);
                 this.updateSelectedStudentsDisplay();
+                
+                // Refresh search results to show updated selection status
+                const searchInput = document.getElementById('notification-search');
+                if (searchInput && searchInput.value.trim()) {
+                    this.handleSearch(searchInput.value.trim());
+                }
+                
+                this.showMessage(`Added ${student.Name} to notification list`, 'success');
             }
-
-            // Clear search
-            const searchInput = document.getElementById('notification-search');
-            if (searchInput) {
-                searchInput.value = '';
-            }
-            this.hideSearchResults();
         }
     }
 
     updateSelectedStudentsDisplay() {
-        const resultsContainer = document.getElementById('notification-search-results');
         const countEl = document.getElementById('notification-selected-count');
+        const displayContainer = document.getElementById('selected-students-display');
+        
         if (countEl) countEl.textContent = this.selectedStudents.length;
-        if (!resultsContainer) return;
+        if (!displayContainer) return;
 
         if (this.selectedStudents.length > 0) {
-            resultsContainer.innerHTML = `
-                <div class="selected-students">
-                    <h5>Selected Students (${this.selectedStudents.length}):</h5>
-                    <div class="selected-tags">
-                        ${this.selectedStudents.map(student => `
-                            <div class="selected-tag">
-                                ${student.Name} (${student.Class})
-                                <span class="remove" onclick="window.notificationManager.removeStudent('${student.Serial_No || student.row_number}')">×</span>
-                            </div>
-                        `).join('')}
+            displayContainer.innerHTML = this.selectedStudents.map(student => `
+                <div class="student-item" title="Class: ${student.Class} | Roll No: ${student.Roll_No} | Contact: ${student.Contact_No}">
+                    <div class="student-info">
+                        <div class="student-name">${student.Name}</div>
+                        <div class="student-details">${student.Class} • ${student.Roll_No}</div>
                     </div>
-                    <button class="clear-all-btn" onclick="window.notificationManager.clearAllStudents()">
-                        Clear All
+                    <button class="remove-student" onclick="window.notificationManager.removeStudent('${student.Serial_No || student.row_number}')" title="Remove ${student.Name}">
+                        ×
                     </button>
                 </div>
-            `;
-            this.showSearchResults();
+            `).join('');
         } else {
-            this.hideSearchResults();
+            displayContainer.innerHTML = `
+                <div class="no-students-selected">
+                    <i class="fas fa-user-plus"></i>
+                    <p>No students selected. Search and click students to add them.</p>
+                </div>
+            `;
         }
     }
 
     removeStudent(studentId) {
+        const removedStudent = this.selectedStudents.find(student => 
+            (student.Serial_No == studentId) || (student.row_number == studentId)
+        );
+        
         this.selectedStudents = this.selectedStudents.filter(student => 
             (student.Serial_No != studentId) && (student.row_number != studentId)
         );
+        
         this.updateSelectedStudentsDisplay();
+        
+        // Refresh search results to show updated selection status
+        const searchInput = document.getElementById('notification-search');
+        if (searchInput && searchInput.value.trim()) {
+            this.handleSearch(searchInput.value.trim());
+        }
+        
+        if (removedStudent) {
+            this.showMessage(`Removed ${removedStudent.Name} from notification list`, 'success');
+        }
     }
 
     clearAllStudents() {
         this.selectedStudents = [];
+        this.updateSelectedStudentsDisplay();
         this.hideSearchResults();
-        const countEl = document.getElementById('notification-selected-count');
-        if (countEl) countEl.textContent = '0';
+    }
+
+    selectStudentsByClass() {
+        if (!window.dataService || !this.selectedClass) {
+            if (!this.selectedClass) {
+                this.showMessage('Please select a class first', 'error');
+            }
+            return;
+        }
+
+        const classStudents = window.dataService.getStudentsByClass(this.selectedClass);
+        
+        // Add students that aren't already selected
+        classStudents.forEach(student => {
+            const isAlreadySelected = this.selectedStudents.some(s => 
+                (s.Serial_No && s.Serial_No == student.Serial_No) || 
+                (s.row_number && s.row_number == student.row_number)
+            );
+            
+            if (!isAlreadySelected) {
+                this.selectedStudents.push(student);
+            }
+        });
+
+        this.updateSelectedStudentsDisplay();
+        this.showMessage(`Added ${classStudents.length} students from ${this.selectedClass}`, 'success');
+    }
+
+    selectAllStudents() {
+        if (!window.dataService) {
+            console.error('Data service not available');
+            return;
+        }
+
+        const allStudents = window.dataService.getStudents();
+        
+        // Add students that aren't already selected
+        let addedCount = 0;
+        allStudents.forEach(student => {
+            const isAlreadySelected = this.selectedStudents.some(s => 
+                (s.Serial_No && s.Serial_No == student.Serial_No) || 
+                (s.row_number && s.row_number == student.row_number)
+            );
+            
+            if (!isAlreadySelected) {
+                this.selectedStudents.push(student);
+                addedCount++;
+            }
+        });
+
+        this.updateSelectedStudentsDisplay();
+        this.showMessage(`Added ${addedCount} students. Total selected: ${this.selectedStudents.length}`, 'success');
     }
 
     showSearchResults() {

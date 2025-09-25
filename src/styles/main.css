@@ -351,7 +351,7 @@ body::before {
     font-size: 1.4rem;
     font-weight: 700;
     border-bottom: 3px solid transparent;
-    border-image: linear-gradient(135deg, #ff6b6b, #4ecdc4) 1;
+    border-bottom: 2px solid rgba(102, 126, 234, 0.1);
     padding-bottom: 15px;
     text-transform: uppercase;
     letter-spacing: 1px;
@@ -1608,4 +1608,283 @@ textarea {
     .glass-panel, .depth-card { background: hsl(var(--accent-h) 58% 18% / 0.88); box-shadow: none; }
     .stat-card { filter: brightness(1.1) contrast(1.15); }
     a, .nav-item, .nav-item span { color: var(--text-inverse); }
+}
+
+/* Notification Tab Restructured Styles */
+.search-controls, .class-controls {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.search-input-group {
+    position: relative;
+    flex: 1;
+    min-width: 200px;
+}
+
+.search-input-group .search-icon {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: rgba(167, 139, 250, 0.6);
+    pointer-events: none;
+    z-index: 2;
+}
+
+.search-input-group .search-input {
+    padding-left: 45px;
+}
+
+.class-controls {
+    margin-top: 8px;
+}
+
+.class-controls select {
+    flex: 1;
+    min-width: 150px;
+    max-width: 200px;
+}
+
+.btn-secondary-glass {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(167, 139, 250, 0.3);
+    border-radius: 12px;
+    padding: 8px 16px;
+    color: #fff;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+}
+
+.btn-secondary-glass:hover {
+    background: rgba(167, 139, 250, 0.15);
+    border-color: rgba(167, 139, 250, 0.5);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(167, 139, 250, 0.2);
+}
+
+.btn-link {
+    background: none;
+    border: none;
+    color: rgba(167, 139, 250, 0.8);
+    font-size: 0.85rem;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.btn-link:hover {
+    color: rgba(167, 139, 250, 1);
+    background: rgba(167, 139, 250, 0.1);
+}
+
+.selected-students-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.selected-students-list {
+    min-height: 60px;
+    max-height: 200px;
+    overflow-y: auto;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(167, 139, 250, 0.2);
+    border-radius: 12px;
+    padding: 12px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-content: flex-start;
+}
+
+.no-students-selected {
+    text-align: center;
+    color: rgba(167, 139, 250, 0.6);
+    padding: 20px;
+    width: 100%;
+}
+
+.no-students-selected i {
+    font-size: 2rem;
+    margin-bottom: 8px;
+    display: block;
+}
+
+.no-students-selected p {
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+.student-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    background: rgba(167, 139, 250, 0.1);
+    border: 1px solid rgba(167, 139, 250, 0.3);
+    border-radius: 20px;
+    font-size: 0.85rem;
+    transition: all 0.2s ease;
+    max-width: 200px;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.student-item:hover {
+    background: rgba(167, 139, 250, 0.2);
+    border-color: rgba(167, 139, 250, 0.5);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(167, 139, 250, 0.2);
+}
+
+.student-info {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    flex: 1;
+}
+
+.student-name {
+    font-weight: 600;
+    color: #2c3e50;
+    font-size: 0.85rem;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.student-details {
+    font-size: 0.7rem;
+    color: rgba(44, 62, 80, 0.6);
+    line-height: 1.1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-top: 1px;
+}
+
+.remove-student {
+    background: none;
+    border: none;
+    color: rgba(220, 53, 69, 0.7);
+    border-radius: 50%;
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 0.7rem;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+    margin-left: 4px;
+}
+
+.remove-student:hover {
+    background: rgba(220, 53, 69, 0.1);
+    color: #dc3545;
+    transform: scale(1.1);
+}
+
+/* Search results in notification tab */
+#notification-search-results {
+    margin-top: 8px;
+    margin-bottom: 16px;
+}
+
+#notification-search-results .search-result-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(167, 139, 250, 0.1);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+#notification-search-results .search-result-item:hover {
+    background: rgba(167, 139, 250, 0.1);
+    transform: translateX(2px);
+}
+
+#notification-search-results .student-info {
+    flex: 1;
+}
+
+#notification-search-results .student-info strong {
+    display: block;
+    color: #fff;
+    margin-bottom: 2px;
+}
+
+#notification-search-results .student-details {
+    font-size: 0.85rem;
+    color: rgba(161, 165, 169, 0.7);
+}
+
+#notification-search-results .search-result-item.selected {
+    background: rgba(40, 167, 69, 0.1);
+    border-left: 3px solid #28a745;
+    cursor: default;
+}
+
+#notification-search-results .search-result-item.selected:hover {
+    background: rgba(40, 167, 69, 0.1);
+    transform: none;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .search-controls, .class-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .search-input-group {
+        min-width: auto;
+    }
+    
+    .class-controls select {
+        min-width: auto;
+        max-width: none;
+        margin-bottom: 8px;
+    }
+    
+    .btn-secondary-glass {
+        justify-content: center;
+        margin-bottom: 6px;
+    }
+    
+    .student-item {
+        max-width: 160px;
+        font-size: 0.8rem;
+    }
+    
+    .student-name {
+        font-size: 0.8rem;
+    }
+    
+    .student-details {
+        font-size: 0.65rem;
+    }
+    
+    .remove-student {
+        width: 16px;
+        height: 16px;
+        font-size: 0.6rem;
+    }
 }

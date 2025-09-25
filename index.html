@@ -50,26 +50,63 @@
             <div class="tab-content active" id="notification-tab">
                 <div class="single-layout">
                     <h3>Notifications</h3>
-                    <div class="unified-toolbar glass-panel">
-                        <div class="toolbar-group search-group">
-                            <i class="fas fa-search toolbar-icon"></i>
-                            <input type="text" id="notification-search" placeholder="Search students" class="search-input compact" aria-label="Search students for notification">
-                            <select id="notification-class" class="form-input compact" aria-label="Select class for notification">
-                                <option value="">All Classes</option>
-                            </select>
-                        </div>
-                        <div class="toolbar-group stats-group">
-                            <div class="stat-pill pill-accent" title="Selected Students"><span id="notification-selected-count">0</span><label>Selected</label></div>
-                        </div>
-                    </div>
-                    <div class="search-results" id="notification-search-results"></div>
                     <div class="split-layout">
                         <div class="action-section depth-card panel-card tilt" data-tilt>
-                            <h3>Compose</h3>
+                            <h3>Compose & Select Recipients</h3>
+                            
+                            <!-- Student Search and Selection -->
+                            <div class="form-group">
+                                <label>Search Students:</label>
+                                <div class="search-controls">
+                                    <div class="search-input-group">
+                                        <i class="fas fa-search search-icon"></i>
+                                        <input type="text" id="notification-search" placeholder="Search by student name" class="search-input" aria-label="Search students for notification">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Class Selection and Filters -->
+                            <div class="form-group">
+                                <label>Select by Class:</label>
+                                <div class="class-controls">
+                                    <select id="notification-class" class="form-input" aria-label="Select class for notification">
+                                        <option value="">All Classes</option>
+                                    </select>
+                                    <button type="button" id="select-by-class" class="btn-secondary-glass">
+                                        <i class="fas fa-users"></i>
+                                        Select Class Students
+                                    </button>
+                                    <button type="button" id="select-all-students" class="btn-secondary-glass">
+                                        <i class="fas fa-check-double"></i>
+                                        Select All Students
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Search Results -->
+                            <div class="search-results" id="notification-search-results"></div>
+
+                            <!-- Selected Students Display -->
+                            <div class="form-group">
+                                <div class="selected-students-header">
+                                    <label>Selected Students (<span id="notification-selected-count">0</span>):</label>
+                                    <button type="button" id="clear-all-students" class="btn-link">Clear All</button>
+                                </div>
+                                <div class="selected-students-list" id="selected-students-display">
+                                    <div class="no-students-selected">
+                                        <i class="fas fa-user-plus"></i>
+                                        <p>No students selected. Search and click students to add them.</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Message Composition -->
                             <div class="form-group">
                                 <label for="notification-message">Message:</label>
                                 <textarea id="notification-message" placeholder="Enter your message here..." rows="4"></textarea>
                             </div>
+
+                            <!-- Attachment -->
                             <div class="form-group">
                                 <button class="attachment-btn btn-primary-glass">
                                     <i class="fas fa-paperclip"></i>
@@ -78,10 +115,12 @@
                                 <input type="file" id="attachment-input" style="display: none;" 
                                        accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif,.mp4,.mp3,.zip,.xlsx,.xls,.ppt,.pptx">
                             </div>
+
+                            <!-- Send Button -->
                             <div class="form-group">
                                 <button class="send-btn btn-primary-glass" id="send-notification">
                                     <i class="fas fa-paper-plane"></i>
-                                    Send
+                                    Send Notification
                                 </button>
                                 <div class="success-message" id="notification-success"></div>
                             </div>
