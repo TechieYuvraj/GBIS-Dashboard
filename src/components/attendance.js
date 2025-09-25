@@ -401,9 +401,11 @@ class AttendanceManager {
                     const item = summaryMap.get(cls);
                     const totalFromRoster = (window.dataService.getStudentsByClass) ? window.dataService.getStudentsByClass(cls).length : (item?.total || 0);
                     if (item) {
-                        const present = item.present || 0;
-                        const total = item.total || (present + (item.absent || 0) || totalFromRoster || 0);
-                        const absent = item.absent ?? Math.max(0, total - present);
+                        const present = Number(item.present ?? 0);
+                        const absentFromWebhook = item.absent;
+                        const absent = Number(absentFromWebhook ?? 0);
+                        const computedTotal = present + absent;
+                        const total = (typeof item.total === 'number') ? Number(item.total) : computedTotal;
                         const pct = total > 0 ? Math.round((present / total) * 100) : 0;
                         return `
                             <div class="class-bar fetched">
