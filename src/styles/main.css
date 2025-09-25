@@ -615,26 +615,6 @@ textarea {
     overflow-y: auto;
 }
 
-/* Allow dropdown to overflow in attendance tab */
-#attendance-tab .multi-select-container {
-    position: relative;
-    z-index: 1001;
-}
-
-/* Force dropdown to be above all containers */
-#attendance-tab .multi-select-dropdown {
-    z-index: 9999 !important;
-    position: absolute !important;
-}
-
-#attendance-tab .split-layout {
-    overflow: visible !important;
-}
-
-#attendance-tab .depth-card {
-    overflow: visible !important;
-}
-
 .multi-select-option {
     padding: 12px 20px;
     cursor: pointer;
