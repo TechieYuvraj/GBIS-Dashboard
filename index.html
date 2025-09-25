@@ -142,24 +142,47 @@
             <div class="tab-content" id="attendance-tab">
                 <div class="single-layout">
                     <h3>Attendance</h3>
-                    <div class="unified-toolbar glass-panel">
-                        <div class="toolbar-group">
-                            <label for="attendance-date" class="toolbar-icon" title="Date"><i class="fas fa-calendar"></i></label>
-                            <input type="date" id="attendance-date" class="search-input compact" aria-label="Attendance date">
-                            <select id="attendance-class" class="form-input compact" aria-label="Select class for attendance">
-                                <option value="">Class</option>
-                            </select>
-                        </div>
-                        <div class="toolbar-group stats-group">
-                            <div class="stat-pill pill-accent" title="Total Students"><span id="attendance-total-students">0</span><label>Total</label></div>
-                            <div class="stat-pill pill-accent" title="Absent Students"><span id="attendance-absent-count">0</span><label>Absent</label></div>
-                        </div>
-                    </div>
                     <div class="split-layout">
-                        <div class="action-section depth-card panel-card tilt" data-tilt>
-                            <h3>Mark</h3>
+                        <div class="action-section depth-card panel-card" data-tilt>
+                            <h3>Mark Attendance</h3>
+                            
+                            <!-- Date Selection -->
                             <div class="form-group">
-                                <label for="attendance-rollno">Absent Roll Numbers:</label>
+                                <label for="attendance-date">
+                                    <i class="fas fa-calendar"></i>
+                                    Select Date:
+                                </label>
+                                <input type="date" id="attendance-date" class="form-input" aria-label="Attendance date">
+                            </div>
+
+                            <!-- Class Selection -->
+                            <div class="form-group">
+                                <label for="attendance-class">
+                                    <i class="fas fa-users"></i>
+                                    Select Class:
+                                </label>
+                                <select id="attendance-class" class="form-input" aria-label="Select class for attendance">
+                                    <option value="">Choose a class</option>
+                                </select>
+                            </div>
+
+                            <!-- Stats Display -->
+                            <div class="form-group">
+                                <div class="attendance-stats">
+                                    <div class="stat-pill pill-accent" title="Total Students">
+                                        <span id="attendance-total-students">0</span>
+                                        <label>Total Students</label>
+                                    </div>
+                                    <div class="stat-pill pill-accent" title="Absent Students">
+                                        <span id="attendance-absent-count">0</span>
+                                        <label>Absent</label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Roll Number Selection -->
+                            <div class="form-group">
+                                <label for="attendance-rollno">Mark Absent Students:</label>
                                 <div class="multi-select-container">
                                     <div class="multi-select-display" id="rollno-display">
                                         <span class="placeholder">Select absent students</span>
@@ -167,10 +190,12 @@
                                     <div class="multi-select-dropdown" id="rollno-dropdown"></div>
                                 </div>
                             </div>
+
+                            <!-- Submit Button -->
                             <div class="form-group">
                                 <button class="mark-btn btn-primary-glass" id="mark-attendance">
                                     <i class="fas fa-check"></i>
-                                    Submit
+                                    Submit Attendance
                                 </button>
                                 <div class="success-message" id="attendance-success"></div>
                             </div>

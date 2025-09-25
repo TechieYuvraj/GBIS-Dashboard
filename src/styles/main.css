@@ -794,6 +794,14 @@ textarea {
     box-shadow: var(--u-shadow-lg), inset 0 1px 0 hsl(var(--u-accent-h) 95% 95% / .5);
 }
 
+/* Reduced hover transitions for action and analytics sections */
+#attendance-tab .action-section:hover, #attendance-tab .analytics-section:hover,
+#notification-tab .action-section:hover, #notification-tab .analytics-section:hover,
+#marks-tab .action-section:hover, #marks-tab .analytics-section:hover {
+    transform: translateY(-2px) scale(1.005);
+    box-shadow: var(--u-shadow-md), inset 0 1px 0 hsl(var(--u-accent-h) 95% 95% / .4);
+}
+
 /* Inputs & selects within these tabs */
 #notification-tab .search-input.compact, #attendance-tab .search-input.compact, #marks-tab .search-input.compact,
 #attendance-tab select.compact, #notification-tab select.compact, #marks-tab select.compact,
@@ -1769,7 +1777,7 @@ textarea {
 
 .student-details {
     font-size: 0.7rem;
-    color: rgba(44, 62, 80, 0.6);
+    color: rgba(181, 187, 194, 0.7);
     line-height: 1.1;
     white-space: nowrap;
     overflow: hidden;
@@ -1887,4 +1895,25 @@ textarea {
         height: 16px;
         font-size: 0.6rem;
     }
+}
+
+/* Attendance Tab Specific Styles */
+.attendance-stats {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+}
+
+.attendance-stats .stat-pill {
+    flex: 1;
+    min-width: 120px;
+}
+
+/* Form labels with icons */
+#attendance-tab .form-group label i {
+    margin-right: 8px;
+    color: rgba(167, 139, 250, 0.7);
+    width: 14px;
+    display: inline-block;
 }
