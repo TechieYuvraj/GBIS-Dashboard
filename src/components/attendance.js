@@ -381,6 +381,14 @@ class AttendanceManager {
         `;
 
         try {
+            // Ensure class list is available so blank bars render at initial load
+            if (!window.dataService.hasData && window.dataService.getClasses && window.dataService.getClasses().length === 0) {
+                // Fallback check if hasData is not present or returns false
+                try { await window.dataService.fetchContacts(); } catch (e) { /* ignore */ }
+            } else if (window.dataService.hasData && !window.dataService.hasData()) {
+                try { await window.dataService.fetchContacts(); } catch (e) { /* ignore */ }
+            }
+
             const summary = await window.dataService.fetchAttendanceSummary(dateStr);
 
             // Map summary by class
@@ -446,13 +454,53 @@ class AttendanceManager {
                 }).join('')
                 : `<div class="analytics-empty">No classes available.</div>`;
 
+            // Determine if all bars are green (i.e., every class has webhook data)
+            const allGreen = allClasses.length > 0 && allClasses.every(cls => summaryMap.has(cls));
+
             analyticsContainer.innerHTML = `
                 <div class="analytics-header-row">
-                    <div class="analytics-title">Attendance Analytics</div>
-                    <div class="analytics-subtitle">Date: ${dateStr}</div>
+                    <div>
+                        <div class="analytics-title">Attendance Analytics</div>
+                        <div class="analytics-subtitle">Date: ${dateStr}</div>
+                    </div>
+                    <button id="send-absent-notification-btn" class="send-btn btn-primary-glass" ${allGreen ? '' : 'disabled'}>
+                        <i class="fas fa-paper-plane"></i>
+                        Send Notification
+                    </button>
                 </div>
                 <div class="class-bars-list">${barsHtml}</div>
             `;
+
+            // Bind click handler for Send Notification button
+            const sendBtn = document.getElementById('send-absent-notification-btn');
+            if (sendBtn) {
+                sendBtn.addEventListener('click', async () => {
+                    if (sendBtn.disabled) return;
+                    const originalHtml = sendBtn.innerHTML;
+                    try {
+                        sendBtn.disabled = true;
+                        sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+                        const todayStr = window.dataService.formatDate(new Date());
+                        await window.dataService.sendAbsentNotification(todayStr);
+                        if (window.Helpers && typeof window.Helpers.showToast === 'function') {
+                            window.Helpers.showToast('Absent notification sent', 'success');
+                        } else {
+                            alert('Absent notification sent');
+                        }
+                    } catch (err) {
+                        console.error('Failed to send absent notification:', err);
+                        if (window.Helpers && typeof window.Helpers.showToast === 'function') {
+                            window.Helpers.showToast('Failed to send absent notification', 'error');
+                        } else {
+                            alert('Failed to send absent notification');
+                        }
+                    } finally {
+                        sendBtn.innerHTML = originalHtml;
+                        // Re-evaluate enable/disable state after send
+                        sendBtn.disabled = !(allClasses.length > 0 && allClasses.every(cls => summaryMap.has(cls)));
+                    }
+                });
+            }
         } catch (err) {
             console.error('Failed to load analytics:', err);
             analyticsContainer.innerHTML = `

@@ -475,6 +475,12 @@ textarea {
     border-color: rgba(167, 139, 250, 0.5);
 }
 
+.send-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
 .attachment-btn {
     background: rgba(139, 195, 250, 0.7);
     border: 1px solid rgba(139, 195, 250, 0.3);
@@ -1270,6 +1276,31 @@ textarea {
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 1px;
+}
+
+/* Make notification analytics cards compact without affecting other tabs */
+#notification-tab .analytics-cards {
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+#notification-tab .analytics-card {
+    padding: 10px 12px;
+    height: 86px;
+    width: auto;
+    border-radius: 16px;
+    box-shadow: 0 6px 18px rgba(167, 139, 250, 0.18);
+}
+
+#notification-tab .analytics-number {
+    font-size: 1.6rem;
+    margin-bottom: 4px;
+}
+
+#notification-tab .analytics-label {
+    font-size: 0.75rem;
+    letter-spacing: 0.6px;
 }
 
 .analytics-details {

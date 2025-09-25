@@ -259,6 +259,18 @@ class GBISApp {
         if (this.shouldRefreshDataForTab(to)) {
             this.refreshData();
         }
+
+        // Ensure attendance analytics load when switching to attendance tab
+        if (to === 'attendance' && window.attendanceManager && window.dataService) {
+            const dateInput = document.getElementById('attendance-date');
+            let dateStr;
+            if (dateInput && dateInput.value) {
+                dateStr = window.dataService.formatDate(new Date(dateInput.value));
+            } else {
+                dateStr = window.dataService.formatDate(new Date());
+            }
+            window.attendanceManager.loadTodayAnalytics(dateStr);
+        }
     }
 
     handleResize() {

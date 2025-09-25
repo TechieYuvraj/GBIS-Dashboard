@@ -694,6 +694,54 @@ class DataService {
     }
 
     /**
+     * Send Absent Notification trigger to webhook with given date (DD/MM/YYYY)
+     */
+    async sendAbsentNotification(dateDDMMYYYY) {
+        const endpoint = `${this.baseURL}/Absent_notification`;
+        const payload = {
+            chatInput: 'send absent notification',
+            date: dateDDMMYYYY
+        };
+
+        // Add timeout to prevent hanging requests
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+        try {
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: this.getHeaders(),
+                body: JSON.stringify(payload),
+                signal: controller.signal
+            });
+
+            clearTimeout(timeoutId);
+
+            if (!response.ok) {
+                if (response.status === 403) {
+                    throw new Error('Access forbidden for absent notification');
+                } else if (response.status === 404) {
+                    throw new Error('Absent notification endpoint not found');
+                } else if (response.status >= 500) {
+                    throw new Error('Server error while sending absent notification');
+                } else {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+            }
+
+            const contentType = response.headers.get('content-type');
+            if (contentType && contentType.includes('application/json')) {
+                return await response.json();
+            }
+            const text = await response.text();
+            return { success: true, message: text || 'Absent notification triggered' };
+        } catch (err) {
+            if (err.name === 'AbortError') throw new Error('Absent notification request timeout');
+            throw err;
+        }
+    }
+
+    /**
      * Validate student data
      */
     validateStudentData(student) {
