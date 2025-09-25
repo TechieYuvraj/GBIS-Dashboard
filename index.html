@@ -217,23 +217,51 @@
             <div class="tab-content" id="marks-tab">
                 <div class="single-layout">
                     <h3>Marks</h3>
-                    <div class="unified-toolbar glass-panel">
-                        <div class="toolbar-group search-group">
-                            <i class="fas fa-search toolbar-icon"></i>
-                            <input type="text" id="marks-search" placeholder="Search students" class="search-input compact" aria-label="Search students for marks" disabled>
-                        </div>
-                        <div class="toolbar-group stats-group">
-                            <div class="stat-pill pill-accent" title="Planned Feature"><span>-</span><label>Pending</label></div>
-                        </div>
-                    </div>
                     <div class="split-layout">
                         <div class="action-section depth-card panel-card tilt" data-tilt>
-                            <h3>Management</h3>
-                            <p class="placeholder-text">Marks management coming soon</p>
+                            <h3>Marks Entry</h3>
+                            <div class="form-group">
+                                <label for="marks-date"><i class="fas fa-calendar"></i> Select Date:</label>
+                                <input type="date" id="marks-date" class="form-input" aria-label="Marks date">
+                            </div>
+                            <div class="form-group">
+                                <label for="marks-class"><i class="fas fa-users"></i> Select Class:</label>
+                                <select id="marks-class" class="form-input" aria-label="Select class for marks">
+                                    <option value="">Choose a class</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="marks-exam"><i class="fas fa-book"></i> Exam Name:</label>
+                                <input type="text" id="marks-exam" class="form-input" placeholder="e.g., Midterm" aria-label="Exam name">
+                            </div>
+                            <div class="form-group">
+                                <label for="marks-mm"><i class="fas fa-list-ol"></i> Maximum Marks (MM):</label>
+                                <input type="number" id="marks-mm" class="form-input" placeholder="e.g., 100" min="0" step="1" aria-label="Maximum marks">
+                            </div>
+                            <div class="form-group">
+                                <div id="marks-students-container" class="marks-table-container">
+                                    <div class="analytics-placeholder">
+                                        <i class="fas fa-users"></i>
+                                        <p>Select a class to load students</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <button class="send-btn btn-primary-glass" id="submit-marks">
+                                    <i class="fas fa-paper-plane"></i>
+                                    Submit Marks
+                                </button>
+                                <div class="success-message" id="marks-success"></div>
+                            </div>
                         </div>
                         <div class="analytics-section depth-card panel-card tilt" data-tilt>
                             <h3>Analytics</h3>
-                            <p class="placeholder-text">Analytics will be shown here</p>
+                            <div id="marks-analytics">
+                                <div class="analytics-placeholder">
+                                    <i class="fas fa-chart-bar"></i>
+                                    <p>Fill marks to see analytics here</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -293,6 +321,7 @@
     <script src="src/components/notification.js"></script>
     <script src="src/components/attendance.js"></script>
     <script src="src/components/contacts.js"></script>
+    <script src="src/components/marks.js"></script>
     <script src="src/utils/helpers.js"></script>
     <script src="src/app.js"></script>
 </body>

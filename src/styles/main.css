@@ -2042,3 +2042,38 @@ textarea {
 
 .analytics-title { font-weight: 700; }
 .analytics-subtitle { font-size: 12px; opacity: 0.75; }
+
+/* === Marks Tab: Table and Inputs === */
+#marks-tab .marks-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: 12px;
+    overflow: hidden;
+}
+#marks-tab .marks-table thead th {
+    text-align: left;
+    background: rgba(0, 0, 0, 0.05);
+    padding: 10px 12px;
+    font-weight: 600;
+}
+#marks-tab .marks-table tbody td {
+    padding: 10px 12px;
+    border-top: 1px solid rgba(0,0,0,0.06);
+}
+#marks-tab .marks-input {
+    width: 100px;
+    padding: 6px 8px;
+    border-radius: 8px;
+    border: 1px solid rgba(0,0,0,0.15);
+    background: rgba(255,255,255,0.9);
+    outline: none;
+}
+#marks-tab .marks-input:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 2px rgba(59,130,246,0.2);
+}
+
+/* Marks success message quick fade */
+#marks-tab .success-message { opacity: 0; transition: opacity 0.2s ease; }
+#marks-tab .success-message.show { opacity: 1; display: block; }

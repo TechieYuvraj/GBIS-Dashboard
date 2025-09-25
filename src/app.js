@@ -271,6 +271,17 @@ class GBISApp {
             }
             window.attendanceManager.loadTodayAnalytics(dateStr);
         }
+  
+           // Ensure marks tab preps its state on switch
+           if (to === 'marks' && window.marksManager) {
+               // Refresh classes (in case contacts loaded later) and enforce MM constraints
+               if (typeof window.marksManager.populateClassDropdown === 'function') {
+                   window.marksManager.populateClassDropdown();
+               }
+               if (typeof window.marksManager.enforceMaxMarks === 'function') {
+                   window.marksManager.enforceMaxMarks();
+               }
+           }
     }
 
     handleResize() {

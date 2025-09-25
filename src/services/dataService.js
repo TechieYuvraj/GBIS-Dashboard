@@ -750,6 +750,59 @@ class DataService {
     }
 
     /**
+     * Submit marks update to webhook
+     * payload example:
+     * {
+     *   date: '25/09/2025',
+     *   class: '5TH',
+     *   examName: 'Midterm',
+     *   maxMarks: 100,
+     *   marks: [ { rollNo: 1, name: 'Alice', obtained: 96 } ]
+     * }
+     */
+    async submitMarksUpdate(payload) {
+        const endpoint = `${this.baseURL}/Marks_update`;
+
+        // Timeout controller
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 20000);
+        try {
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: this.getHeaders(),
+                body: JSON.stringify(payload),
+                signal: controller.signal
+            });
+            clearTimeout(timeoutId);
+
+            if (!response.ok) {
+                if (response.status === 403) {
+                    throw new Error('Access forbidden. Please check API permissions.');
+                } else if (response.status === 404) {
+                    throw new Error('Marks update endpoint not found.');
+                } else if (response.status >= 500) {
+                    throw new Error('Server error. Please try again later.');
+                } else {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+            }
+
+            const contentType = response.headers.get('content-type');
+            if (contentType && contentType.includes('application/json')) {
+                return await response.json();
+            }
+            const text = await response.text();
+            return { success: true, message: text || 'Marks updated successfully' };
+        } catch (err) {
+            if (err.name === 'AbortError') throw new Error('Marks update request timeout');
+            if (err instanceof TypeError && err.message.includes('fetch')) {
+                throw new Error('Network error while submitting marks');
+            }
+            throw err;
+        }
+    }
+
+    /**
      * Get students for a specific class with roll numbers
      */
     getClassRollNumbers(className) {

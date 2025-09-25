@@ -37,6 +37,8 @@ class Navigation {
     switchTab(tabName) {
         if (tabName === this.currentTab) return;
 
+        const prevTab = this.currentTab;
+
         // Hide current tab
         this.hideTab(this.currentTab);
         
@@ -51,6 +53,9 @@ class Navigation {
 
         // Trigger tab-specific initialization
         this.onTabSwitch(tabName);
+
+        // Notify external listeners (e.g., GBISApp) about the change
+        this.triggerTabChange(prevTab, tabName);
     }
 
     showTab(tabName) {
