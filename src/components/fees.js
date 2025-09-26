@@ -134,7 +134,7 @@ class FeesManager {
       Name: this.inputs.name?.value || '',
       Class: cls,
       Roll_No: roll ? Number(roll) : null,
-      Total: Number(this.inputs.total?.value || 0),
+      Total_fees: Number(this.inputs.total?.value || 0),
       Fees_Paid: Number(this.inputs.paid?.value || 0),
       Deposit_Amount: Number(this.inputs.deposit?.value || 0),
       Remarks: this.inputs.remarks?.value || '',
