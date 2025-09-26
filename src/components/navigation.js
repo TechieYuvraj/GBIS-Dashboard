@@ -121,6 +121,12 @@ class Navigation {
             case 'marks':
                 // Future implementation
                 break;
+            case 'fees':
+                // Placeholder for future fees logic
+                break;
+            case 'add-students':
+                // Placeholder for future add-students logic
+                break;
         }
     }
 
