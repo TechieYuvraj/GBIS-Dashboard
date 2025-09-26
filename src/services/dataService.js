@@ -16,6 +16,47 @@ class DataService {
     }
 
     /**
+     * Canonical class order required across the app
+     * Order: PREP, NURSERY, KG, 1ST, 2ND, 3RD, 4TH, 5TH, 6TH, 7TH, 8TH, 9TH, 10TH
+     */
+    getPreferredClassOrder() {
+        return [
+            'PREP', 'NURSERY', 'KG',
+            '1ST', '2ND', '3RD', '4TH', '5TH', '6TH', '7TH', '8TH', '9TH', '10TH'
+        ];
+    }
+
+    /**
+     * Sort a class list by the preferred fixed order. Unknown classes are appended alphabetically.
+     */
+    sortClasses(classList) {
+        const order = this.getPreferredClassOrder();
+        // Deduplicate case-insensitively while preserving first-seen original casing
+        const seenUpper = new Set();
+        const unique = [];
+        (classList || []).forEach((c) => {
+            const original = (c ?? '').toString().trim();
+            if (!original) return;
+            const upper = original.toUpperCase();
+            if (seenUpper.has(upper)) return;
+            seenUpper.add(upper);
+            unique.push(original);
+        });
+
+        return unique.sort((a, b) => {
+            const A = a.toUpperCase();
+            const B = b.toUpperCase();
+            const ia = order.indexOf(A);
+            const ib = order.indexOf(B);
+            if (ia !== -1 && ib !== -1) return ia - ib; // both known
+            if (ia !== -1) return -1; // a known, b unknown -> a first
+            if (ib !== -1) return 1;  // b known, a unknown -> b first
+            // both unknown: fallback to alphabetical
+            return A.localeCompare(B);
+        });
+    }
+
+    /**
      * Get default headers for API requests
      * Includes the n8n API key for authentication
      */
@@ -303,7 +344,8 @@ class DataService {
                 classSet.add(student.Class);
             }
         });
-        this.classes = Array.from(classSet).sort();
+        // Keep raw unique list; ordering will be applied when retrieved via getClasses()
+        this.classes = Array.from(classSet);
     }
 
     /**
@@ -364,7 +406,7 @@ class DataService {
      * Get all classes
      */
     getClasses() {
-        return this.classes;
+        return this.sortClasses(this.classes);
     }
 
     /**

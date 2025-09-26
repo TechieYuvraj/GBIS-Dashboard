@@ -401,7 +401,10 @@ class AttendanceManager {
             const classes = (window.dataService.getClasses ? window.dataService.getClasses() : []) || [];
             const classSet = new Set(classes);
             (summary || []).forEach(s => { if (s && s.class && !classSet.has(String(s.class))) classSet.add(String(s.class)); });
-            const allClasses = Array.from(classSet);
+            let allClasses = Array.from(classSet);
+            if (window.dataService && typeof window.dataService.sortClasses === 'function') {
+                allClasses = window.dataService.sortClasses(allClasses);
+            }
 
             // Build bars list for all classes
             const barsHtml = allClasses.length > 0

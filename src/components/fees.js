@@ -33,6 +33,15 @@ class FeesManager {
       reff: document.getElementById('fees-reff'),
       date: document.getElementById('fees-date'),
     };
+    // Summary display nodes
+    this.summary = {
+      srno: document.getElementById('fees-summary-srno'),
+      name: document.getElementById('fees-summary-name'),
+      total: document.getElementById('fees-summary-total'),
+      paid: document.getElementById('fees-summary-paid'),
+      remaining: document.getElementById('fees-summary-remaining'),
+      status: document.getElementById('fees-summary-status'),
+    };
     this.submitBtn = document.getElementById('fees-submit');
     this.successEl = document.getElementById('fees-success');
   }
@@ -96,10 +105,10 @@ class FeesManager {
       const d = Array.isArray(res) ? (res[0]||{}) : (res || {});
       // Prefill fields based on webhook response keys
       // Try common keys: Sr_No, Serial_No, Name, Total, Fees_Paid, Deposit_Amount, Remarks, Payment_Mode, Ref_No, Date
-      this.inputs.srno.value = d.Sr_No ?? d.Serial_No ?? this.inputs.srno.value;
-      this.inputs.name.value = d.Name ?? this.inputs.name.value;
-      this.inputs.total.value = d.Total ?? d.Total_Fees ?? d.Total_fees ?? this.inputs.total.value;
-      this.inputs.paid.value = d.Fees_Paid ?? d.Paid ?? this.inputs.paid.value;
+  this.inputs.srno.value = d.Sr_No ?? d.Serial_No ?? this.inputs.srno.value;
+  this.inputs.name.value = d.Name ?? this.inputs.name.value;
+  this.inputs.total.value = d.Total ?? d.Total_Fees ?? d.Total_fees ?? this.inputs.total.value;
+  this.inputs.paid.value = d.Fees_Paid ?? d.Paid ?? this.inputs.paid.value;
       this.inputs.deposit.value = d.Deposit_Amount ?? d.Deposit ?? this.inputs.deposit.value;
       // New fields from webhook
       if (this.inputs.remaining) {
@@ -132,6 +141,9 @@ class FeesManager {
         const st = window.dataService.getStudentByRollAndClass(roll, cls);
         if (st) this.inputs.name.value = st.Name;
       }
+
+      // Update summary card text
+      this.updateSummaryFromInputs();
     } catch (err) {
       console.error('Fees detail fetch failed:', err);
       this.showMessage(err.message || 'Failed to fetch fees details', 'error');
@@ -215,6 +227,30 @@ class FeesManager {
       fields.forEach(el => { el.disabled = false; });
       if (this.submitBtn) this.submitBtn.disabled = false;
     }
+    // Reset summary display
+    this.setSummaryText({ srno:'—', name:'—', total:'—', paid:'—', remaining:'—', status:'—' });
+  }
+
+  // Sync summary card from hidden inputs
+  updateSummaryFromInputs() {
+    const s = {
+      srno: this.inputs.srno?.value ?? '—',
+      name: this.inputs.name?.value ?? '—',
+      total: this.inputs.total?.value ?? '—',
+      paid: this.inputs.paid?.value ?? '—',
+      remaining: this.inputs.remaining?.value ?? '—',
+      status: this.inputs.status?.value ?? '—',
+    };
+    this.setSummaryText(s);
+  }
+
+  setSummaryText(s) {
+    if (this.summary.srno) this.summary.srno.textContent = s.srno || '—';
+    if (this.summary.name) this.summary.name.textContent = s.name || '—';
+    if (this.summary.total) this.summary.total.textContent = s.total || '—';
+    if (this.summary.paid) this.summary.paid.textContent = s.paid || '—';
+    if (this.summary.remaining) this.summary.remaining.textContent = s.remaining || '—';
+    if (this.summary.status) this.summary.status.textContent = s.status || '—';
   }
 
   async submit() {

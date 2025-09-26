@@ -124,9 +124,9 @@ class Navigation {
             case 'fees':
                 // Placeholder for future fees logic
                 break;
-            case 'add-students':
-                // Placeholder for future add-students logic
-                break;
+            // removed add-students tab
+            // case 'add-students':
+            //     break;
         }
     }
 

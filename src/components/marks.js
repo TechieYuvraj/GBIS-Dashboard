@@ -46,6 +46,14 @@ class MarksManager {
               <input type="text" id="marks-exam" class="form-input" placeholder="e.g., Midterm" aria-label="Exam name">
             </div>
             <div class="form-group">
+              <label for="marks-subject"><i class="fas fa-book-open"></i> Subject:</label>
+              <input type="text" id="marks-subject" class="form-input" placeholder="e.g., Mathematics" aria-label="Subject">
+            </div>
+            <div class="form-group">
+              <label for="marks-topic"><i class="fas fa-tags"></i> Topic:</label>
+              <input type="text" id="marks-topic" class="form-input" placeholder="e.g., Algebra (Linear Equations)" aria-label="Topic">
+            </div>
+            <div class="form-group">
               <label for="marks-mm"><i class="fas fa-list-ol"></i> Maximum Marks (MM):</label>
               <input type="number" id="marks-mm" class="form-input" placeholder="e.g., 100" min="0" step="1" aria-label="Maximum marks">
             </div>
@@ -229,6 +237,8 @@ class MarksManager {
   buildPayload() {
     const dateInput = document.getElementById('marks-date');
     const examInput = document.getElementById('marks-exam');
+    const subjectInput = document.getElementById('marks-subject');
+    const topicInput = document.getElementById('marks-topic');
     const mmInput = document.getElementById('marks-mm');
 
     if (!dateInput || !examInput || !mmInput) return null;
@@ -246,6 +256,8 @@ class MarksManager {
       date: formattedDate,
       class: this.selectedClass,
       examName: examInput.value.trim(),
+      subject: subjectInput ? subjectInput.value.trim() : '',
+      topic: topicInput ? topicInput.value.trim() : '',
       maxMarks: Number(mmInput.value || 0),
       marks: marksList,
     };
