@@ -282,10 +282,70 @@
                     <div class="split-layout">
                         <div class="action-section depth-card panel-card" data-tilt>
                             <h3>Actions</h3>
-                            <div class="analytics-placeholder">
-                                <i class="fas fa-tools"></i>
-                                <p>Fees actions will be added here</p>
+                            <div class="form-grid two-col" id="fees-form">
+                                <div class="form-group">
+                                    <label for="fees-srno">Sr. No.</label>
+                                    <input type="number" id="fees-srno" class="form-input" placeholder="e.g., 1001">
+                                </div>
+                                <div class="form-group">
+                                    <label for="fees-name">Name</label>
+                                    <input type="text" id="fees-name" class="form-input" placeholder="Student Name">
+                                </div>
+                                <div class="form-group">
+                                    <label for="fees-class">Class</label>
+                                    <select id="fees-class" class="form-input">
+                                        <option value="">Choose class</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="fees-roll">Roll No.</label>
+                                    <select id="fees-roll" class="form-input">
+                                        <option value="">Choose roll no</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="fees-total">Total</label>
+                                    <input type="number" id="fees-total" class="form-input" placeholder="Total fees" min="0" step="1">
+                                </div>
+                                <div class="form-group">
+                                    <label for="fees-paid">Fees Paid</label>
+                                    <input type="number" id="fees-paid" class="form-input" placeholder="Amount paid" min="0" step="1">
+                                </div>
+                                <div class="form-group">
+                                    <label for="fees-deposit">Deposit Amount</label>
+                                    <input type="number" id="fees-deposit" class="form-input" placeholder="Deposit amount" min="0" step="1">
+                                </div>
+                                <div class="form-group">
+                                    <label for="fees-remarks">Remarks</label>
+                                    <input type="text" id="fees-remarks" class="form-input" placeholder="Optional remarks">
+                                </div>
+                                <div class="form-group">
+                                    <label for="fees-mode">Payment Mode</label>
+                                    <select id="fees-mode" class="form-input">
+                                        <option value="">Select mode</option>
+                                        <option value="Cash">Cash</option>
+                                        <option value="UPI">UPI</option>
+                                        <option value="Card">Card</option>
+                                        <option value="Bank Transfer">Bank Transfer</option>
+                                        <option value="Cheque">Cheque</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="fees-reff">Reff. No.</label>
+                                    <input type="text" id="fees-reff" class="form-input" placeholder="Reference number">
+                                </div>
+                                <div class="form-group">
+                                    <label for="fees-date">Date</label>
+                                    <input type="date" id="fees-date" class="form-input">
+                                </div>
                             </div>
+                            <div style="display:flex; justify-content:center; margin-top: 10px;">
+                                <button class="send-btn btn-primary-glass" id="fees-submit">
+                                    <i class="fas fa-paper-plane"></i>
+                                    Submit
+                                </button>
+                            </div>
+                            <div class="success-message" id="fees-success"></div>
                         </div>
                         <div class="analytics-section depth-card panel-card" data-tilt>
                             <h3>Analytics</h3>
@@ -373,6 +433,7 @@
     <script src="src/components/navigation.js"></script>
     <script src="src/components/notification.js"></script>
     <script src="src/components/attendance.js"></script>
+    <script src="src/components/fees.js"></script>
     <script src="src/components/contacts.js"></script>
     <script src="src/components/marks.js"></script>
     <script src="src/utils/helpers.js"></script>

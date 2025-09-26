@@ -2077,3 +2077,13 @@ textarea {
 /* Marks success message quick fade */
 #marks-tab .success-message { opacity: 0; transition: opacity 0.2s ease; }
 #marks-tab .success-message.show { opacity: 1; display: block; }
+
+/* === Fees Tab: Two-column form layout === */
+#fees-tab .form-grid.two-col {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(220px, 1fr));
+    gap: 16px 20px;
+}
+@media (max-width: 800px) {
+    #fees-tab .form-grid.two-col { grid-template-columns: 1fr; }
+}

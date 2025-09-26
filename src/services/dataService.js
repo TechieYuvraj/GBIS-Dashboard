@@ -803,6 +803,77 @@ class DataService {
     }
 
     /**
+     * Submit fees details to webhook
+     * Endpoint: /Fees_submit
+     */
+    async submitFees(payload) {
+        const endpoint = `${this.baseURL}/Fees_submit`;
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 20000);
+        try {
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: this.getHeaders(),
+                body: JSON.stringify(payload),
+                signal: controller.signal
+            });
+            clearTimeout(timeoutId);
+            if (!response.ok) {
+                if (response.status === 403) throw new Error('Access forbidden for fees submit');
+                if (response.status === 404) throw new Error('Fees submit endpoint not found');
+                if (response.status >= 500) throw new Error('Server error while submitting fees');
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const ct = response.headers.get('content-type');
+            if (ct && ct.includes('application/json')) return await response.json();
+            const text = await response.text();
+            return { success: true, message: text || 'Fees submitted successfully' };
+        } catch (err) {
+            if (err.name === 'AbortError') throw new Error('Fees submit request timeout');
+            if (err instanceof TypeError && err.message.includes('fetch')) {
+                throw new Error('Network error while submitting fees');
+            }
+            throw err;
+        }
+    }
+
+    /**
+     * Fetch fees details by class and roll no
+     * Endpoint: /fees_detail_fetch
+     */
+    async fetchFeesDetails(className, rollNo) {
+        const endpoint = `${this.baseURL}/fees_detail_fetch`;
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
+        const payload = { Class: className, Roll_No: rollNo };
+        try {
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: this.getHeaders(),
+                body: JSON.stringify(payload),
+                signal: controller.signal
+            });
+            clearTimeout(timeoutId);
+            if (!response.ok) {
+                if (response.status === 403) throw new Error('Access forbidden for fees detail fetch');
+                if (response.status === 404) throw new Error('Fees detail fetch endpoint not found');
+                if (response.status >= 500) throw new Error('Server error while fetching fees details');
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const ct = response.headers.get('content-type');
+            if (ct && ct.includes('application/json')) return await response.json();
+            const text = await response.text();
+            try { return JSON.parse(text); } catch { return { raw: text }; }
+        } catch (err) {
+            if (err.name === 'AbortError') throw new Error('Fees detail fetch timeout');
+            if (err instanceof TypeError && err.message.includes('fetch')) {
+                throw new Error('Network error while fetching fees details');
+            }
+            throw err;
+        }
+    }
+
+    /**
      * Get students for a specific class with roll numbers
      */
     getClassRollNumbers(className) {
