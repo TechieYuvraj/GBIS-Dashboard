@@ -409,6 +409,19 @@ textarea {
     min-height: 120px;
 }
 
+/* Fees tab focus styles: turn inputs light purple when focused/active */
+#fees-tab .form-input:focus,
+#fees-tab .form-input:active,
+#fees-tab input:focus,
+#fees-tab input:active,
+#fees-tab select:focus,
+#fees-tab select:active,
+#fees-tab textarea:focus,
+#fees-tab textarea:active {
+    background: var(--accent-100) !important;
+    color: #2c3e50 !important; /* dark grey text for readability */
+}
+
 /* Search Container */
 .search-container {
     position: relative;
