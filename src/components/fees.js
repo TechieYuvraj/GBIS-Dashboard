@@ -7,6 +7,10 @@ class FeesManager {
 
   init() {
     this.cacheEls();
+    // Disable non-key fields until data is fetched
+    this.resetFields(true);
+    // Enforce read-only fields that are data-only
+    this.enforceReadOnly();
     this.bindEvents();
     this.setDefaultDate();
     this.populateClasses();
@@ -15,12 +19,15 @@ class FeesManager {
   cacheEls() {
     this.classSel = document.getElementById('fees-class');
     this.rollSel = document.getElementById('fees-roll');
+    this.loader = document.getElementById('fees-fetch-loader');
     this.inputs = {
       srno: document.getElementById('fees-srno'),
       name: document.getElementById('fees-name'),
       total: document.getElementById('fees-total'),
       paid: document.getElementById('fees-paid'),
       deposit: document.getElementById('fees-deposit'),
+      remaining: document.getElementById('fees-remaining'),
+      status: document.getElementById('fees-status'),
       remarks: document.getElementById('fees-remarks'),
       mode: document.getElementById('fees-mode'),
       reff: document.getElementById('fees-reff'),
@@ -59,6 +66,10 @@ class FeesManager {
   onClassChange() {
     const cls = this.classSel.value;
     this.populateRolls(cls);
+    // Clear and disable fields until roll is chosen and data fetched
+    this.resetFields(true);
+    // Keep date populated with today's date (disabled until fetch completes)
+    this.setDefaultDate();
   }
 
   populateRolls(cls) {
@@ -78,6 +89,8 @@ class FeesManager {
     const cls = this.classSel.value;
     const roll = this.rollSel.value;
     if (!cls || !roll) return;
+    // show loader and disable fields while fetching
+    this.setFetching(true);
     try {
       const res = await window.dataService.fetchFeesDetails(cls, roll);
       const d = Array.isArray(res) ? (res[0]||{}) : (res || {});
@@ -85,9 +98,17 @@ class FeesManager {
       // Try common keys: Sr_No, Serial_No, Name, Total, Fees_Paid, Deposit_Amount, Remarks, Payment_Mode, Ref_No, Date
       this.inputs.srno.value = d.Sr_No ?? d.Serial_No ?? this.inputs.srno.value;
       this.inputs.name.value = d.Name ?? this.inputs.name.value;
-      this.inputs.total.value = d.Total ?? d.Total_Fees ?? this.inputs.total.value;
+      this.inputs.total.value = d.Total ?? d.Total_Fees ?? d.Total_fees ?? this.inputs.total.value;
       this.inputs.paid.value = d.Fees_Paid ?? d.Paid ?? this.inputs.paid.value;
       this.inputs.deposit.value = d.Deposit_Amount ?? d.Deposit ?? this.inputs.deposit.value;
+      // New fields from webhook
+      if (this.inputs.remaining) {
+        const rem = d.Remaining_Fees ?? d.Remaining ?? '';
+        this.inputs.remaining.value = typeof rem === 'number' ? rem : (rem || '');
+      }
+      if (this.inputs.status) {
+        this.inputs.status.value = d.Fees_Status ?? d.Status ?? '';
+      }
       this.inputs.remarks.value = d.Remarks ?? this.inputs.remarks.value;
       if (d.Payment_Mode && this.inputs.mode.querySelector(`option[value="${d.Payment_Mode}"]`)) {
         this.inputs.mode.value = d.Payment_Mode;
@@ -114,6 +135,9 @@ class FeesManager {
     } catch (err) {
       console.error('Fees detail fetch failed:', err);
       this.showMessage(err.message || 'Failed to fetch fees details', 'error');
+    } finally {
+      // enable fields and hide loader
+      this.setFetching(false);
     }
   }
 
@@ -134,14 +158,63 @@ class FeesManager {
       Name: this.inputs.name?.value || '',
       Class: cls,
       Roll_No: roll ? Number(roll) : null,
-      Total_fees: Number(this.inputs.total?.value || 0),
+  total_fees: Number(this.inputs.total?.value || 0),
       Fees_Paid: Number(this.inputs.paid?.value || 0),
       Deposit_Amount: Number(this.inputs.deposit?.value || 0),
+      Remaining_Fees: this.inputs.remaining ? Number(this.inputs.remaining.value || 0) : undefined,
+      Fees_Status: this.inputs.status ? (this.inputs.status.value || '') : undefined,
       Remarks: this.inputs.remarks?.value || '',
       Payment_Mode: this.inputs.mode?.value || '',
       Ref_No: this.inputs.reff?.value || '',
       Date: formattedDate,
     };
+  }
+
+  // Helpers to manage fetching state and input enabling
+  setFetching(isFetching) {
+    if (this.loader) this.loader.style.display = isFetching ? 'inline-flex' : 'none';
+    const toToggle = [
+      this.inputs.srno,
+      this.inputs.name,
+      this.inputs.total,
+      this.inputs.paid,
+      this.inputs.deposit,
+      this.inputs.remaining,
+      this.inputs.status,
+      this.inputs.remarks,
+      this.inputs.mode,
+      this.inputs.reff,
+      this.inputs.date,
+      this.submitBtn,
+    ].filter(Boolean);
+    toToggle.forEach(el => {
+      if (!el) return;
+      el.disabled = !!isFetching;
+    });
+  }
+
+  resetFields(disable=false) {
+    const fields = [
+      this.inputs.srno,
+      this.inputs.name,
+      this.inputs.total,
+      this.inputs.paid,
+      this.inputs.deposit,
+      this.inputs.remaining,
+      this.inputs.status,
+      this.inputs.remarks,
+      this.inputs.mode,
+      this.inputs.reff,
+      this.inputs.date,
+    ].filter(Boolean);
+    fields.forEach(el => { if ('value' in el) el.value = ''; });
+    if (disable) {
+      fields.forEach(el => { el.disabled = true; });
+      if (this.submitBtn) this.submitBtn.disabled = true;
+    } else {
+      fields.forEach(el => { el.disabled = false; });
+      if (this.submitBtn) this.submitBtn.disabled = false;
+    }
   }
 
   async submit() {
@@ -170,6 +243,18 @@ class FeesManager {
     el.textContent = message;
     el.className = `success-message show ${type}`;
     setTimeout(() => el.classList.remove('show'), 3000);
+  }
+
+  enforceReadOnly() {
+    const ro = [
+      this.inputs.srno,
+      this.inputs.name,
+      this.inputs.total,
+      this.inputs.paid,
+      this.inputs.remaining,
+      this.inputs.status,
+    ].filter(Boolean);
+    ro.forEach(el => { el.readOnly = true; });
   }
 }
 

@@ -283,37 +283,53 @@
                         <div class="action-section depth-card panel-card" data-tilt>
                             <h3>Actions</h3>
                             <div class="form-grid two-col" id="fees-form">
-                                <div class="form-group">
-                                    <label for="fees-srno">Sr. No.</label>
-                                    <input type="number" id="fees-srno" class="form-input" placeholder="e.g., 1001">
-                                </div>
-                                <div class="form-group">
-                                    <label for="fees-name">Name</label>
-                                    <input type="text" id="fees-name" class="form-input" placeholder="Student Name">
-                                </div>
+                                <!-- Move Class and Roll to the top -->
                                 <div class="form-group">
                                     <label for="fees-class">Class</label>
                                     <select id="fees-class" class="form-input">
                                         <option value="">Choose class</option>
                                     </select>
                                 </div>
-                                <div class="form-group">
+                                <div class="form-group" style="position: relative;">
                                     <label for="fees-roll">Roll No.</label>
-                                    <select id="fees-roll" class="form-input">
-                                        <option value="">Choose roll no</option>
-                                    </select>
+                                    <div style="display:flex; align-items:center; gap:8px;">
+                                        <select id="fees-roll" class="form-input">
+                                            <option value="">Choose roll no</option>
+                                        </select>
+                                        <span id="fees-fetch-loader" style="display:none; color: var(--accent-color, #6c63ff);" aria-live="polite" title="Fetching details">
+                                            <i class="fas fa-spinner fa-spin"></i>
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <!-- Rest of the fields -->
+                                <div class="form-group">
+                                    <label for="fees-srno">Sr. No.</label>
+                                    <input type="number" id="fees-srno" class="form-input" placeholder="e.g., 1001" readonly>
+                                </div>
+                                <div class="form-group">
+                                    <label for="fees-name">Name</label>
+                                    <input type="text" id="fees-name" class="form-input" placeholder="Student Name" readonly>
                                 </div>
                                 <div class="form-group">
                                     <label for="fees-total">Total</label>
-                                    <input type="number" id="fees-total" class="form-input" placeholder="Total fees" min="0" step="1">
+                                    <input type="number" id="fees-total" class="form-input" placeholder="Total fees" min="0" step="1" readonly>
                                 </div>
                                 <div class="form-group">
                                     <label for="fees-paid">Fees Paid</label>
-                                    <input type="number" id="fees-paid" class="form-input" placeholder="Amount paid" min="0" step="1">
+                                    <input type="number" id="fees-paid" class="form-input" placeholder="Amount paid" min="0" step="1" readonly>
                                 </div>
                                 <div class="form-group">
                                     <label for="fees-deposit">Deposit Amount</label>
                                     <input type="number" id="fees-deposit" class="form-input" placeholder="Deposit amount" min="0" step="1">
+                                </div>
+                                <div class="form-group">
+                                    <label for="fees-remaining">Remaining Fees</label>
+                                    <input type="number" id="fees-remaining" class="form-input" placeholder="Remaining fees" min="0" step="1" readonly>
+                                </div>
+                                <div class="form-group">
+                                    <label for="fees-status">Fee Status</label>
+                                    <input type="text" id="fees-status" class="form-input" placeholder="Status (e.g., Paid, Due, Over Paid)" readonly>
                                 </div>
                                 <div class="form-group">
                                     <label for="fees-remarks">Remarks</label>
