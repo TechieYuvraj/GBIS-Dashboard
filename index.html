@@ -288,6 +288,16 @@
                             <h3>Actions</h3>
                             <div class="form-grid two-col" id="fees-form">
                                 <!-- Move Class and Roll to the top -->
+                                <div class="form-group" style="grid-column: 1 / -1;">
+                                    <label for="fees-search">Search Student by Name</label>
+                                    <div class="search-controls">
+                                        <div class="search-input-group">
+                                            <i class="fas fa-search search-icon"></i>
+                                            <input type="text" id="fees-search" class="search-input" placeholder="Type student name to search" aria-label="Search student by name for fees">
+                                        </div>
+                                        <div class="search-results" id="fees-search-results"></div>
+                                    </div>
+                                </div>
                                 <div class="form-group">
                                     <label for="fees-class">Class</label>
                                     <select id="fees-class" class="form-input">

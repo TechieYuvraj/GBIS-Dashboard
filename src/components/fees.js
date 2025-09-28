@@ -20,6 +20,8 @@ class FeesManager {
   cacheEls() {
     this.classSel = document.getElementById('fees-class');
     this.rollSel = document.getElementById('fees-roll');
+    this.searchInput = document.getElementById('fees-search');
+    this.searchResults = document.getElementById('fees-search-results');
     this.loader = document.getElementById('fees-fetch-loader');
     this.inputs = {
       srno: document.getElementById('fees-srno'),
@@ -54,6 +56,18 @@ class FeesManager {
     if (this.rollSel) {
       this.rollSel.addEventListener('change', () => this.onRollChange());
     }
+    // Search handlers
+    if (this.searchInput) {
+      const debounced = this.debounce(() => this.onSearchInput(), 200);
+      this.searchInput.addEventListener('input', debounced);
+      this.searchInput.addEventListener('focus', () => this.onSearchInput());
+      document.addEventListener('click', (e) => {
+        if (!this.searchResults) return;
+        if (!this.searchResults.contains(e.target) && e.target !== this.searchInput) {
+          this.searchResults.classList.remove('show');
+        }
+      });
+    }
     if (this.submitBtn) {
       this.submitBtn.addEventListener('click', () => this.submit());
     }
@@ -66,6 +80,62 @@ class FeesManager {
     if (sessionSel) {
       sessionSel.addEventListener('change', () => this.renderYearly());
     }
+  }
+
+  // ---- Search by name ----
+  onSearchInput() {
+    if (!this.searchInput || !this.searchResults) return;
+    const q = this.searchInput.value.trim().toLowerCase();
+    if (!q) {
+      this.searchResults.innerHTML = '';
+      this.searchResults.classList.remove('show');
+      return;
+    }
+    const students = (window.dataService?.students || []).filter(s => {
+      const name = String(s.Name || '').toLowerCase();
+      return name.includes(q);
+    }).slice(0, 20);
+    if (students.length === 0) {
+      this.searchResults.innerHTML = '<div class="search-result-item">No results</div>';
+      this.searchResults.classList.add('show');
+      return;
+    }
+    this.searchResults.innerHTML = students.map(s => `
+      <div class="search-result-item" data-class="${s.Class}" data-roll="${s.Roll_No}" data-name="${s.Name}">
+        <div class="name">${s.Name}</div>
+        <div class="meta">Class ${s.Class} · Roll ${s.Roll_No}</div>
+      </div>
+    `).join('');
+    this.searchResults.classList.add('show');
+    // Attach click handlers
+    Array.from(this.searchResults.querySelectorAll('.search-result-item')).forEach(el => {
+      el.addEventListener('click', () => {
+        const cls = el.getAttribute('data-class');
+        const roll = el.getAttribute('data-roll');
+        const name = el.getAttribute('data-name');
+        if (this.searchInput && name) this.searchInput.value = name;
+        this.applyStudentSelection(cls, roll);
+        this.searchResults.classList.remove('show');
+      });
+    });
+  }
+
+  applyStudentSelection(cls, roll) {
+    if (!cls || !roll) return;
+    // Set class and repopulate rolls
+    if (this.classSel) this.classSel.value = cls;
+    this.populateRolls(cls);
+    // Set roll and trigger details fetch
+    if (this.rollSel) this.rollSel.value = String(roll);
+    this.onRollChange();
+  }
+
+  debounce(fn, wait=200) {
+    let t;
+    return (...args) => {
+      clearTimeout(t);
+      t = setTimeout(() => fn.apply(this, args), wait);
+    };
   }
 
   // ---------------- Fees Analytics ----------------
