@@ -1758,6 +1758,59 @@ textarea {
     transition: all 0.2s ease;
 }
 
+/* ---- Fees analytics extras ---- */
+.analytics-header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+.analytics-title {
+    font-weight: 600;
+    color: var(--text-strong);
+}
+.analytics-subtitle {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+.section-divider {
+    border: none;
+    height: 1px;
+    background: var(--border-subtle);
+    margin: 16px 0;
+}
+.analytics-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 10px;
+}
+.analytics-list-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 10px 12px;
+    border: 1px solid var(--border-subtle);
+    border-radius: 10px;
+    background: var(--surface);
+}
+.analytics-list-item .item-title {
+    font-weight: 600;
+    color: var(--text-strong);
+}
+.analytics-list-item .item-sub {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+.analytics-list-item .item-values {
+    display: flex;
+    gap: 10px;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-strong);
+}
+
 .analytics-info-item:hover {
     background: #ffffff;
     box-shadow: var(--shadow-sm);

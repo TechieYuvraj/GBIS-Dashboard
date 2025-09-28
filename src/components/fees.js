@@ -14,6 +14,7 @@ class FeesManager {
     this.bindEvents();
     this.setDefaultDate();
     this.populateClasses();
+    this.initAnalytics();
   }
 
   cacheEls() {
@@ -56,6 +57,190 @@ class FeesManager {
     if (this.submitBtn) {
       this.submitBtn.addEventListener('click', () => this.submit());
     }
+    // Month selector
+    const monthSel = document.getElementById('fees-month-select');
+    if (monthSel) {
+      monthSel.addEventListener('change', () => this.renderMonthly());
+    }
+    const sessionSel = document.getElementById('fees-session-select');
+    if (sessionSel) {
+      sessionSel.addEventListener('change', () => this.renderYearly());
+    }
+  }
+
+  // ---------------- Fees Analytics ----------------
+  async initAnalytics() {
+    try {
+      // Populate month dropdown in Apr–Mar fiscal order
+      this.monthOrder = [
+        'April','May','June','July','August','September','October','November','December','January','February','March'
+      ];
+      const monthSel = document.getElementById('fees-month-select');
+      if (monthSel) {
+        monthSel.innerHTML = '';
+        this.monthOrder.forEach((m) => {
+          const opt = document.createElement('option');
+          opt.value = m;
+          opt.textContent = m;
+          monthSel.appendChild(opt);
+        });
+        // Default to current month label (map from Date)
+        const now = new Date();
+        const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+        const currentLabel = monthNames[now.getMonth()];
+        // If currentLabel exists in our fiscal order, select it; else default to April
+        monthSel.value = this.monthOrder.includes(currentLabel) ? currentLabel : 'April';
+      }
+
+      // Fetch analytics data
+      if (window.dataService && typeof window.dataService.fetchFeesAnalytics === 'function') {
+        this.feesAnalytics = await window.dataService.fetchFeesAnalytics();
+      } else {
+        this.feesAnalytics = [];
+      }
+
+      // Normalize array
+      if (!Array.isArray(this.feesAnalytics)) {
+        this.feesAnalytics = this.feesAnalytics && this.feesAnalytics.data ? this.feesAnalytics.data : [];
+      }
+
+      // Render both sections
+      this.populateSessions();
+      this.renderYearly();
+      this.renderMonthly();
+    } catch (err) {
+      console.error('Failed to init fees analytics:', err);
+      const root = document.getElementById('fees-analytics');
+      if (root) root.innerHTML = `<div class="analytics-error">Failed to load fees analytics. ${err.message || ''}</div>`;
+    }
+  }
+
+  populateSessions() {
+    const sessionSel = document.getElementById('fees-session-select');
+    if (!sessionSel) return;
+    sessionSel.innerHTML = '';
+    // Collect FYs from analytics data
+    const data = Array.isArray(this.feesAnalytics) ? this.feesAnalytics : [];
+    const set = new Set();
+    data.forEach(item => {
+      const dateStr = item.Date || item.date || item.Transaction_Date || item.txn_date;
+      const d = this.parseDateToObj(dateStr);
+      if (!d) return;
+      set.add(this.getFiscalYear(d.year, d.monthIdx));
+    });
+    const sessions = Array.from(set).sort((a,b)=>a.localeCompare(b));
+    // Default to current FY
+    const now = new Date();
+    const currentFY = this.getFiscalYear(now.getFullYear(), now.getMonth());
+    sessions.forEach(fy => {
+      const opt = document.createElement('option');
+      opt.value = fy; opt.textContent = fy;
+      sessionSel.appendChild(opt);
+    });
+    if (sessions.length) sessionSel.value = sessions.includes(currentFY) ? currentFY : sessions[sessions.length-1];
+  }
+
+  parseDateToObj(d) {
+    // Accept formats like DD/MM/YYYY or YYYY-MM-DD
+    if (!d) return null;
+    const s = String(d);
+    let year, monthIdx, day;
+    if (s.includes('/')) {
+      const [dd, mm, yyyy] = s.split('/');
+      day = parseInt(dd, 10); monthIdx = parseInt(mm, 10) - 1; year = parseInt(yyyy, 10);
+    } else if (s.includes('-')) {
+      const [yyyy, mm, dd] = s.split('-');
+      year = parseInt(yyyy, 10); monthIdx = parseInt(mm, 10) - 1; day = parseInt(dd, 10);
+    }
+    if (isNaN(year) || isNaN(monthIdx) || isNaN(day)) return null;
+    return { year, monthIdx, day };
+  }
+
+  getFiscalYear(y, mIdx) {
+    // Fiscal year Apr–Mar; if month >= Apr (3), FY is `${y}-${y+1}` else `${y-1}-${y}`
+    if (mIdx >= 3) return `${y}-${y+1}`;
+    return `${y-1}-${y}`;
+  }
+
+  sumSafe(values) { return values.reduce((a,b) => a + (Number(b) || 0), 0); }
+
+  // Get deposit amount from a record, preferring Deposit_amount
+  depositAmount(item) {
+    return Number(
+      item?.Deposit_amount ??
+      item?.Deposit_Amount ??
+      item?.deposit_amount ??
+      item?.Deposit ??
+      item?.Amount ?? item?.amount ??
+      item?.Deposited_fees ?? item?.Fees_Paid ?? item?.Paid ?? 0
+    ) || 0;
+  }
+
+  renderYearly() {
+    const container = document.getElementById('fees-yearly-content');
+    if (!container) return;
+    const data = Array.isArray(this.feesAnalytics) ? this.feesAnalytics : [];
+    if (data.length === 0) {
+      container.innerHTML = `<div class="analytics-placeholder"><i class="fas fa-chart-line"></i><p>No yearly data</p></div>`;
+      return;
+    }
+
+    // Compute total for selected session only
+    const sessionSel = document.getElementById('fees-session-select');
+    const selectedFY = sessionSel?.value;
+    if (!selectedFY) {
+      container.innerHTML = `<div class="analytics-placeholder"><i class="fas fa-chart-line"></i><p>No session selected</p></div>`;
+      return;
+    }
+    let totalDep = 0;
+    data.forEach(item => {
+      const dateStr = item.Date || item.date || item.Transaction_Date || item.txn_date;
+      const d = this.parseDateToObj(dateStr);
+      if (!d) return;
+      const fy = this.getFiscalYear(d.year, d.monthIdx);
+      if (fy === selectedFY) totalDep += this.depositAmount(item);
+    });
+
+    container.innerHTML = `
+      <div class="analytics-cards">
+        <div class="analytics-card present"><div class="analytics-number">${totalDep}</div><div class="analytics-label">Total Collection</div></div>
+      </div>
+    `;
+  }
+
+  renderMonthly() {
+    const container = document.getElementById('fees-monthly-content');
+    const monthSel = document.getElementById('fees-month-select');
+    if (!container || !monthSel) return;
+    const sel = monthSel.value;
+    const data = Array.isArray(this.feesAnalytics) ? this.feesAnalytics : [];
+    if (data.length === 0) {
+      container.innerHTML = `<div class="analytics-placeholder"><i class=\"fas fa-calendar\"></i><p>No monthly data</p></div>`;
+      return;
+    }
+
+    // Filter by selected calendar month name using parsed date
+    const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    const filtered = data.filter(item => {
+      const dateStr = item.Date || item.date || item.Transaction_Date || item.txn_date;
+      const d = this.parseDateToObj(dateStr);
+      if (!d) return false;
+      return monthNames[d.monthIdx] === sel;
+    });
+
+    if (filtered.length === 0) {
+      container.innerHTML = `<div class="analytics-placeholder"><i class=\"fas fa-calendar\"></i><p>No records in ${sel}</p></div>`;
+      return;
+    }
+
+    // Aggregate monthly total collection from Deposit_amount
+    const totalCollection = this.sumSafe(filtered.map(i => this.depositAmount(i)));
+
+    container.innerHTML = `
+      <div class="analytics-cards">
+        <div class="analytics-card present"><div class="analytics-number">${totalCollection}</div><div class="analytics-label">Total Collection</div></div>
+      </div>
+    `;
   }
 
   async populateClasses() {

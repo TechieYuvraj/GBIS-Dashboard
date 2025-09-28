@@ -386,9 +386,44 @@
                         </div>
                         <div class="analytics-section depth-card panel-card" data-tilt>
                             <h3>Analytics</h3>
-                            <div class="analytics-placeholder">
-                                <i class="fas fa-chart-pie"></i>
-                                <p>Fees analytics will be shown here</p>
+                            <div id="fees-analytics">
+                                <div class="fees-analytics-monthly">
+                                    <div class="analytics-header-row">
+                                        <div>
+                                            <div class="analytics-title">Monthly Collection</div>
+                                            <div class="analytics-subtitle">Select a month to view details</div>
+                                        </div>
+                                        <div class="month-filter">
+                                            <label for="fees-month-select" style="margin-right:8px;">Month:</label>
+                                            <select id="fees-month-select" class="form-input compact" aria-label="Select month for fees analytics"></select>
+                                        </div>
+                                    </div>
+                                    <div id="fees-monthly-content" class="analytics-content">
+                                        <div class="analytics-placeholder">
+                                            <i class="fas fa-calendar"></i>
+                                            <p>Choose a month to view collection details</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <hr class="section-divider" />
+                                <div class="fees-analytics-yearly">
+                                    <div class="analytics-header-row">
+                                        <div>
+                                            <div class="analytics-title">Yearly Collection (Apr–Mar)</div>
+                                            <div class="analytics-subtitle">Choose a session</div>
+                                        </div>
+                                        <div class="month-filter">
+                                            <label for="fees-session-select" style="margin-right:8px;">Session:</label>
+                                            <select id="fees-session-select" class="form-input compact" aria-label="Select session for fees analytics"></select>
+                                        </div>
+                                    </div>
+                                    <div id="fees-yearly-content" class="analytics-content">
+                                        <div class="analytics-placeholder">
+                                            <i class="fas fa-chart-line"></i>
+                                            <p>Yearly summary will appear here</p>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>

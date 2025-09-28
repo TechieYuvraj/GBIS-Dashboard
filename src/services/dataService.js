@@ -916,6 +916,41 @@ class DataService {
     }
 
     /**
+     * Fetch fees analytics (monthly/yearly) from webhook
+     * Endpoint: /Fees_Analytics with body { chatInput: 'Fetch Fees Analytics' }
+     */
+    async fetchFeesAnalytics() {
+        const endpoint = `${this.baseURL}/Fees_Analytics`;
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
+        try {
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: this.getHeaders(),
+                body: JSON.stringify({ chatInput: 'Fetch Fees Analytics' }),
+                signal: controller.signal
+            });
+            clearTimeout(timeoutId);
+            if (!response.ok) {
+                if (response.status === 403) throw new Error('Access forbidden for fees analytics');
+                if (response.status === 404) throw new Error('Fees analytics endpoint not found');
+                if (response.status >= 500) throw new Error('Server error while fetching fees analytics');
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const ct = response.headers.get('content-type');
+            if (ct && ct.includes('application/json')) return await response.json();
+            const text = await response.text();
+            try { return JSON.parse(text); } catch { return { raw: text }; }
+        } catch (err) {
+            if (err.name === 'AbortError') throw new Error('Fees analytics request timeout');
+            if (err instanceof TypeError && err.message.includes('fetch')) {
+                throw new Error('Network error while fetching fees analytics');
+            }
+            throw err;
+        }
+    }
+
+    /**
      * Get students for a specific class with roll numbers
      */
     getClassRollNumbers(className) {
