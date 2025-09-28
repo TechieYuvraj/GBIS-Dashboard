@@ -103,26 +103,57 @@ class FeesManager {
     try {
       const res = await window.dataService.fetchFeesDetails(cls, roll);
       const d = Array.isArray(res) ? (res[0]||{}) : (res || {});
-      // Prefill fields based on webhook response keys
-      // Try common keys: Sr_No, Serial_No, Name, Total, Fees_Paid, Deposit_Amount, Remarks, Payment_Mode, Ref_No, Date
-  this.inputs.srno.value = d.Sr_No ?? d.Serial_No ?? this.inputs.srno.value;
-  this.inputs.name.value = d.Name ?? this.inputs.name.value;
-  this.inputs.total.value = d.Total ?? d.Total_Fees ?? d.Total_fees ?? this.inputs.total.value;
-  this.inputs.paid.value = d.Fees_Paid ?? d.Paid ?? this.inputs.paid.value;
-      this.inputs.deposit.value = d.Deposit_Amount ?? d.Deposit ?? this.inputs.deposit.value;
-      // New fields from webhook
+      // Normalize keys for robust lookups (trim, lowercase, replace spaces and hyphens with underscores)
+      const normalizeKey = (k) => String(k).trim().toLowerCase().replace(/[\s\-\.]+/g, '_');
+      const normMap = (() => {
+        const m = {};
+        Object.keys(d || {}).forEach((k) => {
+          m[normalizeKey(k)] = d[k];
+        });
+        return m;
+      })();
+      const getN = (keys, fallback = undefined) => {
+        for (const k of keys) {
+          const nk = normalizeKey(k);
+          if (nk in normMap) return normMap[nk];
+        }
+        return fallback;
+      };
+
+      // Serial / Sr No
+  this.inputs.srno.value = getN(['Sr_No', 'Serial_No', 'SrNo', 'Sr no']) ?? this.inputs.srno.value;
+      // Name
+  this.inputs.name.value = getN(['Name', 'Student_Name']) ?? this.inputs.name.value;
+      // Total fees
+  this.inputs.total.value = getN(['Total', 'Total_Fees', 'Total_fees', 'Total_fees ', 'Tution_fees', 'Tution_fees ', 'Tuition_Fees']) ?? this.inputs.total.value;
+      // Fees Paid (hidden input used for submission) from deposited/paid keys
+  this.inputs.paid.value = getN(['Fees_Paid', 'Paid', 'Deposited_fees', 'Deposited_Fees']) ?? this.inputs.paid.value;
+      // Deposit amount (current input default from webhook if present)
+  this.inputs.deposit.value = getN(['Deposit_Amount', 'Deposit']) ?? this.inputs.deposit.value;
+      // Remaining / Pending fees
       if (this.inputs.remaining) {
-        const rem = d.Remaining_Fees ?? d.Remaining ?? '';
+        const rem = getN(['Remaining_Fees', 'Remaining', 'Pending_fees', 'Pending_fees '], '');
         this.inputs.remaining.value = typeof rem === 'number' ? rem : (rem || '');
       }
+      // Fees status
       if (this.inputs.status) {
-        this.inputs.status.value = d.Fees_Status ?? d.Status ?? '';
+        let statusVal = getN(['Fees_Status', 'Fees_status', 'Status']);
+        if (!statusVal) {
+          const totalNum = Number(this.inputs.total.value || 0);
+          const paidNum = Number(this.inputs.paid.value || 0);
+          if (totalNum > 0) {
+            if (paidNum === 0) statusVal = 'Not Paid';
+            else if (paidNum >= totalNum) statusVal = 'Paid';
+            else statusVal = 'Partially Paid';
+          }
+        }
+        this.inputs.status.value = statusVal || '';
       }
       this.inputs.remarks.value = d.Remarks ?? this.inputs.remarks.value;
       if (d.Payment_Mode && this.inputs.mode.querySelector(`option[value="${d.Payment_Mode}"]`)) {
         this.inputs.mode.value = d.Payment_Mode;
       }
-      this.inputs.reff.value = d.Ref_No ?? d.Reff_No ?? this.inputs.reff.value;
+      this.inputs.reff.value = getN(['Ref_No', 'Reff_No']) ?? this.inputs.reff.value;
       if (d.Date) {
         // normalize DD/MM/YYYY to YYYY-MM-DD
         const parts = String(d.Date).includes('-') ? String(d.Date).split('-') : String(d.Date).split('/');
@@ -133,6 +164,15 @@ class FeesManager {
           else { this.inputs.date.value = `${a}-${b}-${c}`; }
         }
       }
+      // If remaining not provided, derive as Total - Paid when possible (after inputs set)
+      if (this.inputs.remaining && (this.inputs.remaining.value === '' || this.inputs.remaining.value === undefined)) {
+        const totalNum = Number(this.inputs.total.value || 0);
+        const paidNum = Number(this.inputs.paid.value || 0);
+        if (!Number.isNaN(totalNum) && !Number.isNaN(paidNum) && (totalNum !== 0 || paidNum !== 0)) {
+          this.inputs.remaining.value = Math.max(0, totalNum - paidNum);
+        }
+      }
+
       // Always set class and roll in the visible controls
       this.classSel.value = cls;
       this.rollSel.value = String(roll);
@@ -143,7 +183,16 @@ class FeesManager {
       }
 
       // Update summary card text
-      this.updateSummaryFromInputs();
+      // Build summary overrides based on API mapping requirements
+      const summaryOverrides = {
+        // Show Total_fees in Fees Paid slot (display only)
+        paid: getN(['Total_fees', 'Total_Fees', 'Total', 'Total_fees ']) ?? this.inputs.paid?.value,
+        // Show Pending_fees in Remaining Fees slot (display only)
+        remaining: getN(['Pending_fees', 'Pending_fees ', 'Remaining_Fees', 'Remaining']) ?? this.inputs.remaining?.value,
+        // Show Fees_status in Fees Status slot (display only)
+        status: getN(['Fees_status', 'Fees_Status', 'Status']) ?? this.inputs.status?.value,
+      };
+      this.updateSummaryFromInputs(summaryOverrides);
     } catch (err) {
       console.error('Fees detail fetch failed:', err);
       this.showMessage(err.message || 'Failed to fetch fees details', 'error');
@@ -232,25 +281,30 @@ class FeesManager {
   }
 
   // Sync summary card from hidden inputs
-  updateSummaryFromInputs() {
+  updateSummaryFromInputs(overrides = {}) {
     const s = {
       srno: this.inputs.srno?.value ?? '—',
       name: this.inputs.name?.value ?? '—',
       total: this.inputs.total?.value ?? '—',
-      paid: this.inputs.paid?.value ?? '—',
-      remaining: this.inputs.remaining?.value ?? '—',
-      status: this.inputs.status?.value ?? '—',
+      paid: overrides.paid ?? (this.inputs.paid?.value ?? '—'),
+      remaining: overrides.remaining ?? (this.inputs.remaining?.value ?? '—'),
+      status: overrides.status ?? (this.inputs.status?.value ?? '—'),
     };
     this.setSummaryText(s);
   }
 
   setSummaryText(s) {
-    if (this.summary.srno) this.summary.srno.textContent = s.srno || '—';
-    if (this.summary.name) this.summary.name.textContent = s.name || '—';
-    if (this.summary.total) this.summary.total.textContent = s.total || '—';
-    if (this.summary.paid) this.summary.paid.textContent = s.paid || '—';
-    if (this.summary.remaining) this.summary.remaining.textContent = s.remaining || '—';
-    if (this.summary.status) this.summary.status.textContent = s.status || '—';
+    const display = (v) => {
+      if (v === null || v === undefined) return '—';
+      if (typeof v === 'string' && v.trim() === '') return '—';
+      return String(v);
+    };
+    if (this.summary.srno) this.summary.srno.textContent = display(s.srno);
+    if (this.summary.name) this.summary.name.textContent = display(s.name);
+    if (this.summary.total) this.summary.total.textContent = display(s.total);
+    if (this.summary.paid) this.summary.paid.textContent = display(s.paid);
+    if (this.summary.remaining) this.summary.remaining.textContent = display(s.remaining);
+    if (this.summary.status) this.summary.status.textContent = display(s.status);
   }
 
   async submit() {
