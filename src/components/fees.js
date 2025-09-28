@@ -185,8 +185,8 @@ class FeesManager {
       // Update summary card text
       // Build summary overrides based on API mapping requirements
       const summaryOverrides = {
-        // Show Total_fees in Fees Paid slot (display only)
-        paid: getN(['Total_fees', 'Total_Fees', 'Total', 'Total_fees ']) ?? this.inputs.paid?.value,
+        // Show Deposited_fees in Deposited Amount slot (display only)
+        paid: getN(['Deposited_fees', 'Deposited_Fees', 'Fees_Paid', 'Paid']) ?? this.inputs.paid?.value,
         // Show Pending_fees in Remaining Fees slot (display only)
         remaining: getN(['Pending_fees', 'Pending_fees ', 'Remaining_Fees', 'Remaining']) ?? this.inputs.remaining?.value,
         // Show Fees_status in Fees Status slot (display only)
