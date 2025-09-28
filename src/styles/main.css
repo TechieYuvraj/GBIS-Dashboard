@@ -202,7 +202,7 @@ body::before {
     top: 10px;
     left: 10px;
     right: 10px;
-    background: #d7d7d7;
+    background: var(--accent-200);
     border-radius: 50px;
     color: var(--text-primary);
     padding: 0;
@@ -356,7 +356,7 @@ body::before {
     font-size: 1.4rem;
     font-weight: 700;
     border-bottom: 3px solid transparent;
-    border-bottom: 2px solid hsl(220 30% 90% / 1);
+    border-bottom: 2px solid var(--accent-200);
     padding-bottom: 15px;
     text-transform: uppercase;
     letter-spacing: 1px;
@@ -904,7 +904,7 @@ textarea {
 .stat-pill label { font-weight:600; }
 
 /* Redesigned Student Card */
-#contacts-tab .student-card { background:var(--c-bg-card); border:1px solid var(--c-border); border-radius:26px; padding:15px; display:flex; flex-direction:column; gap:10px; color:var(--c-text-primary); position:relative; overflow:hidden; backdrop-filter:blur(34px) saturate(180%); -webkit-backdrop-filter:blur(34px) saturate(180%); box-shadow:0 14px 40px hsl(var(--c-accent-h) 60% 20% / .45), inset 0 1px 0 hsl(var(--c-accent-h) 85% 85% / .3); }
+#contacts-tab .student-card { background:var(--c-bg-card); border:1px solid var(--c-border); border-radius:26px; padding:15px; display:flex; flex-direction:column; gap:10px; color:var(--c-text-primary); position:relative; overflow:hidden; backdrop-filter:blur(34px) saturate(180%); -webkit-backdrop-filter:blur(34px) saturate(180%); box-shadow:0 3px 10px hsl(var(--c-accent-h) 60% 20% / .45), inset 0 1px 0 hsl(var(--c-accent-h) 85% 85% / .3); }
 #contacts-tab .student-card::before { content:""; position:absolute; inset:0; background:radial-gradient(circle at 25% 20%, hsl(var(--c-accent-h) 75% 55% / .35), transparent 60%); mix-blend-mode:screen; opacity:.5; }
 #contacts-tab .student-card:hover { box-shadow:0 18px 54px hsl(var(--c-accent-h) 60% 18% / .55); }
 #contacts-tab .student-header { display:flex; flex-direction: row; align-items:center; justify-content:space-between; gap:10px; }
@@ -974,7 +974,7 @@ textarea {
 
 .student-card:hover { box-shadow: var(--shadow-md); border-color: hsl(220 30% 85% / 1); background: #ffffff; }
 
-.student-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; border-bottom: 2px solid hsl(220 30% 90% / 1); padding-bottom:8px; }
+.student-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; border-bottom: 2px solid var(--accent-200); padding-bottom:8px; }
 
 .student-name { font-size: 1rem; font-weight: 700; color: var(--text-primary); }
 
