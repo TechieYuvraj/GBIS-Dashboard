@@ -1882,7 +1882,13 @@ textarea {
     border: 1px solid var(--accent-200);
 }
 
-/* Account info in header */
+/* Header actions and account info */
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
 .account-info {
     display: none; /* Hidden by default, shown when logged in */
     align-items: center;
@@ -1898,6 +1904,31 @@ textarea {
 .account-info i {
     font-size: 1.2rem;
     color: var(--accent);
+}
+
+.logout-btn {
+    display: none; /* Hidden by default, shown when logged in */
+    align-items: center;
+    gap: 6px;
+    background: transparent;
+    border: 1px solid var(--border-subtle);
+    color: var(--text-strong);
+    padding: 8px 12px;
+    border-radius: 16px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.logout-btn:hover {
+    background: var(--surface-soft);
+    border-color: var(--accent-300);
+    color: var(--accent-600);
+}
+
+.logout-btn i {
+    font-size: 0.9rem;
 }
 
 /* ---- Fees analytics extras ---- */

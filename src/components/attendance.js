@@ -389,7 +389,15 @@ class AttendanceManager {
                 try { await window.dataService.fetchContacts(); } catch (e) { /* ignore */ }
             }
 
-            const summary = await window.dataService.fetchAttendanceSummary(dateStr);
+            // Try to fetch attendance summary, but continue with fallback if it fails
+            let summary = [];
+            try {
+                summary = await window.dataService.fetchAttendanceSummary(dateStr);
+            } catch (webhookError) {
+                console.warn('Attendance webhook failed, showing classes without data:', webhookError.message);
+                // Continue with empty summary - fallback logic will handle it
+                summary = [];
+            }
 
             // Map summary by class
             const summaryMap = new Map();

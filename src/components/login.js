@@ -31,6 +31,14 @@ class LoginManager {
       });
     }
     
+    // Logout button functionality
+    const logoutBtn = document.getElementById('logout-btn');
+    if (logoutBtn) {
+      logoutBtn.addEventListener('click', () => {
+        this.logout();
+      });
+    }
+    
     // Password toggle functionality
     const passwordToggle = document.getElementById('password-toggle');
     const passwordInput = document.getElementById('password');
@@ -77,57 +85,45 @@ class LoginManager {
   }
 
   async handleLogin() {
-    const username = document.getElementById('username').value.trim();
-    const password = document.getElementById('password').value.trim();
-
-    if (!username || !password) {
-      this.showMessage('Please enter both username and password', 'error');
-      return;
-    }
-
     try {
+      // Get form values
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value.trim();
+      
+      // Basic validation
+      if (!username || !password) {
+        this.showMessage('Please enter both username and password', 'error');
+        return;
+      }
+
       // Show loading state
       const submitBtn = this.loginForm.querySelector('button[type="submit"]');
       const originalText = submitBtn.innerHTML;
       submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Logging in...';
       submitBtn.disabled = true;
 
-      // Call login API
+      // Call login API with form credentials
       const response = await window.dataService.login(username, password);
       
-      // Check if response contains "Login Successful"
-      const responseText = typeof response === 'string' ? response : JSON.stringify(response);
-      
-      if (responseText.includes('Login Successful')) {
+      // Handle successful login
+      if (response && response.success) {
         this.showMessage('Login successful! Redirecting...', 'success');
         setTimeout(() => {
           this.setLoggedInState();
           localStorage.setItem('gbis_login_state', 'logged_in');
         }, 1000);
       } else {
-        // Show the actual response for debugging if it's not a login success
-        console.log('Login response:', response);
-        
-        // Handle specific error messages from the webhook
-        if (responseText.includes('Authorization data is wrong!')) {
-          this.showMessage('Invalid username or password. Please try again.', 'error');
-        } else {
-          this.showMessage('Please check your username or password to login', 'error');
-        }
+        this.showMessage('Unexpected response from login', 'error');
       }
 
     } catch (error) {
       console.error('Login error:', error);
       
-      // More specific error messages
-      if (error.message.includes('403')) {
-        this.showMessage('Access denied. Please check your credentials or contact administrator.', 'error');
-      } else if (error.message.includes('timeout')) {
-        this.showMessage('Login request timed out. Please try again.', 'error');
-      } else if (error.message.includes('Network error')) {
-        this.showMessage('Network error. Please check your connection and try again.', 'error');
+      // Handle validation errors
+      if (error.message.includes('Invalid username or password')) {
+        this.showMessage('Invalid username or password. Please try again.', 'error');
       } else {
-        this.showMessage('Please check your username or password to login', 'error');
+        this.showMessage('Login failed. Please try again.', 'error');
       }
     } finally {
       // Reset button state
@@ -144,6 +140,12 @@ class LoginManager {
     // Show account info in header (already updated in HTML)
     if (this.accountInfo) {
       this.accountInfo.style.display = 'flex';
+    }
+    
+    // Show logout button
+    const logoutBtn = document.getElementById('logout-btn');
+    if (logoutBtn) {
+      logoutBtn.style.display = 'flex';
     }
   }
 
@@ -172,9 +174,13 @@ class LoginManager {
       this.loginForm.reset();
     }
     
-    // Hide account info
+    // Hide account info and logout button
     if (this.accountInfo) {
       this.accountInfo.style.display = 'none';
+    }
+    const logoutBtn = document.getElementById('logout-btn');
+    if (logoutBtn) {
+      logoutBtn.style.display = 'none';
     }
   }
 }
