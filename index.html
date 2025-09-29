@@ -9,14 +9,44 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 <body>
+    <!-- Login Screen -->
+    <div class="login-overlay" id="login-overlay">
+        <div class="login-modal">
+            <div class="login-header">
+                <h2>Login to Dashboard</h2>
+                <p>Gyan Bharti International School</p>
+            </div>
+            <form class="login-form" id="login-form">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" class="form-input" placeholder="Enter username" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <div class="password-input-group">
+                        <input type="password" id="password" class="form-input" placeholder="Enter password" required>
+                        <button type="button" class="password-toggle" id="password-toggle">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+                <button type="submit" class="login-submit-btn btn-primary-glass">
+                    <i class="fas fa-sign-in-alt"></i>
+                    Login
+                </button>
+                <div class="login-message" id="login-message"></div>
+            </form>
+        </div>
+    </div>
+
     <!-- Header -->
     <header class="header">
         <div class="header-content">
             <h1 class="school-name">Gyan Bharti International School</h1>
-            <button class="login-btn">
-                <i class="fas fa-user"></i>
-                Login
-            </button>
+            <div class="account-info" id="account-info">
+                <i class="fas fa-user-circle"></i>
+                <span>ADMIN</span>
+            </div>
         </div>
     </header>
 
@@ -495,6 +525,7 @@
 
     <!-- Scripts -->
     <script src="src/services/dataService.js"></script>
+    <script src="src/components/login.js"></script>
     <script src="src/components/navigation.js"></script>
     <script src="src/components/notification.js"></script>
     <script src="src/components/attendance.js"></script>

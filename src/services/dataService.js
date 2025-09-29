@@ -60,11 +60,66 @@ class DataService {
      * Get default headers for API requests
      * Includes the n8n API key for authentication
      */
-    getHeaders() {
+    getHeaders(extraHeaders = {}) {
         return {
             'Content-Type': 'application/json',
-            'x-n8n-apiKey': this.apiKey
+            'x-n8n-apiKey': this.apiKey,
+            ...extraHeaders
         };
+    }
+
+    /**
+     * Login to the dashboard
+     * Sends username as 'key' header and password as 'Value' header with chatInput: "Login"
+     */
+    async login(username, password) {
+        const endpoint = `${this.baseURL}/login`;
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
+        
+        try {
+            console.log('Login attempt to:', endpoint);
+            console.log('Headers:', { 'key': username, 'Value': password });
+            
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'key': username,
+                    'Value': password
+                },
+                body: JSON.stringify({ chatInput: 'Login' }),
+                signal: controller.signal
+            });
+            
+            clearTimeout(timeoutId);
+            
+            console.log('Login response status:', response.status);
+            console.log('Login response headers:', Object.fromEntries(response.headers.entries()));
+            
+            const contentType = response.headers.get('content-type');
+            let result;
+            if (contentType && contentType.includes('application/json')) {
+                result = await response.json();
+            } else {
+                result = await response.text();
+            }
+            
+            console.log('Login response body:', result);
+            
+            // Return the result regardless of status code - let the UI handle the response
+            return result;
+            
+        } catch (err) {
+            console.error('Login fetch error:', err);
+            if (err.name === 'AbortError') {
+                throw new Error('Login request timeout');
+            }
+            if (err instanceof TypeError && err.message.includes('fetch')) {
+                throw new Error('Network error during login');
+            }
+            throw err;
+        }
     }
 
     /**
