@@ -224,25 +224,37 @@ class FeesManager {
     const sessionSel = document.getElementById('fees-session-select');
     if (!sessionSel) return;
     sessionSel.innerHTML = '';
-    // Collect FYs from analytics data
+    
+    // Collect fiscal years from analytics data using the new JSON structure
     const data = Array.isArray(this.feesAnalytics) ? this.feesAnalytics : [];
-    const set = new Set();
+    const fiscalYears = new Set();
+    
     data.forEach(item => {
       const dateStr = this.getTransactionDate(item);
       const transactionDate = this.parseDateFromIST(dateStr);
       if (!transactionDate) return;
-      set.add(this.getFiscalYear(transactionDate.getFullYear(), transactionDate.getMonth()));
+      
+      const fy = this.getFiscalYear(transactionDate.getFullYear(), transactionDate.getMonth());
+      fiscalYears.add(fy);
     });
-    const sessions = Array.from(set).sort((a,b)=>a.localeCompare(b));
-    // Default to current FY
-    const now = new Date();
-    const currentFY = this.getFiscalYear(now.getFullYear(), now.getMonth());
+    
+    const sessions = Array.from(fiscalYears).sort((a, b) => a.localeCompare(b));
+    
+    // Populate dropdown with available sessions
     sessions.forEach(fy => {
       const opt = document.createElement('option');
-      opt.value = fy; opt.textContent = fy;
+      opt.value = fy; 
+      opt.textContent = fy;
       sessionSel.appendChild(opt);
     });
-    if (sessions.length) sessionSel.value = sessions.includes(currentFY) ? currentFY : sessions[sessions.length-1];
+    
+    // Default to current fiscal year if available
+    const now = new Date();
+    const currentFY = this.getFiscalYear(now.getFullYear(), now.getMonth());
+    
+    if (sessions.length > 0) {
+      sessionSel.value = sessions.includes(currentFY) ? currentFY : sessions[sessions.length - 1];
+    }
   }
 
   parseDateToObj(d) {
@@ -284,33 +296,38 @@ class FeesManager {
   renderYearly() {
     const container = document.getElementById('fees-yearly-content');
     if (!container) return;
+    
     const data = Array.isArray(this.feesAnalytics) ? this.feesAnalytics : [];
     if (data.length === 0) {
       container.innerHTML = `<div class="analytics-placeholder"><i class="fas fa-chart-line"></i><p>No yearly data</p></div>`;
       return;
     }
 
-    // Compute total for selected session only
+    // Get selected session/fiscal year
     const sessionSel = document.getElementById('fees-session-select');
     const selectedFY = sessionSel?.value;
     if (!selectedFY) {
       container.innerHTML = `<div class="analytics-placeholder"><i class="fas fa-chart-line"></i><p>No session selected</p></div>`;
       return;
     }
-    let totalDep = 0;
-    data.forEach(item => {
-      const dateStr = this.getTransactionDate(item);
-      const transactionDate = this.parseDateFromIST(dateStr);
-      if (!transactionDate) return;
-      const fy = this.getFiscalYear(transactionDate.getFullYear(), transactionDate.getMonth());
-      if (fy === selectedFY) totalDep += this.getDepositAmount(item);
-    });
+
+    // Use centralized filtering method
+    const yearlyTransactions = this.filterTransactionsByDate(data, 'yearly', selectedFY);
+    const summary = this.calculateSummary(yearlyTransactions);
 
     container.innerHTML = `
       <table class="analytics-summary-table">
         <tr>
+          <td><strong>Session:</strong></td>
+          <td>${selectedFY}</td>
+        </tr>
+        <tr>
           <td><strong>Total Collection:</strong></td>
-          <td class="amount">₹${totalDep}</td>
+          <td class="amount">₹${summary.total.toLocaleString('en-IN')}</td>
+        </tr>
+        <tr>
+          <td><strong>Transactions:</strong></td>
+          <td>${summary.count}</td>
         </tr>
       </table>
     `;
@@ -320,35 +337,38 @@ class FeesManager {
     const container = document.getElementById('fees-monthly-content');
     const monthSel = document.getElementById('fees-month-select');
     if (!container || !monthSel) return;
-    const sel = monthSel.value;
+    
+    const selectedMonth = monthSel.value;
     const data = Array.isArray(this.feesAnalytics) ? this.feesAnalytics : [];
+    
     if (data.length === 0) {
-      container.innerHTML = `<div class="analytics-placeholder"><i class=\"fas fa-calendar\"></i><p>No monthly data</p></div>`;
+      container.innerHTML = `<div class="analytics-placeholder"><i class="fas fa-calendar"></i><p>No monthly data</p></div>`;
       return;
     }
 
-    // Filter by selected calendar month name using parsed date
-    const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-    const filtered = data.filter(item => {
-      const dateStr = this.getTransactionDate(item);
-      const transactionDate = this.parseDateFromIST(dateStr);
-      if (!transactionDate) return false;
-      return monthNames[transactionDate.getMonth()] === sel;
-    });
-
-    if (filtered.length === 0) {
-      container.innerHTML = `<div class="analytics-placeholder"><i class=\"fas fa-calendar\"></i><p>No records in ${sel}</p></div>`;
+    // Use centralized filtering method
+    const monthlyTransactions = this.filterTransactionsByDate(data, 'monthly', selectedMonth);
+    
+    if (monthlyTransactions.length === 0) {
+      container.innerHTML = `<div class="analytics-placeholder"><i class="fas fa-calendar"></i><p>No records in ${selectedMonth}</p></div>`;
       return;
     }
 
-    // Aggregate monthly total collection from Deposit_amount
-    const totalCollection = this.sumSafe(filtered.map(i => this.getDepositAmount(i)));
+    const summary = this.calculateSummary(monthlyTransactions);
 
     container.innerHTML = `
       <table class="analytics-summary-table">
         <tr>
+          <td><strong>Month:</strong></td>
+          <td>${selectedMonth}</td>
+        </tr>
+        <tr>
           <td><strong>Total Collection:</strong></td>
-          <td class="amount">₹${totalCollection}</td>
+          <td class="amount">₹${summary.total.toLocaleString('en-IN')}</td>
+        </tr>
+        <tr>
+          <td><strong>Transactions:</strong></td>
+          <td>${summary.count}</td>
         </tr>
       </table>
     `;
@@ -675,22 +695,22 @@ class FeesManager {
   generateSampleFeesData() {
     const data = [];
     const today = new Date();
-    const students = ['AAHIL KHAN', 'SARA ALI', 'AMIT SINGH', 'RIYA PATEL', 'RAJESH KUMAR', 'PRIYA SHARMA', 'ARJUN VERMA', 'ANAYA GUPTA'];
-    const paymentModes = ['Cash', 'UPI', 'Card', 'Bank Transfer'];
+    const students = ['Garvit Sunda', 'AAHIL KHAN', 'SARA ALI', 'AMIT SINGH', 'RIYA PATEL', 'RAJESH KUMAR', 'PRIYA SHARMA', 'ARJUN VERMA', 'ANAYA GUPTA'];
+    const paymentModes = ['UPI', 'Cash', 'Card', 'Bank Transfer'];
+    const remarks = ['Tution', 'Transport', 'Books', 'Exam Fee', 'Annual Fee', 'Sports Fee'];
     
-    // Generate data for last 60 days
-    for (let i = 0; i < 60; i++) {
+    // Generate data for last 90 days to cover multiple months
+    for (let i = 0; i < 90; i++) {
       const date = new Date(today);
       date.setDate(today.getDate() - i);
-      const dateStr = this.formatDateToDDMMYYYY(date);
       
-      // Random number of transactions per day (0-5)
-      const numTransactions = Math.floor(Math.random() * 6);
+      // Random number of transactions per day (0-8 for more variety)
+      const numTransactions = Math.floor(Math.random() * 9);
       
       for (let j = 0; j < numTransactions; j++) {
         // Add random hours/minutes/seconds to make it more realistic
         const transactionDate = new Date(date);
-        transactionDate.setHours(Math.floor(Math.random() * 12) + 9); // 9 AM to 8 PM
+        transactionDate.setHours(Math.floor(Math.random() * 10) + 8); // 8 AM to 6 PM
         transactionDate.setMinutes(Math.floor(Math.random() * 60));
         transactionDate.setSeconds(Math.floor(Math.random() * 60));
         
@@ -700,14 +720,19 @@ class FeesManager {
           Name: students[Math.floor(Math.random() * students.length)],
           Date: this.formatDateToIST(transactionDate),
           Mode: paymentModes[Math.floor(Math.random() * paymentModes.length)],
-          Deposit_amount: Math.floor(Math.random() * 5000) + 500,
+          Deposit_amount: Math.floor(Math.random() * 15000) + 1000, // More realistic fee amounts
           Transaction_ID: Math.floor(Math.random() * 9000000000000) + 1000000000000,
-          Remark: ['Tution', 'Transport', 'Books', 'Exam Fee'][Math.floor(Math.random() * 4)]
+          Remark: remarks[Math.floor(Math.random() * remarks.length)]
         });
       }
     }
     
-    return data.sort((a, b) => this.parseDateFromDDMMYYYY(b.Date) - this.parseDateFromDDMMYYYY(a.Date));
+    // Sort by date descending (newest first)
+    return data.sort((a, b) => {
+      const dateA = this.parseDateFromIST(a.Date);
+      const dateB = this.parseDateFromIST(b.Date);
+      return dateB - dateA;
+    });
   }
 
   // Format date to DD/MM/YYYY (for display purposes)
@@ -740,17 +765,27 @@ class FeesManager {
   // Parse DD-MM-YYYYTHH:mm:ss IST to Date object
   parseDateFromIST(dateStr) {
     if (!dateStr) return null;
-    // Handle both old DD/MM/YYYY format and new IST format
+    
+    // Handle the new IST format: "02-10-2025T05:30:00 IST"
     if (dateStr.includes('T') && dateStr.includes('IST')) {
       const [datePart, timePart] = dateStr.split('T');
       const [day, month, year] = datePart.split('-');
       const [time] = timePart.split(' IST');
       const [hours, minutes, seconds] = time.split(':');
-      return new Date(year, month - 1, day, hours, minutes, seconds);
-    } else if (dateStr.includes('/')) {
-      // Fallback for old DD/MM/YYYY format
+      return new Date(parseInt(year), parseInt(month) - 1, parseInt(day), parseInt(hours), parseInt(minutes), parseInt(seconds));
+    } 
+    // Handle ISO format without IST suffix
+    else if (dateStr.includes('T') && !dateStr.includes('IST')) {
+      const [datePart, timePart] = dateStr.split('T');
+      const [day, month, year] = datePart.split('-');
+      const [hours, minutes, seconds] = timePart.split(':');
+      return new Date(parseInt(year), parseInt(month) - 1, parseInt(day), parseInt(hours), parseInt(minutes), parseInt(seconds));
+    }
+    // Fallback for old DD/MM/YYYY format
+    else if (dateStr.includes('/')) {
       return this.parseDateFromDDMMYYYY(dateStr);
     }
+    
     return new Date(dateStr);
   }
 
@@ -799,6 +834,67 @@ class FeesManager {
            item?.ref_no ?? 
            item?.Reference ?? 
            'N/A';
+  }
+
+  // Centralized data filtering method for all analytics
+  filterTransactionsByDate(data, filterType, filterValue) {
+    if (!Array.isArray(data)) return [];
+    
+    return data.filter(item => {
+      const dateStr = this.getTransactionDate(item);
+      if (!dateStr) return false;
+      
+      const transactionDate = this.parseDateFromIST(dateStr);
+      if (!transactionDate) return false;
+      
+      switch (filterType) {
+        case 'daily':
+          // filterValue is a date string in YYYY-MM-DD format
+          if (!filterValue) return false;
+          const selectedDate = new Date(filterValue);
+          return (
+            transactionDate.getDate() === selectedDate.getDate() &&
+            transactionDate.getMonth() === selectedDate.getMonth() &&
+            transactionDate.getFullYear() === selectedDate.getFullYear()
+          );
+          
+        case 'range':
+          // filterValue is {from: "YYYY-MM-DD", to: "YYYY-MM-DD"}
+          if (!filterValue.from || !filterValue.to) return false;
+          const fromDate = new Date(filterValue.from);
+          const toDate = new Date(filterValue.to);
+          toDate.setHours(23, 59, 59, 999); // Include full end day
+          return transactionDate >= fromDate && transactionDate <= toDate;
+          
+        case 'monthly':
+          // filterValue is month name like "October"
+          if (!filterValue) return false;
+          const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+          const monthIndex = monthNames.indexOf(filterValue);
+          if (monthIndex === -1) return false;
+          return transactionDate.getMonth() === monthIndex;
+          
+        case 'yearly':
+          // filterValue is fiscal year like "2024-2025"
+          if (!filterValue) return false;
+          const fiscalYear = this.getFiscalYear(transactionDate.getFullYear(), transactionDate.getMonth());
+          return fiscalYear === filterValue;
+          
+        default:
+          return true;
+      }
+    });
+  }
+
+  // Calculate summary statistics for filtered transactions
+  calculateSummary(transactions) {
+    if (!Array.isArray(transactions)) return { total: 0, count: 0, average: 0 };
+    
+    const total = this.sumSafe(transactions.map(t => this.getDepositAmount(t)));
+    const count = transactions.length;
+    const average = count > 0 ? Math.round(total / count) : 0;
+    
+    return { total, count, average };
   }
 
   // Render recent transactions
@@ -877,39 +973,31 @@ class FeesManager {
       return;
     }
 
-    // Convert YYYY-MM-DD to DD/MM/YYYY for comparison
-    const [year, month, day] = selectedDate.split('-');
-    const formattedDate = `${day}/${month}/${year}`;
-    
+    // Use centralized filtering method
     const data = Array.isArray(this.feesAnalytics) ? this.feesAnalytics : [];
-    const dayTransactions = data.filter(item => {
-      const dateStr = this.getTransactionDate(item);
-      if (!dateStr) return false;
-      
-      // Parse the transaction date and compare with selected date
-      const transactionDate = this.parseDateFromIST(dateStr);
-      if (!transactionDate) return false;
-      
-      const selectedDateObj = new Date(selectedDate);
-      return (
-        transactionDate.getDate() === selectedDateObj.getDate() &&
-        transactionDate.getMonth() === selectedDateObj.getMonth() &&
-        transactionDate.getFullYear() === selectedDateObj.getFullYear()
-      );
-    });
+    const dayTransactions = this.filterTransactionsByDate(data, 'daily', selectedDate);
+    const summary = this.calculateSummary(dayTransactions);
 
-    const totalCollection = this.sumSafe(dayTransactions.map(i => this.getDepositAmount(i)));
-    const transactionCount = dayTransactions.length;
+    // Format the selected date for display
+    const displayDate = new Date(selectedDate).toLocaleDateString('en-IN', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric'
+    });
 
     container.innerHTML = `
       <table class="analytics-summary-table">
         <tr>
+          <td><strong>Date:</strong></td>
+          <td>${displayDate}</td>
+        </tr>
+        <tr>
           <td><strong>Total Collection:</strong></td>
-          <td class="amount">₹${totalCollection}</td>
+          <td class="amount">₹${summary.total.toLocaleString('en-IN')}</td>
         </tr>
         <tr>
           <td><strong>Transactions:</strong></td>
-          <td>${transactionCount}</td>
+          <td>${summary.count}</td>
         </tr>
       </table>
     `;
@@ -935,39 +1023,44 @@ class FeesManager {
       return;
     }
 
+    // Use centralized filtering method
     const data = Array.isArray(this.feesAnalytics) ? this.feesAnalytics : [];
-    const rangeTransactions = data.filter(item => {
-      const dateStr = this.getTransactionDate(item);
-      if (!dateStr) return false;
-      
-      const transactionDate = this.parseDateFromIST(dateStr);
-      if (!transactionDate) return false;
-      
-      const from = new Date(fromDate);
-      const to = new Date(toDate);
-      // Set end of day for 'to' date to include all transactions on that day
-      to.setHours(23, 59, 59, 999);
-      
-      return transactionDate >= from && transactionDate <= to;
-    });
+    const rangeTransactions = this.filterTransactionsByDate(data, 'range', { from: fromDate, to: toDate });
+    const summary = this.calculateSummary(rangeTransactions);
 
-    const totalCollection = this.sumSafe(rangeTransactions.map(i => this.getDepositAmount(i)));
-    const transactionCount = rangeTransactions.length;
-    const avgDaily = transactionCount > 0 ? Math.round(totalCollection / Math.ceil((new Date(toDate) - new Date(fromDate)) / (1000 * 60 * 60 * 24)) + 1) : 0;
+    // Calculate number of days in range
+    const daysDiff = Math.ceil((new Date(toDate) - new Date(fromDate)) / (1000 * 60 * 60 * 24)) + 1;
+    const avgDaily = summary.count > 0 ? Math.round(summary.total / daysDiff) : 0;
+
+    // Format dates for display
+    const fromDisplay = new Date(fromDate).toLocaleDateString('en-IN', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric'
+    });
+    const toDisplay = new Date(toDate).toLocaleDateString('en-IN', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric'
+    });
 
     container.innerHTML = `
       <table class="analytics-summary-table">
         <tr>
+          <td><strong>Date Range:</strong></td>
+          <td>${fromDisplay} - ${toDisplay}</td>
+        </tr>
+        <tr>
           <td><strong>Total Collection:</strong></td>
-          <td class="amount">₹${totalCollection}</td>
+          <td class="amount">₹${summary.total.toLocaleString('en-IN')}</td>
         </tr>
         <tr>
           <td><strong>Transactions:</strong></td>
-          <td>${transactionCount}</td>
+          <td>${summary.count}</td>
         </tr>
         <tr>
           <td><strong>Average Daily:</strong></td>
-          <td class="amount">₹${avgDaily}</td>
+          <td class="amount">₹${avgDaily.toLocaleString('en-IN')}</td>
         </tr>
       </table>
     `;
