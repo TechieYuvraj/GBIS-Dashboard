@@ -228,10 +228,10 @@ class FeesManager {
     const data = Array.isArray(this.feesAnalytics) ? this.feesAnalytics : [];
     const set = new Set();
     data.forEach(item => {
-      const dateStr = item.Date || item.date || item.Transaction_Date || item.txn_date;
-      const d = this.parseDateToObj(dateStr);
-      if (!d) return;
-      set.add(this.getFiscalYear(d.year, d.monthIdx));
+      const dateStr = this.getTransactionDate(item);
+      const transactionDate = this.parseDateFromIST(dateStr);
+      if (!transactionDate) return;
+      set.add(this.getFiscalYear(transactionDate.getFullYear(), transactionDate.getMonth()));
     });
     const sessions = Array.from(set).sort((a,b)=>a.localeCompare(b));
     // Default to current FY
@@ -299,11 +299,11 @@ class FeesManager {
     }
     let totalDep = 0;
     data.forEach(item => {
-      const dateStr = item.Date || item.date || item.Transaction_Date || item.txn_date;
-      const d = this.parseDateToObj(dateStr);
-      if (!d) return;
-      const fy = this.getFiscalYear(d.year, d.monthIdx);
-      if (fy === selectedFY) totalDep += this.depositAmount(item);
+      const dateStr = this.getTransactionDate(item);
+      const transactionDate = this.parseDateFromIST(dateStr);
+      if (!transactionDate) return;
+      const fy = this.getFiscalYear(transactionDate.getFullYear(), transactionDate.getMonth());
+      if (fy === selectedFY) totalDep += this.getDepositAmount(item);
     });
 
     container.innerHTML = `
@@ -330,10 +330,10 @@ class FeesManager {
     // Filter by selected calendar month name using parsed date
     const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
     const filtered = data.filter(item => {
-      const dateStr = item.Date || item.date || item.Transaction_Date || item.txn_date;
-      const d = this.parseDateToObj(dateStr);
-      if (!d) return false;
-      return monthNames[d.monthIdx] === sel;
+      const dateStr = this.getTransactionDate(item);
+      const transactionDate = this.parseDateFromIST(dateStr);
+      if (!transactionDate) return false;
+      return monthNames[transactionDate.getMonth()] === sel;
     });
 
     if (filtered.length === 0) {
@@ -342,7 +342,7 @@ class FeesManager {
     }
 
     // Aggregate monthly total collection from Deposit_amount
-    const totalCollection = this.sumSafe(filtered.map(i => this.depositAmount(i)));
+    const totalCollection = this.sumSafe(filtered.map(i => this.getDepositAmount(i)));
 
     container.innerHTML = `
       <table class="analytics-summary-table">
@@ -509,7 +509,7 @@ class FeesManager {
     const cls = this.classSel?.value || '';
     const roll = this.rollSel?.value || '';
     const dateStr = this.inputs.date?.value;
-    const formattedDate = dateStr ? window.dataService.formatDate(new Date(dateStr)) : window.dataService.formatDate(new Date());
+    const formattedDate = dateStr ? this.formatDateToIST(new Date(dateStr)) : this.formatDateToIST(new Date());
     return {
       Sr_No: Number(this.inputs.srno?.value || 0),
       Name: this.inputs.name?.value || '',
@@ -620,15 +620,16 @@ class FeesManager {
         if (window.dataService && typeof window.dataService.fetchFeesAnalytics === 'function') {
           this.feesAnalytics = await window.dataService.fetchFeesAnalytics();
         } else {
-          // Add the new transaction to sample data
+          // Add the new transaction to sample data with new JSON structure
           this.feesAnalytics.unshift({
-            Date: this.formatDateToDDMMYYYY(new Date(payload.Date)),
-            Student_Name: payload.Name,
+            row_number: this.feesAnalytics.length + 1,
+            "Serial_No.": payload.Sr_No,
+            Name: payload.Name,
+            Date: payload.Date, // Already in IST format from buildPayload
+            Mode: payload.Payment_Mode,
             Deposit_amount: payload.Deposit_Amount,
-            Payment_Mode: payload.Payment_Mode,
-            Ref_No: payload.Ref_No,
-            Class: payload.Class,
-            Roll_No: payload.Roll_No
+            Transaction_ID: Math.floor(Math.random() * 9000000000000) + 1000000000000,
+            Remark: payload.Remarks || 'Fee Payment'
           });
         }
         
@@ -687,14 +688,21 @@ class FeesManager {
       const numTransactions = Math.floor(Math.random() * 6);
       
       for (let j = 0; j < numTransactions; j++) {
+        // Add random hours/minutes/seconds to make it more realistic
+        const transactionDate = new Date(date);
+        transactionDate.setHours(Math.floor(Math.random() * 12) + 9); // 9 AM to 8 PM
+        transactionDate.setMinutes(Math.floor(Math.random() * 60));
+        transactionDate.setSeconds(Math.floor(Math.random() * 60));
+        
         data.push({
-          Date: dateStr,
-          Student_Name: students[Math.floor(Math.random() * students.length)],
+          row_number: i * 10 + j + 1,
+          "Serial_No.": Math.floor(Math.random() * 9000) + 1000,
+          Name: students[Math.floor(Math.random() * students.length)],
+          Date: this.formatDateToIST(transactionDate),
+          Mode: paymentModes[Math.floor(Math.random() * paymentModes.length)],
           Deposit_amount: Math.floor(Math.random() * 5000) + 500,
-          Payment_Mode: paymentModes[Math.floor(Math.random() * paymentModes.length)],
-          Ref_No: `TXN${Date.now() + Math.random().toString(36).substr(2, 9)}`,
-          Class: ['NURSERY', '5TH', '8TH', '10TH'][Math.floor(Math.random() * 4)],
-          Roll_No: Math.floor(Math.random() * 30) + 1
+          Transaction_ID: Math.floor(Math.random() * 9000000000000) + 1000000000000,
+          Remark: ['Tution', 'Transport', 'Books', 'Exam Fee'][Math.floor(Math.random() * 4)]
         });
       }
     }
@@ -729,6 +737,70 @@ class FeesManager {
     return new Date(year, month - 1, day);
   }
 
+  // Parse DD-MM-YYYYTHH:mm:ss IST to Date object
+  parseDateFromIST(dateStr) {
+    if (!dateStr) return null;
+    // Handle both old DD/MM/YYYY format and new IST format
+    if (dateStr.includes('T') && dateStr.includes('IST')) {
+      const [datePart, timePart] = dateStr.split('T');
+      const [day, month, year] = datePart.split('-');
+      const [time] = timePart.split(' IST');
+      const [hours, minutes, seconds] = time.split(':');
+      return new Date(year, month - 1, day, hours, minutes, seconds);
+    } else if (dateStr.includes('/')) {
+      // Fallback for old DD/MM/YYYY format
+      return this.parseDateFromDDMMYYYY(dateStr);
+    }
+    return new Date(dateStr);
+  }
+
+  // Get deposit amount from the new JSON structure
+  getDepositAmount(item) {
+    return Number(
+      item?.Deposit_amount ??
+      item?.deposit_amount ??
+      item?.Amount ?? item?.amount ??
+      item?.Deposited_fees ?? item?.Fees_Paid ?? item?.Paid ?? 0
+    ) || 0;
+  }
+
+  // Get transaction date from the new JSON structure
+  getTransactionDate(item) {
+    return item?.Date ?? 
+           item?.date ?? 
+           item?.Transaction_Date ?? 
+           item?.txn_date ?? 
+           item?.transaction_date;
+  }
+
+  // Get student name from the new JSON structure
+  getStudentName(item) {
+    return item?.Name ?? 
+           item?.name ?? 
+           item?.Student_Name ?? 
+           item?.student_name ?? 
+           'N/A';
+  }
+
+  // Get payment mode from the new JSON structure
+  getPaymentMode(item) {
+    return item?.Mode ?? 
+           item?.mode ?? 
+           item?.Payment_Mode ?? 
+           item?.payment_mode ?? 
+           'N/A';
+  }
+
+  // Get transaction ID/reference from the new JSON structure
+  getTransactionRef(item) {
+    return item?.Transaction_ID ?? 
+           item?.transaction_id ?? 
+           item?.Ref_No ?? 
+           item?.ref_no ?? 
+           item?.Reference ?? 
+           'N/A';
+  }
+
   // Render recent transactions
   renderTransactions() {
     const container = document.getElementById('fees-transactions-content');
@@ -758,11 +830,11 @@ class FeesManager {
           <tbody>
             ${recentTransactions.map(transaction => `
               <tr>
-                <td>${transaction.Student_Name || transaction.Name || 'N/A'}</td>
-                <td>₹${this.depositAmount(transaction)}</td>
-                <td>${transaction.Payment_Mode || 'N/A'}</td>
+                <td>${this.getStudentName(transaction)}</td>
+                <td>₹${this.getDepositAmount(transaction)}</td>
+                <td>${this.getPaymentMode(transaction)}</td>
                 <td>
-                  <button class="receipt-btn" onclick="window.feesManager.downloadReceipt('${transaction.Ref_No || 'N/A'}')">
+                  <button class="receipt-btn" onclick="window.feesManager.downloadReceipt('${this.getTransactionRef(transaction)}')">
                     <i class="fas fa-download"></i> Receipt
                   </button>
                 </td>
@@ -776,12 +848,12 @@ class FeesManager {
         ${recentTransactions.map(transaction => `
           <div class="transaction-card">
             <div class="transaction-header">
-              <strong>${transaction.Student_Name || transaction.Name || 'N/A'}</strong>
-              <span class="transaction-amount">₹${this.depositAmount(transaction)}</span>
+              <strong>${this.getStudentName(transaction)}</strong>
+              <span class="transaction-amount">₹${this.getDepositAmount(transaction)}</span>
             </div>
             <div class="transaction-details">
-              <span class="transaction-mode">${transaction.Payment_Mode || 'N/A'}</span>
-              <button class="receipt-btn" onclick="window.feesManager.downloadReceipt('${transaction.Ref_No || 'N/A'}')">
+              <span class="transaction-mode">${this.getPaymentMode(transaction)}</span>
+              <button class="receipt-btn" onclick="window.feesManager.downloadReceipt('${this.getTransactionRef(transaction)}')">
                 <i class="fas fa-download"></i> Receipt
               </button>
             </div>
@@ -811,11 +883,22 @@ class FeesManager {
     
     const data = Array.isArray(this.feesAnalytics) ? this.feesAnalytics : [];
     const dayTransactions = data.filter(item => {
-      const dateStr = item.Date || item.date || item.Transaction_Date || item.txn_date;
-      return dateStr === formattedDate;
+      const dateStr = this.getTransactionDate(item);
+      if (!dateStr) return false;
+      
+      // Parse the transaction date and compare with selected date
+      const transactionDate = this.parseDateFromIST(dateStr);
+      if (!transactionDate) return false;
+      
+      const selectedDateObj = new Date(selectedDate);
+      return (
+        transactionDate.getDate() === selectedDateObj.getDate() &&
+        transactionDate.getMonth() === selectedDateObj.getMonth() &&
+        transactionDate.getFullYear() === selectedDateObj.getFullYear()
+      );
     });
 
-    const totalCollection = this.sumSafe(dayTransactions.map(i => this.depositAmount(i)));
+    const totalCollection = this.sumSafe(dayTransactions.map(i => this.getDepositAmount(i)));
     const transactionCount = dayTransactions.length;
 
     container.innerHTML = `
@@ -854,17 +937,21 @@ class FeesManager {
 
     const data = Array.isArray(this.feesAnalytics) ? this.feesAnalytics : [];
     const rangeTransactions = data.filter(item => {
-      const dateStr = item.Date || item.date || item.Transaction_Date || item.txn_date;
+      const dateStr = this.getTransactionDate(item);
       if (!dateStr) return false;
       
-      const transactionDate = this.parseDateFromDDMMYYYY(dateStr);
+      const transactionDate = this.parseDateFromIST(dateStr);
+      if (!transactionDate) return false;
+      
       const from = new Date(fromDate);
       const to = new Date(toDate);
+      // Set end of day for 'to' date to include all transactions on that day
+      to.setHours(23, 59, 59, 999);
       
       return transactionDate >= from && transactionDate <= to;
     });
 
-    const totalCollection = this.sumSafe(rangeTransactions.map(i => this.depositAmount(i)));
+    const totalCollection = this.sumSafe(rangeTransactions.map(i => this.getDepositAmount(i)));
     const transactionCount = rangeTransactions.length;
     const avgDaily = transactionCount > 0 ? Math.round(totalCollection / Math.ceil((new Date(toDate) - new Date(fromDate)) / (1000 * 60 * 60 * 24)) + 1) : 0;
 

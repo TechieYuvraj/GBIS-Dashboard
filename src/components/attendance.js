@@ -306,9 +306,9 @@ class AttendanceManager {
             markBtn.disabled = true;
             markBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Marking...';
 
-            // Format date to DD/MM/YYYY
+            // Format date to IST format
             const selectedDate = new Date(dateInput.value);
-            const formattedDate = window.dataService.formatDate(selectedDate);
+            const formattedDate = window.dataService.formatDateToIST(selectedDate);
 
             // Prepare attendance data
             const attendanceData = [{

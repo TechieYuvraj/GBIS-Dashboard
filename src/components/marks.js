@@ -245,8 +245,8 @@ class MarksManager {
     if (!this.selectedClass) return null;
 
     const formattedDate = (dateInput && dateInput.value)
-      ? window.dataService.formatDate(new Date(dateInput.value))
-      : window.dataService.formatDate(new Date());
+      ? window.dataService.formatDateToIST(new Date(dateInput.value))
+      : window.dataService.formatDateToIST(new Date());
 
     const marksList = this.rows
       .filter((r) => r.obtained !== '')
