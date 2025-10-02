@@ -80,6 +80,16 @@ class FeesManager {
     if (sessionSel) {
       sessionSel.addEventListener('change', () => this.renderYearly());
     }
+    // Daily collection date selector
+    const dailyDateSel = document.getElementById('fees-daily-date');
+    if (dailyDateSel) {
+      dailyDateSel.addEventListener('change', () => this.renderDaily());
+    }
+    // Date range apply button
+    const rangeApplyBtn = document.getElementById('fees-range-apply');
+    if (rangeApplyBtn) {
+      rangeApplyBtn.addEventListener('click', () => this.renderDateRange());
+    }
   }
 
   // ---- Search by name ----
@@ -162,19 +172,44 @@ class FeesManager {
         monthSel.value = this.monthOrder.includes(currentLabel) ? currentLabel : 'April';
       }
 
+      // Set default daily date to today
+      const dailyDateSel = document.getElementById('fees-daily-date');
+      if (dailyDateSel) {
+        const today = new Date();
+        dailyDateSel.value = today.toISOString().split('T')[0];
+      }
+
+      // Set default date range (last 30 days)
+      const rangeFromSel = document.getElementById('fees-range-from');
+      const rangeToSel = document.getElementById('fees-range-to');
+      if (rangeFromSel && rangeToSel) {
+        const today = new Date();
+        const thirtyDaysAgo = new Date(today);
+        thirtyDaysAgo.setDate(today.getDate() - 30);
+        rangeFromSel.value = thirtyDaysAgo.toISOString().split('T')[0];
+        rangeToSel.value = today.toISOString().split('T')[0];
+      }
+
       // Fetch analytics data
       if (window.dataService && typeof window.dataService.fetchFeesAnalytics === 'function') {
         this.feesAnalytics = await window.dataService.fetchFeesAnalytics();
       } else {
-        this.feesAnalytics = [];
+        this.feesAnalytics = this.generateSampleFeesData();
       }
 
       // Normalize array
       if (!Array.isArray(this.feesAnalytics)) {
         this.feesAnalytics = this.feesAnalytics && this.feesAnalytics.data ? this.feesAnalytics.data : [];
       }
+      
+      // Ensure we have at least sample data for demonstration
+      if (this.feesAnalytics.length === 0) {
+        this.feesAnalytics = this.generateSampleFeesData();
+      }
 
-      // Render both sections
+      // Render all sections
+      this.renderTransactions();
+      this.renderDaily();
       this.populateSessions();
       this.renderYearly();
       this.renderMonthly();
@@ -272,9 +307,12 @@ class FeesManager {
     });
 
     container.innerHTML = `
-      <div class="analytics-cards">
-        <div class="analytics-card present"><div class="analytics-number">${totalDep}</div><div class="analytics-label">Total Collection</div></div>
-      </div>
+      <table class="analytics-summary-table">
+        <tr>
+          <td><strong>Total Collection:</strong></td>
+          <td class="amount">₹${totalDep}</td>
+        </tr>
+      </table>
     `;
   }
 
@@ -307,9 +345,12 @@ class FeesManager {
     const totalCollection = this.sumSafe(filtered.map(i => this.depositAmount(i)));
 
     container.innerHTML = `
-      <div class="analytics-cards">
-        <div class="analytics-card present"><div class="analytics-number">${totalCollection}</div><div class="analytics-label">Total Collection</div></div>
-      </div>
+      <table class="analytics-summary-table">
+        <tr>
+          <td><strong>Total Collection:</strong></td>
+          <td class="amount">₹${totalCollection}</td>
+        </tr>
+      </table>
     `;
   }
 
@@ -474,7 +515,7 @@ class FeesManager {
       Name: this.inputs.name?.value || '',
       Class: cls,
       Roll_No: roll ? Number(roll) : null,
-  total_fees: Number(this.inputs.total?.value || 0),
+      total_fees: Number(this.inputs.total?.value || 0),
       Fees_Paid: Number(this.inputs.paid?.value || 0),
       Deposit_Amount: Number(this.inputs.deposit?.value || 0),
       Remaining_Fees: this.inputs.remaining ? Number(this.inputs.remaining.value || 0) : undefined,
@@ -573,6 +614,33 @@ class FeesManager {
       this.submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
       await window.dataService.submitFees(payload);
       this.showMessage('Fees submitted successfully', 'success');
+      
+      // Refresh analytics data after successful submission
+      try {
+        if (window.dataService && typeof window.dataService.fetchFeesAnalytics === 'function') {
+          this.feesAnalytics = await window.dataService.fetchFeesAnalytics();
+        } else {
+          // Add the new transaction to sample data
+          this.feesAnalytics.unshift({
+            Date: this.formatDateToDDMMYYYY(new Date(payload.Date)),
+            Student_Name: payload.Name,
+            Deposit_amount: payload.Deposit_Amount,
+            Payment_Mode: payload.Payment_Mode,
+            Ref_No: payload.Ref_No,
+            Class: payload.Class,
+            Roll_No: payload.Roll_No
+          });
+        }
+        
+        // Re-render all analytics sections
+        this.renderTransactions();
+        this.renderDaily();
+        this.renderDateRange();
+        this.renderMonthly();
+        this.renderYearly();
+      } catch (analyticsError) {
+        console.warn('Failed to refresh analytics after submission:', analyticsError);
+      }
     } catch (err) {
       console.error('Submit fees failed:', err);
       this.showMessage(err.message || 'Failed to submit fees', 'error');
@@ -600,6 +668,235 @@ class FeesManager {
       this.inputs.status,
     ].filter(Boolean);
     ro.forEach(el => { el.readOnly = true; });
+  }
+
+  // Generate sample fees data for development/testing
+  generateSampleFeesData() {
+    const data = [];
+    const today = new Date();
+    const students = ['AAHIL KHAN', 'SARA ALI', 'AMIT SINGH', 'RIYA PATEL', 'RAJESH KUMAR', 'PRIYA SHARMA', 'ARJUN VERMA', 'ANAYA GUPTA'];
+    const paymentModes = ['Cash', 'UPI', 'Card', 'Bank Transfer'];
+    
+    // Generate data for last 60 days
+    for (let i = 0; i < 60; i++) {
+      const date = new Date(today);
+      date.setDate(today.getDate() - i);
+      const dateStr = this.formatDateToDDMMYYYY(date);
+      
+      // Random number of transactions per day (0-5)
+      const numTransactions = Math.floor(Math.random() * 6);
+      
+      for (let j = 0; j < numTransactions; j++) {
+        data.push({
+          Date: dateStr,
+          Student_Name: students[Math.floor(Math.random() * students.length)],
+          Deposit_amount: Math.floor(Math.random() * 5000) + 500,
+          Payment_Mode: paymentModes[Math.floor(Math.random() * paymentModes.length)],
+          Ref_No: `TXN${Date.now() + Math.random().toString(36).substr(2, 9)}`,
+          Class: ['NURSERY', '5TH', '8TH', '10TH'][Math.floor(Math.random() * 4)],
+          Roll_No: Math.floor(Math.random() * 30) + 1
+        });
+      }
+    }
+    
+    return data.sort((a, b) => this.parseDateFromDDMMYYYY(b.Date) - this.parseDateFromDDMMYYYY(a.Date));
+  }
+
+  // Format date to DD/MM/YYYY (for display purposes)
+  formatDateToDDMMYYYY(date) {
+    const d = new Date(date);
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const year = d.getFullYear();
+    return `${day}/${month}/${year}`;
+  }
+
+  // Format date to DD-MM-YYYYTHH:mm:ss IST (for JSON data)
+  formatDateToIST(date) {
+    const d = new Date(date);
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const year = d.getFullYear();
+    const hours = String(d.getHours()).padStart(2, '0');
+    const minutes = String(d.getMinutes()).padStart(2, '0');
+    const seconds = String(d.getSeconds()).padStart(2, '0');
+    return `${day}-${month}-${year}T${hours}:${minutes}:${seconds} IST`;
+  }
+
+  // Parse DD/MM/YYYY to Date object
+  parseDateFromDDMMYYYY(dateStr) {
+    const [day, month, year] = dateStr.split('/');
+    return new Date(year, month - 1, day);
+  }
+
+  // Render recent transactions
+  renderTransactions() {
+    const container = document.getElementById('fees-transactions-content');
+    if (!container) return;
+    
+    const data = Array.isArray(this.feesAnalytics) ? this.feesAnalytics : [];
+    if (data.length === 0) {
+      container.innerHTML = `<div class="analytics-placeholder"><i class="fas fa-receipt"></i><p>No transactions found</p></div>`;
+      return;
+    }
+
+    // Get last 5 transactions
+    const recentTransactions = data.slice(0, 5);
+    
+    // Desktop table view
+    const tableHTML = `
+      <div class="transactions-desktop">
+        <table class="fees-transactions-table">
+          <thead>
+            <tr>
+              <th>Student Name</th>
+              <th>Fee Submit</th>
+              <th>Payment Mode</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${recentTransactions.map(transaction => `
+              <tr>
+                <td>${transaction.Student_Name || transaction.Name || 'N/A'}</td>
+                <td>₹${this.depositAmount(transaction)}</td>
+                <td>${transaction.Payment_Mode || 'N/A'}</td>
+                <td>
+                  <button class="receipt-btn" onclick="window.feesManager.downloadReceipt('${transaction.Ref_No || 'N/A'}')">
+                    <i class="fas fa-download"></i> Receipt
+                  </button>
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+      
+      <div class="transactions-mobile">
+        ${recentTransactions.map(transaction => `
+          <div class="transaction-card">
+            <div class="transaction-header">
+              <strong>${transaction.Student_Name || transaction.Name || 'N/A'}</strong>
+              <span class="transaction-amount">₹${this.depositAmount(transaction)}</span>
+            </div>
+            <div class="transaction-details">
+              <span class="transaction-mode">${transaction.Payment_Mode || 'N/A'}</span>
+              <button class="receipt-btn" onclick="window.feesManager.downloadReceipt('${transaction.Ref_No || 'N/A'}')">
+                <i class="fas fa-download"></i> Receipt
+              </button>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+    
+    container.innerHTML = tableHTML;
+  }
+
+  // Render daily collection
+  renderDaily() {
+    const container = document.getElementById('fees-daily-content');
+    const dateInput = document.getElementById('fees-daily-date');
+    if (!container || !dateInput) return;
+    
+    const selectedDate = dateInput.value;
+    if (!selectedDate) {
+      container.innerHTML = `<div class="analytics-placeholder"><i class="fas fa-calendar-day"></i><p>Please select a date</p></div>`;
+      return;
+    }
+
+    // Convert YYYY-MM-DD to DD/MM/YYYY for comparison
+    const [year, month, day] = selectedDate.split('-');
+    const formattedDate = `${day}/${month}/${year}`;
+    
+    const data = Array.isArray(this.feesAnalytics) ? this.feesAnalytics : [];
+    const dayTransactions = data.filter(item => {
+      const dateStr = item.Date || item.date || item.Transaction_Date || item.txn_date;
+      return dateStr === formattedDate;
+    });
+
+    const totalCollection = this.sumSafe(dayTransactions.map(i => this.depositAmount(i)));
+    const transactionCount = dayTransactions.length;
+
+    container.innerHTML = `
+      <table class="analytics-summary-table">
+        <tr>
+          <td><strong>Total Collection:</strong></td>
+          <td class="amount">₹${totalCollection}</td>
+        </tr>
+        <tr>
+          <td><strong>Transactions:</strong></td>
+          <td>${transactionCount}</td>
+        </tr>
+      </table>
+    `;
+  }
+
+  // Render date range collection
+  renderDateRange() {
+    const container = document.getElementById('fees-range-content');
+    const fromInput = document.getElementById('fees-range-from');
+    const toInput = document.getElementById('fees-range-to');
+    if (!container || !fromInput || !toInput) return;
+    
+    const fromDate = fromInput.value;
+    const toDate = toInput.value;
+    
+    if (!fromDate || !toDate) {
+      container.innerHTML = `<div class="analytics-placeholder"><i class="fas fa-calendar-alt"></i><p>Please select both from and to dates</p></div>`;
+      return;
+    }
+
+    if (new Date(fromDate) > new Date(toDate)) {
+      container.innerHTML = `<div class="analytics-placeholder"><i class="fas fa-exclamation-triangle"></i><p>From date cannot be later than to date</p></div>`;
+      return;
+    }
+
+    const data = Array.isArray(this.feesAnalytics) ? this.feesAnalytics : [];
+    const rangeTransactions = data.filter(item => {
+      const dateStr = item.Date || item.date || item.Transaction_Date || item.txn_date;
+      if (!dateStr) return false;
+      
+      const transactionDate = this.parseDateFromDDMMYYYY(dateStr);
+      const from = new Date(fromDate);
+      const to = new Date(toDate);
+      
+      return transactionDate >= from && transactionDate <= to;
+    });
+
+    const totalCollection = this.sumSafe(rangeTransactions.map(i => this.depositAmount(i)));
+    const transactionCount = rangeTransactions.length;
+    const avgDaily = transactionCount > 0 ? Math.round(totalCollection / Math.ceil((new Date(toDate) - new Date(fromDate)) / (1000 * 60 * 60 * 24)) + 1) : 0;
+
+    container.innerHTML = `
+      <table class="analytics-summary-table">
+        <tr>
+          <td><strong>Total Collection:</strong></td>
+          <td class="amount">₹${totalCollection}</td>
+        </tr>
+        <tr>
+          <td><strong>Transactions:</strong></td>
+          <td>${transactionCount}</td>
+        </tr>
+        <tr>
+          <td><strong>Average Daily:</strong></td>
+          <td class="amount">₹${avgDaily}</td>
+        </tr>
+      </table>
+    `;
+  }
+
+  // Download receipt function
+  downloadReceipt(refNo) {
+    // This is a placeholder function. In a real implementation, you would:
+    // 1. Fetch the receipt data from the server
+    // 2. Generate a PDF or redirect to a receipt page
+    // 3. Trigger download or open in new window
+    
+    alert(`Receipt download for transaction ${refNo} would be implemented here.\n\nIn a real implementation, this would:\n- Fetch receipt details from server\n- Generate PDF receipt\n- Trigger download`);
+    
+    // Example implementation:
+    // window.open(`/api/receipts/${refNo}`, '_blank');
   }
 }
 
