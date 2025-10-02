@@ -90,6 +90,11 @@ class FeesManager {
     if (rangeApplyBtn) {
       rangeApplyBtn.addEventListener('click', () => this.renderDateRange());
     }
+    // Analytics refresh button
+    const refreshBtn = document.getElementById('fees-analytics-refresh');
+    if (refreshBtn) {
+      refreshBtn.addEventListener('click', () => this.refreshAnalytics());
+    }
   }
 
   // ---- Search by name ----
@@ -908,8 +913,17 @@ class FeesManager {
       return;
     }
 
-    // Get last 5 transactions
-    const recentTransactions = data.slice(0, 5);
+    // Sort all transactions by date and time (most recent first) and get top 5
+    const sortedTransactions = data
+      .filter(item => this.getTransactionDate(item)) // Only include items with valid dates
+      .sort((a, b) => {
+        const dateA = this.parseDateFromIST(this.getTransactionDate(a));
+        const dateB = this.parseDateFromIST(this.getTransactionDate(b));
+        if (!dateA || !dateB) return 0;
+        return dateB - dateA; // Descending order (newest first)
+      });
+    
+    const recentTransactions = sortedTransactions.slice(0, 5);
     
     // Desktop table view
     const tableHTML = `
@@ -1064,6 +1078,83 @@ class FeesManager {
         </tr>
       </table>
     `;
+  }
+
+  // Refresh analytics data and re-render all sections
+  async refreshAnalytics() {
+    const refreshBtn = document.getElementById('fees-analytics-refresh');
+    if (!refreshBtn) return;
+    
+    try {
+      // Show loading state
+      refreshBtn.classList.add('refreshing');
+      refreshBtn.disabled = true;
+      
+      // Fetch fresh analytics data
+      if (window.dataService && typeof window.dataService.fetchFeesAnalytics === 'function') {
+        this.feesAnalytics = await window.dataService.fetchFeesAnalytics();
+      } else {
+        // Regenerate sample data with current timestamp
+        this.feesAnalytics = this.generateSampleFeesData();
+      }
+
+      // Normalize array
+      if (!Array.isArray(this.feesAnalytics)) {
+        this.feesAnalytics = this.feesAnalytics && this.feesAnalytics.data ? this.feesAnalytics.data : [];
+      }
+      
+      // Ensure we have at least sample data for demonstration
+      if (this.feesAnalytics.length === 0) {
+        this.feesAnalytics = this.generateSampleFeesData();
+      }
+
+      // Re-render all analytics sections
+      this.renderTransactions();
+      this.renderDaily();
+      this.renderDateRange();
+      this.populateSessions();
+      this.renderMonthly();
+      this.renderYearly();
+      
+      // Show success feedback
+      this.showMessage('Analytics refreshed successfully', 'success');
+      
+    } catch (error) {
+      console.error('Failed to refresh analytics:', error);
+      this.showMessage('Failed to refresh analytics', 'error');
+    } finally {
+      // Remove loading state
+      refreshBtn.classList.remove('refreshing');
+      refreshBtn.disabled = false;
+    }
+  }
+
+  // Show user feedback messages
+  showMessage(message, type = 'info') {
+    // Create or update message element
+    let messageEl = document.getElementById('fees-message');
+    if (!messageEl) {
+      messageEl = document.createElement('div');
+      messageEl.id = 'fees-message';
+      messageEl.className = 'fees-message';
+      
+      // Insert at top of fees section
+      const feesSection = document.getElementById('fees-section');
+      if (feesSection && feesSection.firstChild) {
+        feesSection.insertBefore(messageEl, feesSection.firstChild);
+      }
+    }
+    
+    messageEl.textContent = message;
+    messageEl.className = `fees-message ${type}`;
+    messageEl.style.display = 'block';
+    
+    // Auto-hide after 3 seconds
+    setTimeout(() => {
+      if (messageEl) {
+        messageEl.style.display = 'none';
+      }
+    }, 3000);
   }
 
   // Download receipt function
