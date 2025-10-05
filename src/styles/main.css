@@ -1593,6 +1593,311 @@ textarea {
     }
 }
 
+/* Fees Analytics Specific Styles */
+.fees-transactions-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+    background: #ffffff;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+}
+
+/* Analytics Header with Refresh Button */
+.analytics-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.analytics-header h3 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.refresh-btn {
+    background: var(--accent-50);
+    border: 1px solid var(--accent-200);
+    border-radius: 8px;
+    padding: 8px 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: var(--accent-600);
+    font-size: 0.9rem;
+}
+
+.refresh-btn:hover {
+    background: var(--accent-100);
+    border-color: var(--accent-300);
+    transform: translateY(-1px);
+}
+
+.refresh-btn:active {
+    transform: translateY(0);
+}
+
+.refresh-btn i {
+    transition: transform 0.3s ease;
+}
+
+.refresh-btn.refreshing i {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* Analytics Summary Table */
+.analytics-summary-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #ffffff;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+    font-size: 0.95rem;
+}
+
+.analytics-summary-table td {
+    padding: 10px 15px;
+    border-bottom: 1px solid hsl(220 30% 95%);
+    vertical-align: middle;
+}
+
+.analytics-summary-table tr:last-child td {
+    border-bottom: none;
+}
+
+.analytics-summary-table td:first-child {
+    color: var(--text-secondary);
+    width: 60%;
+}
+
+.analytics-summary-table td:last-child {
+    text-align: right;
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+.analytics-summary-table td.amount {
+    color: var(--cta);
+    font-weight: 600;
+}
+
+.fees-transactions-table th {
+    background: var(--accent-50);
+    padding: 10px 12px;
+    text-align: left;
+    font-weight: 600;
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--accent-100);
+    font-size: 0.9rem;
+}
+
+.fees-transactions-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid hsl(220 30% 95%);
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.fees-transactions-table tr:last-child td {
+    border-bottom: none;
+}
+
+.fees-transactions-table tr:hover {
+    background: var(--accent-50);
+}
+
+.receipt-btn {
+    padding: 6px 12px;
+    font-size: 0.85rem;
+    border-radius: 16px;
+    background: var(--cta);
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.receipt-btn:hover {
+    background: var(--cta-600);
+    transform: translateY(-1px);
+}
+
+/* Mobile transaction cards */
+.transactions-mobile {
+    display: none;
+}
+
+.transaction-card {
+    background: #ffffff;
+    border: 1px solid hsl(220 30% 90%);
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 8px;
+    box-shadow: var(--shadow-sm);
+}
+
+.transaction-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.transaction-header strong {
+    color: var(--text-primary);
+    font-size: 1rem;
+}
+
+.transaction-amount {
+    color: var(--cta);
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+.transaction-details {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.transaction-mode {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.date-filter, .date-range-filter {
+    display: flex;
+    align-items: center;
+}
+
+.form-input.compact {
+    min-width: 120px;
+    padding: 8px 12px;
+    font-size: 0.9rem;
+    max-width: 130px;
+}
+
+.btn-secondary-glass.compact {
+    padding: 8px 12px;
+    font-size: 0.9rem;
+    min-width: auto;
+}
+
+/* Analytics header row styling */
+.analytics-header-row {
+    justify-content: space-between;
+    margin-bottom: 10px;
+    gap: 15px;
+}
+
+.analytics-title {
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+}
+
+.analytics-subtitle {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+/* Section dividers - more compact */
+.section-divider {
+    border: none;
+    height: 1px;
+    background: linear-gradient(to right, transparent, hsl(220 30% 85%), transparent);
+    margin: 18px 0;
+}
+
+/* Fees analytics sections spacing - more compact */
+.fees-analytics-transactions,
+.fees-analytics-daily,
+.fees-analytics-range,
+.fees-analytics-monthly,
+.fees-analytics-yearly {
+    margin-bottom: 10px;
+}
+
+.fees-analytics-transactions:first-child {
+    margin-top: 0;
+}
+
+.fees-analytics-yearly:last-child {
+    margin-bottom: 0;
+}
+
+.analytics-title {
+    font-size: 1rem;
+    margin-bottom: 2px;
+}
+
+.analytics-subtitle {
+    font-size: 0.85rem;
+}
+
+/* Analytics numbers formatting */
+.analytics-number {
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-bottom: 5px;
+}
+
+.analytics-label {
+    font-size: 0.85rem;
+    font-weight: 500;
+    opacity: 0.8;
+}
+
+@media (max-width: 768px) {
+    .analytics-header-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
+    .date-range-filter {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+        width: 100%;
+    }
+    
+    .date-range-filter > * {
+        width: 100%;
+    }
+    
+    .date-range-filter label {
+        display: block;
+        margin-bottom: 4px;
+    }
+    
+    .transactions-desktop {
+        display: none;
+    }
+    
+    .transactions-mobile {
+        display: block;
+    }
+    
+    .analytics-summary-table {
+        font-size: 0.9rem;
+    }
+    
+    .analytics-summary-table td {
+        padding: 8px 12px;
+    }
+}
+
 .analytics-card {
     background: #ffffff;
     color: var(--text-primary);
@@ -2762,12 +3067,6 @@ textarea {
     font-size: 14px;
 }
 
-.analytics-header-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-}
-
 .analytics-title {
     font-weight: 700;
 }
@@ -2833,5 +3132,45 @@ textarea {
 @media (max-width: 800px) {
     #fees-tab .form-grid.two-col {
         grid-template-columns: 1fr;
+    }
+}
+
+/* Message feedback styles */
+.fees-message {
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    font-size: 14px;
+    font-weight: 500;
+    display: none;
+    animation: slideDown 0.3s ease-out;
+}
+
+.fees-message.success {
+    background: rgba(34, 197, 94, 0.1);
+    color: #15803d;
+    border: 1px solid rgba(34, 197, 94, 0.2);
+}
+
+.fees-message.error {
+    background: rgba(239, 68, 68, 0.1);
+    color: #dc2626;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.fees-message.info {
+    background: rgba(59, 130, 246, 0.1);
+    color: #2563eb;
+    border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
     }
 }

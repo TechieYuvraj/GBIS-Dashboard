@@ -452,7 +452,7 @@ class NotificationManager {
                     contact: student.Contact_No,
                     id: student.Serial_No || student.row_number
                 })),
-                timestamp: new Date().toISOString()
+                timestamp: window.dataService.formatDateToIST(new Date())
             };
 
             // Send notification with file attachment if present
@@ -528,7 +528,7 @@ class NotificationManager {
         // Create analytics display
         const analytics = {
             totalSent: this.selectedStudents.length,
-            timestamp: new Date().toLocaleString(),
+            timestamp: window.dataService.formatDateToIST(new Date()),
             status: response.success ? 'SUCCESS' : 'COMPLETED',
             messageLength: document.getElementById('notification-message').value.length,
             students: this.selectedStudents.map(s => s.Name).join(', ')

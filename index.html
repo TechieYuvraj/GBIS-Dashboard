@@ -431,8 +431,85 @@
                             <div class="success-message" id="fees-success"></div>
                         </div>
                         <div class="analytics-section depth-card panel-card" data-tilt>
-                            <h3>Analytics</h3>
+                            <div class="analytics-header">
+                                <h3>Analytics</h3>
+                                <button id="fees-analytics-refresh" class="refresh-btn" title="Refresh Analytics">
+                                    <i class="fas fa-sync-alt"></i>
+                                </button>
+                            </div>
                             <div id="fees-analytics">
+                                <!-- 1. Transaction List -->
+                                <div class="fees-analytics-transactions">
+                                    <div class="analytics-header-row">
+                                        <div>
+                                            <div class="analytics-title">Recent Transactions</div>
+                                            <div class="analytics-subtitle">Last 5 fee payments</div>
+                                        </div>
+                                    </div>
+                                    <div id="fees-transactions-content" class="analytics-content">
+                                        <div class="analytics-placeholder">
+                                            <i class="fas fa-receipt"></i>
+                                            <p>Recent transactions will appear here</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Section Divider -->
+                                <hr class="section-divider" />
+                                
+                                <!-- 2. Daily Collection -->
+                                <div class="fees-analytics-daily">
+                                    <div class="analytics-header-row">
+                                        <div>
+                                            <div class="analytics-title">Daily Collection</div>
+                                            <div class="analytics-subtitle">Select a date to view collection</div>
+                                        </div>
+                                        <div class="date-filter">
+                                            <label for="fees-daily-date" style="margin-right:8px;">Date:</label>
+                                            <input type="date" id="fees-daily-date" class="form-input compact" aria-label="Select date for daily collection">
+                                        </div>
+                                    </div>
+                                    <div id="fees-daily-content" class="analytics-content">
+                                        <div class="analytics-placeholder">
+                                            <i class="fas fa-calendar-day"></i>
+                                            <p>Select a date to view daily collection</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Section Divider -->
+                                <hr class="section-divider" />
+                                
+                                <!-- 3. Date Range Collection -->
+                                <div class="fees-analytics-range">
+                                    <div class="analytics-header-row">
+                                        <div>
+                                            <div class="analytics-title">Date Range Collection</div>
+                                            <div class="analytics-subtitle">Select date range for collection report</div>
+                                        </div>
+                                        <div class="date-range-filter">
+                                            <label for="fees-range-from" style="margin-right:8px;">From:</label>
+                                            <input type="date" id="fees-range-from" class="form-input compact" aria-label="From date">
+                                            <label for="fees-range-to" style="margin-right:8px; margin-left:12px;">To:</label>
+                                            <input type="date" id="fees-range-to" class="form-input compact" aria-label="To date">
+                                            <button id="fees-range-apply" class="btn-secondary-glass compact" style="margin-left:8px;">
+                                                <i class="fas fa-search"></i>
+                                                Apply
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div id="fees-range-content" class="analytics-content">
+                                        <div class="analytics-placeholder">
+                                            <i class="fas fa-calendar-alt"></i>
+                                            <p>Select date range and click Apply to view collection</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Section Divider -->
+                                <hr class="section-divider" />
+                                
+                                <!-- 4. Monthly Collection -->
                                 <div class="fees-analytics-monthly">
                                     <div class="analytics-header-row">
                                         <div>
@@ -451,7 +528,11 @@
                                         </div>
                                     </div>
                                 </div>
+                                
+                                <!-- Section Divider -->
                                 <hr class="section-divider" />
+                                
+                                <!-- 5. Yearly Collection -->
                                 <div class="fees-analytics-yearly">
                                     <div class="analytics-header-row">
                                         <div>
