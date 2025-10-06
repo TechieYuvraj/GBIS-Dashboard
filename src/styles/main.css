@@ -3174,3 +3174,473 @@ textarea {
         transform: translateY(0);
     }
 }
+
+/* Enhanced Student Card Styles with Fee Details */
+.student-fees-section {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.fees-section-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #374151;
+    margin: 0 0 12px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.fees-section-title i {
+    color: #059669;
+    font-size: 12px;
+}
+
+.fees-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.fee-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 8px;
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: 6px;
+    font-size: 12px;
+}
+
+.fee-label {
+    color: #6b7280;
+    font-weight: 500;
+}
+
+.fee-value {
+    font-weight: 600;
+    color: #374151;
+}
+
+.fee-item.total-fee {
+    background: rgba(59, 130, 246, 0.1);
+    border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.fee-item.total-fee .fee-value {
+    color: #2563eb;
+}
+
+.fee-item.deposited-fee {
+    background: rgba(34, 197, 94, 0.1);
+    border: 1px solid rgba(34, 197, 94, 0.2);
+}
+
+.fee-item.deposited-fee .fee-value {
+    color: #059669;
+}
+
+.fee-item.pending-fee {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.fee-item.pending-fee .fee-value {
+    color: #dc2626;
+}
+
+.fee-item.discount-fee {
+    background: rgba(168, 85, 247, 0.1);
+    border: 1px solid rgba(168, 85, 247, 0.2);
+}
+
+.fee-item.discount-fee .fee-value {
+    color: #7c3aed;
+}
+
+.discount-reason {
+    margin-top: 8px;
+    padding: 6px 8px;
+    background: rgba(168, 85, 247, 0.05);
+    border-radius: 4px;
+    font-size: 11px;
+}
+
+.discount-label {
+    font-weight: 600;
+    color: #7c3aed;
+}
+
+.discount-text {
+    color: #6b7280;
+    margin-left: 4px;
+}
+
+.student-actions {
+    margin-top: 16px;
+    display: flex;
+    gap: 8px;
+}
+
+.action-btn {
+    flex: 1;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+}
+
+.view-details-btn {
+    background: rgba(59, 130, 246, 0.1);
+    color: #2563eb;
+    border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.view-details-btn:hover {
+    background: rgba(59, 130, 246, 0.2);
+    transform: translateY(-1px);
+}
+
+.send-notification-btn {
+    background: rgba(34, 197, 94, 0.1);
+    color: #059669;
+    border: 1px solid rgba(34, 197, 94, 0.2);
+}
+
+.send-notification-btn:hover {
+    background: rgba(34, 197, 94, 0.2);
+    transform: translateY(-1px);
+}
+
+/* Student Details Popup Styles */
+.student-popup-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.student-popup-overlay.show {
+    opacity: 1;
+}
+
+.popup-content {
+    background: var(--surface-deep);
+    border-radius: 16px;
+    box-shadow: var(--shadow-lg);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    max-width: 800px;
+    width: 90%;
+    max-height: 90vh;
+    overflow: hidden;
+    transform: scale(0.9);
+    transition: transform 0.3s ease;
+}
+
+.student-popup-overlay.show .popup-content {
+    transform: scale(1);
+}
+
+.popup-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(168, 85, 247, 0.1));
+}
+
+.popup-header h3 {
+    margin: 0;
+    color: #374151;
+    font-size: 18px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.popup-header h3 i {
+    color: #3b82f6;
+}
+
+.popup-close {
+    background: none;
+    border: none;
+    font-size: 18px;
+    color: #6b7280;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.popup-close:hover {
+    background: rgba(239, 68, 68, 0.1);
+    color: #dc2626;
+}
+
+.popup-body {
+    padding: 24px;
+    overflow-y: auto;
+    max-height: calc(90vh - 140px);
+}
+
+.student-info-grid {
+    display: grid;
+    gap: 24px;
+}
+
+.info-section {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 12px;
+    padding: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+.info-section h4 {
+    margin: 0 0 16px 0;
+    color: #374151;
+    font-size: 16px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.info-section h4 i {
+    color: #3b82f6;
+    font-size: 14px;
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 16px;
+}
+
+.info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.info-item.full-width {
+    grid-column: 1 / -1;
+}
+
+.info-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.info-value {
+    font-size: 14px;
+    font-weight: 500;
+    color: #374151;
+}
+
+.info-value.class-badge {
+    background: rgba(59, 130, 246, 0.1);
+    color: #2563eb;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-weight: 600;
+    display: inline-block;
+    width: fit-content;
+}
+
+.info-value.contact-number {
+    font-family: 'Courier New', monospace;
+    font-weight: 600;
+    color: #059669;
+}
+
+.fees-section {
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.05), rgba(59, 130, 246, 0.05));
+    border: 1px solid rgba(34, 197, 94, 0.2);
+}
+
+.fees-summary {
+    margin-top: 16px;
+}
+
+.fee-breakdown {
+    display: grid;
+    gap: 12px;
+}
+
+.fee-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: 8px;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.fee-type {
+    font-weight: 500;
+    color: #374151;
+}
+
+.fee-amount {
+    font-weight: 600;
+    font-family: 'Courier New', monospace;
+}
+
+.fee-row.total-row {
+    background: rgba(59, 130, 246, 0.1);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.fee-row.total-row .total-amount {
+    color: #2563eb;
+    font-size: 16px;
+}
+
+.fee-row.deposited-row {
+    background: rgba(34, 197, 94, 0.1);
+    border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.fee-row.deposited-row .deposited-amount {
+    color: #059669;
+}
+
+.fee-row.pending-row {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.fee-row.pending-row .pending-amount {
+    color: #dc2626;
+}
+
+.fee-row.discount-row {
+    background: rgba(168, 85, 247, 0.1);
+    border: 1px solid rgba(168, 85, 247, 0.3);
+}
+
+.fee-row.discount-row .discount-amount {
+    color: #7c3aed;
+}
+
+.discount-reason-row {
+    background: rgba(168, 85, 247, 0.05);
+    border: 1px solid rgba(168, 85, 247, 0.2);
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 13px;
+}
+
+.discount-reason-row .discount-reason {
+    color: #7c3aed;
+    font-weight: 500;
+}
+
+.popup-footer {
+    padding: 20px 24px;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.primary-btn {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+}
+
+.primary-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.secondary-btn {
+    background: rgba(107, 114, 128, 0.1);
+    color: #6b7280;
+    border: 1px solid rgba(107, 114, 128, 0.3);
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+}
+
+.secondary-btn:hover {
+    background: rgba(107, 114, 128, 0.2);
+    transform: translateY(-1px);
+}
+
+/* Mobile responsiveness for popup */
+@media (max-width: 768px) {
+    .popup-content {
+        width: 95%;
+        max-height: 95vh;
+    }
+    
+    .popup-header {
+        padding: 16px 20px;
+    }
+    
+    .popup-body {
+        padding: 20px;
+        max-height: calc(95vh - 120px);
+    }
+    
+    .info-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+    
+    .popup-footer {
+        padding: 16px 20px;
+        flex-direction: column;
+    }
+    
+    .fees-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .student-actions {
+        flex-direction: column;
+    }
+}

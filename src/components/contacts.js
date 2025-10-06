@@ -134,6 +134,16 @@ class ContactsManager {
         card.className = 'student-card';
 
         const safe = (v) => v || '—';
+        const formatCurrency = (amount) => {
+            if (!amount || amount === 0) return '₹0';
+            return `₹${Number(amount).toLocaleString('en-IN')}`;
+        };
+        const formatContactNumber = (contact) => {
+            if (!contact) return '—';
+            const str = String(contact);
+            return str.length === 10 ? str.replace(/(\d{5})(\d{5})/, '$1-$2') : str;
+        };
+
         card.innerHTML = `
             <div class="student-header">
                 <h4 class="student-name">${safe(student.Name)}</h4>
@@ -147,8 +157,57 @@ class ContactsManager {
                 <div class="meta"><span class="meta-label">DOB</span><span class="meta-value">${safe(student.DOB)}</span></div>
                 <div class="meta"><span class="meta-label">Admission</span><span class="meta-value">${safe(student.Admission_Date)}</span></div>
                 <div class="meta" style="grid-column: span 2"><span class="meta-label">Address</span><span class="meta-value">${safe(student.Address)}</span></div>
-                <div class="meta"><span class="meta-label">Contact</span><span class="meta-value em">${safe(student.Contact_No)}</span></div>
-                <div class="meta"><span class="meta-label">Transport Fees</span><span class="meta-value">${safe(student.Transportaion_Fees)}</span></div>
+                <div class="meta"><span class="meta-label">Contact</span><span class="meta-value em">${formatContactNumber(student.Contact_No)}</span></div>
+            </div>
+            
+            <div class="student-fees-section">
+                <h5 class="fees-section-title">
+                    <i class="fas fa-money-bill-wave"></i>
+                    Fee Details
+                </h5>
+                <div class="fees-grid">
+                    <div class="fee-item">
+                        <span class="fee-label">Transportation</span>
+                        <span class="fee-value">${formatCurrency(student.Transportaion_fees || student.Transportaion_Fees)}</span>
+                    </div>
+                    <div class="fee-item">
+                        <span class="fee-label">Tuition</span>
+                        <span class="fee-value">${formatCurrency(student.Tution_fees || student['Tution_fees '])}</span>
+                    </div>
+                    <div class="fee-item total-fee">
+                        <span class="fee-label">Total Fees</span>
+                        <span class="fee-value">${formatCurrency(student.Total_fees)}</span>
+                    </div>
+                    <div class="fee-item deposited-fee">
+                        <span class="fee-label">Deposited</span>
+                        <span class="fee-value">${formatCurrency(student.Deposited_fees)}</span>
+                    </div>
+                    <div class="fee-item pending-fee">
+                        <span class="fee-label">Pending</span>
+                        <span class="fee-value">${formatCurrency(student.Pending_fees || student['Pending_fees '])}</span>
+                    </div>
+                    <div class="fee-item discount-fee">
+                        <span class="fee-label">Discount</span>
+                        <span class="fee-value">${formatCurrency(student.Discount_Amt)}</span>
+                    </div>
+                </div>
+                ${student.Disc_reason && student.Disc_reason !== 'NA' ? `
+                    <div class="discount-reason">
+                        <span class="discount-label">Discount Reason:</span>
+                        <span class="discount-text">${student.Disc_reason}</span>
+                    </div>
+                ` : ''}
+            </div>
+            
+            <div class="student-actions">
+                <button class="action-btn view-details-btn" onclick="window.contactsManager.showStudentDetails('${student.Serial_No || student.row_number}')">
+                    <i class="fas fa-eye"></i>
+                    View Details
+                </button>
+                <button class="action-btn send-notification-btn" onclick="window.contactsManager.sendNotificationToStudent('${student.Serial_No || student.row_number}')">
+                    <i class="fas fa-bell"></i>
+                    Send Notice
+                </button>
             </div>
         `;
 
@@ -271,6 +330,219 @@ class ContactsManager {
             this.currentFilters.class = className;
             this.applyFilters();
         }
+    }
+
+    // Method to show detailed student information in a modal/popup
+    showStudentDetails(studentId) {
+        const student = this.getStudentById(studentId);
+        if (!student) {
+            console.error('Student not found:', studentId);
+            return;
+        }
+
+        // Create and show popup with all student details
+        this.showStudentPopup(student);
+    }
+
+    // Method to send notification to a specific student
+    sendNotificationToStudent(studentId) {
+        const student = this.getStudentById(studentId);
+        if (!student) {
+            console.error('Student not found:', studentId);
+            return;
+        }
+
+        // If notification manager is available, pre-fill the form
+        if (window.notificationManager) {
+            // Switch to notification tab
+            if (window.navigation) {
+                window.navigation.goToTab('notification');
+            }
+
+            // Pre-fill with student details
+            setTimeout(() => {
+                const recipientInput = document.getElementById('notification-recipient');
+                if (recipientInput) {
+                    recipientInput.value = student.Name;
+                }
+                
+                // If there's a contact field, fill it
+                const contactInput = document.getElementById('notification-contact');
+                if (contactInput) {
+                    contactInput.value = student.Contact_No || '';
+                }
+            }, 300);
+        } else {
+            alert(`Send notification to: ${student.Name}\nContact: ${student.Contact_No || 'N/A'}`);
+        }
+    }
+
+    // Method to create and show student details popup
+    showStudentPopup(student) {
+        // Remove existing popup if any
+        const existingPopup = document.querySelector('.student-popup-overlay');
+        if (existingPopup) {
+            existingPopup.remove();
+        }
+
+        const safe = (v) => v || '—';
+        const formatCurrency = (amount) => {
+            if (!amount || amount === 0) return '₹0';
+            return `₹${Number(amount).toLocaleString('en-IN')}`;
+        };
+        const formatContactNumber = (contact) => {
+            if (!contact) return '—';
+            const str = String(contact);
+            return str.length === 10 ? str.replace(/(\d{5})(\d{5})/, '$1-$2') : str;
+        };
+
+        // Create popup overlay
+        const popupOverlay = document.createElement('div');
+        popupOverlay.className = 'student-popup-overlay';
+        popupOverlay.innerHTML = `
+            <div class="popup-content">
+                <div class="popup-header">
+                    <h3>
+                        <i class="fas fa-user-graduate"></i>
+                        Student Details
+                    </h3>
+                    <button class="popup-close" onclick="this.closest('.student-popup-overlay').remove()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <div class="popup-body">
+                    <div class="student-info-grid">
+                        <div class="info-section">
+                            <h4><i class="fas fa-user"></i> Personal Information</h4>
+                            <div class="info-grid">
+                                <div class="info-item">
+                                    <span class="info-label">Full Name</span>
+                                    <span class="info-value">${safe(student.Name)}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Class</span>
+                                    <span class="info-value class-badge">${safe(student.Class)}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Roll Number</span>
+                                    <span class="info-value">${safe(student.Roll_No)}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Serial Number</span>
+                                    <span class="info-value">${safe(student.Serial_No)}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Date of Birth</span>
+                                    <span class="info-value">${safe(student.DOB)}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Admission Date</span>
+                                    <span class="info-value">${safe(student.Admission_Date)}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="info-section">
+                            <h4><i class="fas fa-users"></i> Family Information</h4>
+                            <div class="info-grid">
+                                <div class="info-item">
+                                    <span class="info-label">Father's Name</span>
+                                    <span class="info-value">${safe(student.Father_Name)}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Mother's Name</span>
+                                    <span class="info-value">${safe(student.Mother_Name)}</span>
+                                </div>
+                                <div class="info-item full-width">
+                                    <span class="info-label">Address</span>
+                                    <span class="info-value">${safe(student.Address)}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Contact Number</span>
+                                    <span class="info-value contact-number">${formatContactNumber(student.Contact_No)}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="info-section fees-section">
+                            <h4><i class="fas fa-money-bill-wave"></i> Fee Details</h4>
+                            <div class="fees-summary">
+                                <div class="fee-breakdown">
+                                    <div class="fee-row">
+                                        <span class="fee-type">Transportation Fees</span>
+                                        <span class="fee-amount">${formatCurrency(student.Transportaion_fees || student.Transportaion_Fees)}</span>
+                                    </div>
+                                    <div class="fee-row">
+                                        <span class="fee-type">Tuition Fees</span>
+                                        <span class="fee-amount">${formatCurrency(student.Tution_fees || student['Tution_fees '])}</span>
+                                    </div>
+                                    <div class="fee-row total-row">
+                                        <span class="fee-type">Total Fees</span>
+                                        <span class="fee-amount total-amount">${formatCurrency(student.Total_fees)}</span>
+                                    </div>
+                                    <div class="fee-row deposited-row">
+                                        <span class="fee-type">Deposited Amount</span>
+                                        <span class="fee-amount deposited-amount">${formatCurrency(student.Deposited_fees)}</span>
+                                    </div>
+                                    <div class="fee-row pending-row">
+                                        <span class="fee-type">Pending Amount</span>
+                                        <span class="fee-amount pending-amount">${formatCurrency(student.Pending_fees || student['Pending_fees '])}</span>
+                                    </div>
+                                    ${student.Discount_Amt && student.Discount_Amt > 0 ? `
+                                        <div class="fee-row discount-row">
+                                            <span class="fee-type">Discount Applied</span>
+                                            <span class="fee-amount discount-amount">${formatCurrency(student.Discount_Amt)}</span>
+                                        </div>
+                                        ${student.Disc_reason && student.Disc_reason !== 'NA' ? `
+                                            <div class="discount-reason-row">
+                                                <span class="fee-type">Discount Reason</span>
+                                                <span class="discount-reason">${student.Disc_reason}</span>
+                                            </div>
+                                        ` : ''}
+                                    ` : ''}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="popup-footer">
+                    <button class="action-btn primary-btn" onclick="window.contactsManager.sendNotificationToStudent('${student.Serial_No || student.row_number}')">
+                        <i class="fas fa-bell"></i>
+                        Send Notification
+                    </button>
+                    <button class="action-btn secondary-btn" onclick="this.closest('.student-popup-overlay').remove()">
+                        <i class="fas fa-times"></i>
+                        Close
+                    </button>
+                </div>
+            </div>
+        `;
+
+        // Add to document
+        document.body.appendChild(popupOverlay);
+
+        // Add click outside to close
+        popupOverlay.addEventListener('click', (e) => {
+            if (e.target === popupOverlay) {
+                popupOverlay.remove();
+            }
+        });
+
+        // Add escape key to close
+        const handleEscape = (e) => {
+            if (e.key === 'Escape') {
+                popupOverlay.remove();
+                document.removeEventListener('keydown', handleEscape);
+            }
+        };
+        document.addEventListener('keydown', handleEscape);
+
+        // Animate in
+        setTimeout(() => {
+            popupOverlay.classList.add('show');
+        }, 10);
     }
 }
 
