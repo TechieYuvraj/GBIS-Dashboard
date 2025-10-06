@@ -432,15 +432,25 @@ class FeesManager {
       };
 
       // Serial / Sr No
-  this.inputs.srno.value = getN(['Sr_No', 'Serial_No', 'SrNo', 'Sr no']) ?? this.inputs.srno.value;
+      if (this.inputs.srno) {
+        this.inputs.srno.value = getN(['Serial_No', 'Sr_No', 'SrNo', 'Sr no']) ?? this.inputs.srno.value;
+      }
       // Name
-  this.inputs.name.value = getN(['Name', 'Student_Name']) ?? this.inputs.name.value;
-      // Total fees
-  this.inputs.total.value = getN(['Total', 'Total_Fees', 'Total_fees', 'Total_fees ', 'Tution_fees', 'Tution_fees ', 'Tuition_Fees']) ?? this.inputs.total.value;
-      // Fees Paid (hidden input used for submission) from deposited/paid keys
-  this.inputs.paid.value = getN(['Fees_Paid', 'Paid', 'Deposited_fees', 'Deposited_Fees']) ?? this.inputs.paid.value;
+      if (this.inputs.name) {
+        this.inputs.name.value = getN(['Name', 'Student_Name']) ?? this.inputs.name.value;
+      }
+      // Total fees - prioritize new format
+      if (this.inputs.total) {
+        this.inputs.total.value = getN(['Total_fees', 'Total_Fees', 'Total', 'Tution_fees ', 'Tution_fees', 'Tuition_Fees']) ?? this.inputs.total.value;
+      }
+      // Fees Paid (hidden input used for submission) - prioritize new format
+      if (this.inputs.paid) {
+        this.inputs.paid.value = getN(['Deposited_fees', 'Fees_Paid', 'Paid', 'Deposited_Fees']) ?? this.inputs.paid.value;
+      }
       // Deposit amount (current input default from webhook if present)
-  this.inputs.deposit.value = getN(['Deposit_Amount', 'Deposit']) ?? this.inputs.deposit.value;
+      if (this.inputs.deposit) {
+        this.inputs.deposit.value = getN(['Deposit_Amount', 'Deposit']) ?? this.inputs.deposit.value;
+      }
       // Remaining / Pending fees
       if (this.inputs.remaining) {
         const rem = getN(['Remaining_Fees', 'Remaining', 'Pending_fees', 'Pending_fees '], '');
@@ -449,7 +459,7 @@ class FeesManager {
       // Fees status
       if (this.inputs.status) {
         let statusVal = getN(['Fees_Status', 'Fees_status', 'Status']);
-        if (!statusVal) {
+        if (!statusVal && this.inputs.total && this.inputs.paid) {
           const totalNum = Number(this.inputs.total.value || 0);
           const paidNum = Number(this.inputs.paid.value || 0);
           if (totalNum > 0) {
@@ -458,17 +468,39 @@ class FeesManager {
             else statusVal = 'Partially Paid';
           }
         }
-        this.inputs.status.value = statusVal || '';
+        if (this.inputs.status) {
+          this.inputs.status.value = statusVal || '';
+        }
       }
-      this.inputs.remarks.value = d.Remarks ?? this.inputs.remarks.value;
-      if (d.Payment_Mode && this.inputs.mode.querySelector(`option[value="${d.Payment_Mode}"]`)) {
+      // Handle fee category from API data (replaced old remarks field)
+      if (d.Fee_Category || d.Remarks) {
+        const categoryValue = d.Fee_Category || d.Remarks;
+        if (this.inputs.category) {
+          // Try to match with predefined categories first
+          if (categoryValue.includes('Transportation')) {
+            this.inputs.category.value = 'Transportation Fees';
+          } else if (categoryValue.includes('Tuition')) {
+            this.inputs.category.value = 'Tuition Fees';
+          } else {
+            // Default to Miscellaneous for any other category
+            this.inputs.category.value = 'Miscellaneous';
+            if (this.inputs.miscDetail) {
+              this.inputs.miscDetail.value = categoryValue;
+              this.onCategoryChange(); // Show the miscellaneous field
+            }
+          }
+        }
+      }
+      if (d.Payment_Mode && this.inputs.mode && this.inputs.mode.querySelector(`option[value="${d.Payment_Mode}"]`)) {
         this.inputs.mode.value = d.Payment_Mode;
       }
-      this.inputs.reff.value = getN(['Ref_No', 'Reff_No']) ?? this.inputs.reff.value;
-      if (d.Date) {
+      if (this.inputs.reff) {
+        this.inputs.reff.value = getN(['Ref_No', 'Reff_No']) ?? this.inputs.reff.value;
+      }
+      if (d.Date && this.inputs.date) {
         // normalize DD/MM/YYYY to YYYY-MM-DD
         const parts = String(d.Date).includes('-') ? String(d.Date).split('-') : String(d.Date).split('/');
-        if (parts.length === 3) {
+        if (parts.length === 3 && this.inputs.date) {
           let [a,b,c] = parts.map(p=>p.padStart(2,'0'));
           // Heuristic: if first part length 2 => DD/MM/YYYY
           if (a.length === 2) { this.inputs.date.value = `${c}-${b}-${a}`; }
@@ -477,20 +509,20 @@ class FeesManager {
       }
       // If remaining not provided, derive as Total - Paid when possible (after inputs set)
       if (this.inputs.remaining && (this.inputs.remaining.value === '' || this.inputs.remaining.value === undefined)) {
-        const totalNum = Number(this.inputs.total.value || 0);
-        const paidNum = Number(this.inputs.paid.value || 0);
+        const totalNum = Number((this.inputs.total && this.inputs.total.value) || 0);
+        const paidNum = Number((this.inputs.paid && this.inputs.paid.value) || 0);
         if (!Number.isNaN(totalNum) && !Number.isNaN(paidNum) && (totalNum !== 0 || paidNum !== 0)) {
           this.inputs.remaining.value = Math.max(0, totalNum - paidNum);
         }
       }
 
       // Always set class and roll in the visible controls
-      this.classSel.value = cls;
-      this.rollSel.value = String(roll);
+      if (this.classSel) this.classSel.value = cls;
+      if (this.rollSel) this.rollSel.value = String(roll);
       // Derive name from contacts if missing
-      if (!this.inputs.name.value) {
+      if (this.inputs.name && !this.inputs.name.value) {
         const st = window.dataService.getStudentByRollAndClass(roll, cls);
-        if (st) this.inputs.name.value = st.Name;
+        if (st && this.inputs.name) this.inputs.name.value = st.Name;
       }
 
       // Update summary card text
