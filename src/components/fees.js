@@ -80,11 +80,7 @@ class FeesManager {
     if (sessionSel) {
       sessionSel.addEventListener('change', () => this.renderYearly());
     }
-    // Daily collection date selector
-    const dailyDateSel = document.getElementById('fees-daily-date');
-    if (dailyDateSel) {
-      dailyDateSel.addEventListener('change', () => this.renderDaily());
-    }
+
     // Date range apply button
     const rangeApplyBtn = document.getElementById('fees-range-apply');
     if (rangeApplyBtn) {
@@ -177,12 +173,7 @@ class FeesManager {
         monthSel.value = this.monthOrder.includes(currentLabel) ? currentLabel : 'April';
       }
 
-      // Set default daily date to today
-      const dailyDateSel = document.getElementById('fees-daily-date');
-      if (dailyDateSel) {
-        const today = new Date();
-        dailyDateSel.value = today.toISOString().split('T')[0];
-      }
+
 
       // Set default date range (last 30 days)
       const rangeFromSel = document.getElementById('fees-range-from');
@@ -214,7 +205,6 @@ class FeesManager {
 
       // Render all sections
       this.renderTransactions();
-      this.renderDaily();
       this.populateSessions();
       this.renderYearly();
       this.renderMonthly();
@@ -660,7 +650,6 @@ class FeesManager {
         
         // Re-render all analytics sections
         this.renderTransactions();
-        this.renderDaily();
         this.renderDateRange();
         this.renderMonthly();
         this.renderYearly();
@@ -853,16 +842,6 @@ class FeesManager {
       if (!transactionDate) return false;
       
       switch (filterType) {
-        case 'daily':
-          // filterValue is a date string in YYYY-MM-DD format
-          if (!filterValue) return false;
-          const selectedDate = new Date(filterValue);
-          return (
-            transactionDate.getDate() === selectedDate.getDate() &&
-            transactionDate.getMonth() === selectedDate.getMonth() &&
-            transactionDate.getFullYear() === selectedDate.getFullYear()
-          );
-          
         case 'range':
           // filterValue is {from: "YYYY-MM-DD", to: "YYYY-MM-DD"}
           if (!filterValue.from || !filterValue.to) return false;
@@ -975,47 +954,7 @@ class FeesManager {
     container.innerHTML = tableHTML;
   }
 
-  // Render daily collection
-  renderDaily() {
-    const container = document.getElementById('fees-daily-content');
-    const dateInput = document.getElementById('fees-daily-date');
-    if (!container || !dateInput) return;
-    
-    const selectedDate = dateInput.value;
-    if (!selectedDate) {
-      container.innerHTML = `<div class="analytics-placeholder"><i class="fas fa-calendar-day"></i><p>Please select a date</p></div>`;
-      return;
-    }
 
-    // Use centralized filtering method
-    const data = Array.isArray(this.feesAnalytics) ? this.feesAnalytics : [];
-    const dayTransactions = this.filterTransactionsByDate(data, 'daily', selectedDate);
-    const summary = this.calculateSummary(dayTransactions);
-
-    // Format the selected date for display
-    const displayDate = new Date(selectedDate).toLocaleDateString('en-IN', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric'
-    });
-
-    container.innerHTML = `
-      <table class="analytics-summary-table">
-        <tr>
-          <td><strong>Date:</strong></td>
-          <td>${displayDate}</td>
-        </tr>
-        <tr>
-          <td><strong>Total Collection:</strong></td>
-          <td class="amount">₹${summary.total.toLocaleString('en-IN')}</td>
-        </tr>
-        <tr>
-          <td><strong>Transactions:</strong></td>
-          <td>${summary.count}</td>
-        </tr>
-      </table>
-    `;
-  }
 
   // Render date range collection
   renderDateRange() {
@@ -1110,7 +1049,6 @@ class FeesManager {
 
       // Re-render all analytics sections
       this.renderTransactions();
-      this.renderDaily();
       this.renderDateRange();
       this.populateSessions();
       this.renderMonthly();
