@@ -32,6 +32,8 @@ class FeesManager {
       remaining: document.getElementById('fees-remaining'),
       status: document.getElementById('fees-status'),
       remarks: document.getElementById('fees-remarks'),
+      category: document.getElementById('fees-category'),
+      miscDetail: document.getElementById('fees-misc-detail'),
       mode: document.getElementById('fees-mode'),
       reff: document.getElementById('fees-reff'),
       date: document.getElementById('fees-date'),
@@ -70,6 +72,10 @@ class FeesManager {
     }
     if (this.submitBtn) {
       this.submitBtn.addEventListener('click', () => this.submit());
+    }
+    // Fee category handler
+    if (this.inputs.category) {
+      this.inputs.category.addEventListener('change', () => this.onCategoryChange());
     }
     // Month selector
     const monthSel = document.getElementById('fees-month-select');
@@ -139,6 +145,25 @@ class FeesManager {
     // Set roll and trigger details fetch
     if (this.rollSel) this.rollSel.value = String(roll);
     this.onRollChange();
+  }
+
+  onCategoryChange() {
+    if (!this.inputs.category) return;
+    const miscGroup = document.getElementById('fees-misc-group');
+    if (!miscGroup) return;
+    
+    if (this.inputs.category.value === 'Miscellaneous') {
+      miscGroup.style.display = 'block';
+      if (this.inputs.miscDetail) {
+        this.inputs.miscDetail.setAttribute('required', '');
+      }
+    } else {
+      miscGroup.style.display = 'none';
+      if (this.inputs.miscDetail) {
+        this.inputs.miscDetail.removeAttribute('required');
+        this.inputs.miscDetail.value = ''; // Clear the field when hidden
+      }
+    }
   }
 
   debounce(fn, wait=200) {
@@ -397,11 +422,17 @@ class FeesManager {
     this.rollSel.innerHTML = '<option value="">Choose roll no</option>';
     if (!cls || !window.dataService) return;
     const students = window.dataService.getStudentsByClass(cls) || [];
-    students
-      .sort((a,b) => Number(a.Roll_No) - Number(b.Roll_No))
-      .forEach(s => {
+    
+    // Remove duplicates by creating a unique set of roll numbers
+    const uniqueRolls = [...new Set(students.map(s => s.Roll_No))];
+    
+    uniqueRolls
+      .sort((a,b) => Number(a) - Number(b))
+      .forEach(rollNo => {
         const opt = document.createElement('option');
-        opt.value = s.Roll_No; opt.textContent = s.Roll_No; this.rollSel.appendChild(opt);
+        opt.value = rollNo; 
+        opt.textContent = rollNo; 
+        this.rollSel.appendChild(opt);
       });
   }
 
@@ -549,14 +580,29 @@ class FeesManager {
     if (this.inputs.date) {
       const today = new Date();
       this.inputs.date.value = today.toISOString().split('T')[0];
+      // Make the date field read-only since we use live timestamp for submission
+      this.inputs.date.readOnly = true;
+      this.inputs.date.title = 'Date is automatically set to current date/time during submission';
     }
   }
 
   buildPayload() {
     const cls = this.classSel?.value || '';
     const roll = this.rollSel?.value || '';
-    const dateStr = this.inputs.date?.value;
-    const formattedDate = dateStr ? this.formatDateToIST(new Date(dateStr)) : this.formatDateToIST(new Date());
+    // Always use current live date and time for submission
+    const currentDateTime = new Date();
+    const formattedDate = this.formatDateToIST(currentDateTime);
+    
+    // Build category/remarks field
+    let categoryValue = '';
+    if (this.inputs.category && this.inputs.category.value) {
+      if (this.inputs.category.value === 'Miscellaneous' && this.inputs.miscDetail && this.inputs.miscDetail.value) {
+        categoryValue = this.inputs.miscDetail.value;
+      } else {
+        categoryValue = this.inputs.category.value;
+      }
+    }
+    
     return {
       Sr_No: Number(this.inputs.srno?.value || 0),
       Name: this.inputs.name?.value || '',
@@ -567,10 +613,12 @@ class FeesManager {
       Deposit_Amount: Number(this.inputs.deposit?.value || 0),
       Remaining_Fees: this.inputs.remaining ? Number(this.inputs.remaining.value || 0) : undefined,
       Fees_Status: this.inputs.status ? (this.inputs.status.value || '') : undefined,
-      Remarks: this.inputs.remarks?.value || '',
+      Fee_Category: categoryValue,
+      Remarks: categoryValue, // Keep for backward compatibility
       Payment_Mode: this.inputs.mode?.value || '',
       Ref_No: this.inputs.reff?.value || '',
-      Date: formattedDate,
+      Date: formattedDate, // Live timestamp in IST format
+      Submission_Time: formattedDate, // Additional field for explicit submission timestamp
     };
   }
 
@@ -586,6 +634,8 @@ class FeesManager {
       this.inputs.remaining,
       this.inputs.status,
       this.inputs.remarks,
+      this.inputs.category,
+      this.inputs.miscDetail,
       this.inputs.mode,
       this.inputs.reff,
       this.inputs.date,
@@ -607,6 +657,8 @@ class FeesManager {
       this.inputs.remaining,
       this.inputs.status,
       this.inputs.remarks,
+      this.inputs.category,
+      this.inputs.miscDetail,
       this.inputs.mode,
       this.inputs.reff,
       this.inputs.date,
@@ -618,6 +670,14 @@ class FeesManager {
     } else {
       fields.forEach(el => { el.disabled = false; });
       if (this.submitBtn) this.submitBtn.disabled = false;
+    }
+    // Reset category selection and hide miscellaneous field
+    if (this.inputs.category) {
+      this.inputs.category.value = '';
+    }
+    const miscGroup = document.getElementById('fees-misc-group');
+    if (miscGroup) {
+      miscGroup.style.display = 'none';
     }
     // Reset summary display
     this.setSummaryText({ srno:'—', name:'—', total:'—', paid:'—', remaining:'—', status:'—' });
@@ -651,6 +711,30 @@ class FeesManager {
   }
 
   async submit() {
+    // Validate required fields
+    const requiredFields = [
+      { field: this.classSel, name: 'Class' },
+      { field: this.rollSel, name: 'Roll No' },
+      { field: this.inputs.deposit, name: 'Deposit Amount' },
+      { field: this.inputs.category, name: 'Fee Category' },
+      { field: this.inputs.mode, name: 'Payment Mode' },
+      { field: this.inputs.reff, name: 'Reference No' },
+      // Date field removed from validation since we use live timestamp
+    ];
+    
+    // Check if Miscellaneous is selected and misc detail is required
+    if (this.inputs.category && this.inputs.category.value === 'Miscellaneous') {
+      requiredFields.push({ field: this.inputs.miscDetail, name: 'Specify Category' });
+    }
+    
+    for (const { field, name } of requiredFields) {
+      if (!field || !field.value || field.value.trim() === '') {
+        this.showMessage(`Please fill in ${name}.`, 'error');
+        if (field && field.focus) field.focus();
+        return;
+      }
+    }
+    
     const payload = this.buildPayload();
     if (!payload.Class || !payload.Roll_No) {
       this.showMessage('Please select Class and Roll No.', 'error');
@@ -659,8 +743,12 @@ class FeesManager {
     try {
       this.submitBtn.disabled = true;
       this.submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
+      
+      // Log the live timestamp being sent
+      console.log('Submitting fees with live timestamp:', payload.Date);
+      
       await window.dataService.submitFees(payload);
-      this.showMessage('Fees submitted successfully', 'success');
+      this.showMessage(`Fees submitted successfully at ${payload.Date}`, 'success');
       
       // Refresh analytics data after successful submission
       try {

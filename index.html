@@ -417,7 +417,8 @@
                                         <option value="">Select mode</option>
                                         <option value="Cash">Cash</option>
                                         <option value="UPI">UPI</option>
-                                        <option value="Card">Card</option>
+                                        <option value="UPI ICICI Bank">UPI ICICI Bank</option>
+                                        <option value="UPI Axis Bank">UPI Axis Bank</option>
                                         <option value="Bank Transfer">Bank Transfer</option>
                                         <option value="Cheque">Cheque</option>
                                     </select>
@@ -427,8 +428,8 @@
                                     <input type="text" id="fees-reff" class="form-input" placeholder="Reference number" required>
                                 </div>
                                 <div class="form-group">
-                                    <label for="fees-date">Date</label>
-                                    <input type="date" id="fees-date" class="form-input" required>
+                                    <label for="fees-date">Date <small style="color: #666;">(Live timestamp used on submit)</small></label>
+                                    <input type="date" id="fees-date" class="form-input" readonly title="Date is automatically set to current date/time during submission">
                                 </div>
                             </div>
                             <div style="display:flex; justify-content:center; margin-top: 10px;">
