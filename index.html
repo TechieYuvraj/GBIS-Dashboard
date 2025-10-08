@@ -354,35 +354,46 @@
 
                                 <!-- Summary preview card (replaces read-only fields) -->
                                 <div class="form-group fees-summary-group">
-                                    <div class="fees-summary-card">
-                                        <div class="fees-summary-row">
-                                            <div class="fees-summary-item">
-                                                <label>Sr. No.: </label>
-                                                <div id="fees-summary-srno">—</div>
+                                    <div class="fees-summary-table-container">
+                                        <table class="fees-summary-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Serial No.</th>
+                                                    <th>Name</th>
+                                                    <th>Total Fees</th>
+                                                    <th>Remaining Fees</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td id="fees-summary-srno">—</td>
+                                                    <td id="fees-summary-name">—</td>
+                                                    <td id="fees-summary-total">—</td>
+                                                    <td id="fees-summary-remaining">—</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    
+                                    <!-- Deposited Fees Breakdown -->
+                                    <div class="deposited-fees-breakdown">
+                                        <h4>Deposited Fees Breakdown</h4>
+                                        <div class="breakdown-table">
+                                            <div class="breakdown-row">
+                                                <span class="breakdown-label">Transportation Fees:</span>
+                                                <span class="breakdown-amount" id="fees-breakdown-transportation">₹0</span>
                                             </div>
-                                            <div class="fees-summary-item">
-                                                <label>Name: </label>
-                                                <div id="fees-summary-name">—</div>
+                                            <div class="breakdown-row">
+                                                <span class="breakdown-label">Tuition Fees:</span>
+                                                <span class="breakdown-amount" id="fees-breakdown-tuition">₹0</span>
                                             </div>
-                                        </div>
-                                        <div class="fees-summary-row">
-                                            <div class="fees-summary-item">
-                                                <label>Total Fees: </label>
-                                                <div id="fees-summary-total">—</div>
+                                            <div class="breakdown-row">
+                                                <span class="breakdown-label">Miscellaneous Fees:</span>
+                                                <span class="breakdown-amount" id="fees-breakdown-miscellaneous">₹0</span>
                                             </div>
-                                            <div class="fees-summary-item">
-                                                <label>Deposited Amount: </label>
-                                                <div id="fees-summary-paid">—</div>
-                                            </div>
-                                        </div>
-                                        <div class="fees-summary-row">
-                                            <div class="fees-summary-item">
-                                                <label>Remaining Fees: </label>
-                                                <div id="fees-summary-remaining">—</div>
-                                            </div>
-                                            <div class="fees-summary-item">
-                                                <label>Fees Status: </label>
-                                                <div id="fees-summary-status">—</div>
+                                            <div class="breakdown-row total-row">
+                                                <span class="breakdown-label">Total Deposited:</span>
+                                                <span class="breakdown-amount" id="fees-breakdown-total">₹0</span>
                                             </div>
                                         </div>
                                     </div>

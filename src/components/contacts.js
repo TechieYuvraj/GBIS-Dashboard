@@ -47,22 +47,15 @@ class ContactsManager {
             
             // Wait for data service to be ready
             if (window.dataService) {
-                // First try to get existing students
-                this.students = window.dataService.getStudents();
-                
-                // Only fetch if no students are available and dataService is not initialized
-                if (this.students.length === 0 && !window.dataService.isInitialized) {
-                    console.log('No students found and service not initialized, fetching...');
-                    await window.dataService.fetchContacts();
-                    this.students = window.dataService.getStudents();
-                } else if (this.students.length === 0) {
-                    // If initialized but no students, something went wrong - try again
-                    console.log('Service initialized but no students found, attempting fetch...');
-                    await window.dataService.fetchContacts();
-                    this.students = window.dataService.getStudents();
-                } else {
-                    console.log('Students already available, skipping fetch');
+                // Wait for data service to be initialized
+                let attempts = 0;
+                while (!window.dataService.isInitialized && attempts < 50) {
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                    attempts++;
                 }
+                
+                // Get students from data service
+                this.students = window.dataService.getStudents();
                 
                 // Initialize filtered students with all students
                 this.filteredStudents = [...this.students];
@@ -134,10 +127,6 @@ class ContactsManager {
         card.className = 'student-card';
 
         const safe = (v) => v || '—';
-        const formatCurrency = (amount) => {
-            if (!amount || amount === 0) return '₹0';
-            return `₹${Number(amount).toLocaleString('en-IN')}`;
-        };
         const formatContactNumber = (contact) => {
             if (!contact) return '—';
             const str = String(contact);
@@ -160,53 +149,10 @@ class ContactsManager {
                 <div class="meta"><span class="meta-label">Contact</span><span class="meta-value em">${formatContactNumber(student.Contact_No)}</span></div>
             </div>
             
-            <div class="student-fees-section">
-                <h5 class="fees-section-title">
-                    <i class="fas fa-money-bill-wave"></i>
-                    Fee Details
-                </h5>
-                <div class="fees-grid">
-                    <div class="fee-item">
-                        <span class="fee-label">Transportation</span>
-                        <span class="fee-value">${formatCurrency(student.Transportaion_fees || student.Transportaion_Fees)}</span>
-                    </div>
-                    <div class="fee-item">
-                        <span class="fee-label">Tuition</span>
-                        <span class="fee-value">${formatCurrency(student.Tution_fees || student['Tution_fees '])}</span>
-                    </div>
-                    <div class="fee-item total-fee">
-                        <span class="fee-label">Total Fees</span>
-                        <span class="fee-value">${formatCurrency(student.Total_fees)}</span>
-                    </div>
-                    <div class="fee-item deposited-fee">
-                        <span class="fee-label">Deposited</span>
-                        <span class="fee-value">${formatCurrency(student.Deposited_fees)}</span>
-                    </div>
-                    <div class="fee-item pending-fee">
-                        <span class="fee-label">Pending</span>
-                        <span class="fee-value">${formatCurrency(student.Pending_fees || student['Pending_fees '])}</span>
-                    </div>
-                    <div class="fee-item discount-fee">
-                        <span class="fee-label">Discount</span>
-                        <span class="fee-value">${formatCurrency(student.Discount_Amt)}</span>
-                    </div>
-                </div>
-                ${student.Disc_reason && student.Disc_reason !== 'NA' ? `
-                    <div class="discount-reason">
-                        <span class="discount-label">Discount Reason:</span>
-                        <span class="discount-text">${student.Disc_reason}</span>
-                    </div>
-                ` : ''}
-            </div>
-            
-            <div class="student-actions">
+            <div class="student-actions-center">
                 <button class="action-btn view-details-btn" onclick="window.contactsManager.showStudentDetails('${student.Serial_No || student.row_number}')">
                     <i class="fas fa-eye"></i>
                     View Details
-                </button>
-                <button class="action-btn send-notification-btn" onclick="window.contactsManager.sendNotificationToStudent('${student.Serial_No || student.row_number}')">
-                    <i class="fas fa-bell"></i>
-                    Send Notice
                 </button>
             </div>
         `;
@@ -344,40 +290,9 @@ class ContactsManager {
         this.showStudentPopup(student);
     }
 
-    // Method to send notification to a specific student
-    sendNotificationToStudent(studentId) {
-        const student = this.getStudentById(studentId);
-        if (!student) {
-            console.error('Student not found:', studentId);
-            return;
-        }
 
-        // If notification manager is available, pre-fill the form
-        if (window.notificationManager) {
-            // Switch to notification tab
-            if (window.navigation) {
-                window.navigation.goToTab('notification');
-            }
 
-            // Pre-fill with student details
-            setTimeout(() => {
-                const recipientInput = document.getElementById('notification-recipient');
-                if (recipientInput) {
-                    recipientInput.value = student.Name;
-                }
-                
-                // If there's a contact field, fill it
-                const contactInput = document.getElementById('notification-contact');
-                if (contactInput) {
-                    contactInput.value = student.Contact_No || '';
-                }
-            }, 300);
-        } else {
-            alert(`Send notification to: ${student.Name}\nContact: ${student.Contact_No || 'N/A'}`);
-        }
-    }
-
-    // Method to create and show student details popup
+    // Method to create and show student details popup with edit functionality
     showStudentPopup(student) {
         // Remove existing popup if any
         const existingPopup = document.querySelector('.student-popup-overlay');
@@ -385,15 +300,10 @@ class ContactsManager {
             existingPopup.remove();
         }
 
-        const safe = (v) => v || '—';
+        const safe = (v) => v || '';
         const formatCurrency = (amount) => {
-            if (!amount || amount === 0) return '₹0';
-            return `₹${Number(amount).toLocaleString('en-IN')}`;
-        };
-        const formatContactNumber = (contact) => {
-            if (!contact) return '—';
-            const str = String(contact);
-            return str.length === 10 ? str.replace(/(\d{5})(\d{5})/, '$1-$2') : str;
+            if (!amount || amount === 0) return '0';
+            return Number(amount).toString();
         };
 
         // Create popup overlay
@@ -412,33 +322,39 @@ class ContactsManager {
                 </div>
                 
                 <div class="popup-body">
-                    <div class="student-info-grid">
+                    <form id="student-edit-form" class="student-info-grid">
                         <div class="info-section">
                             <h4><i class="fas fa-user"></i> Personal Information</h4>
                             <div class="info-grid">
                                 <div class="info-item">
                                     <span class="info-label">Full Name</span>
-                                    <span class="info-value">${safe(student.Name)}</span>
+                                    <span class="info-value" data-field="Name">${safe(student.Name)}</span>
+                                    <input type="text" class="info-input" data-field="Name" value="${safe(student.Name)}" style="display: none;">
                                 </div>
                                 <div class="info-item">
                                     <span class="info-label">Class</span>
-                                    <span class="info-value class-badge">${safe(student.Class)}</span>
+                                    <span class="info-value class-badge" data-field="Class">${safe(student.Class)}</span>
+                                    <input type="text" class="info-input" data-field="Class" value="${safe(student.Class)}" style="display: none;">
                                 </div>
                                 <div class="info-item">
                                     <span class="info-label">Roll Number</span>
-                                    <span class="info-value">${safe(student.Roll_No)}</span>
+                                    <span class="info-value" data-field="Roll_No">${safe(student.Roll_No)}</span>
+                                    <input type="number" class="info-input" data-field="Roll_No" value="${safe(student.Roll_No)}" style="display: none;">
                                 </div>
                                 <div class="info-item">
                                     <span class="info-label">Serial Number</span>
-                                    <span class="info-value">${safe(student.Serial_No)}</span>
+                                    <span class="info-value" data-field="Serial_No">${safe(student.Serial_No)}</span>
+                                    <input type="number" class="info-input" data-field="Serial_No" value="${safe(student.Serial_No)}" style="display: none;">
                                 </div>
                                 <div class="info-item">
                                     <span class="info-label">Date of Birth</span>
-                                    <span class="info-value">${safe(student.DOB)}</span>
+                                    <span class="info-value" data-field="DOB">${safe(student.DOB)}</span>
+                                    <input type="text" class="info-input" data-field="DOB" value="${safe(student.DOB)}" placeholder="DD-MM-YYYY" style="display: none;">
                                 </div>
                                 <div class="info-item">
                                     <span class="info-label">Admission Date</span>
-                                    <span class="info-value">${safe(student.Admission_Date)}</span>
+                                    <span class="info-value" data-field="Admission_Date">${safe(student.Admission_Date)}</span>
+                                    <input type="text" class="info-input" data-field="Admission_Date" value="${safe(student.Admission_Date)}" placeholder="DD-MM-YYYY" style="display: none;">
                                 </div>
                             </div>
                         </div>
@@ -448,69 +364,77 @@ class ContactsManager {
                             <div class="info-grid">
                                 <div class="info-item">
                                     <span class="info-label">Father's Name</span>
-                                    <span class="info-value">${safe(student.Father_Name)}</span>
+                                    <span class="info-value" data-field="Father_Name">${safe(student.Father_Name)}</span>
+                                    <input type="text" class="info-input" data-field="Father_Name" value="${safe(student.Father_Name)}" style="display: none;">
                                 </div>
                                 <div class="info-item">
                                     <span class="info-label">Mother's Name</span>
-                                    <span class="info-value">${safe(student.Mother_Name)}</span>
+                                    <span class="info-value" data-field="Mother_Name">${safe(student.Mother_Name)}</span>
+                                    <input type="text" class="info-input" data-field="Mother_Name" value="${safe(student.Mother_Name)}" style="display: none;">
                                 </div>
                                 <div class="info-item full-width">
                                     <span class="info-label">Address</span>
-                                    <span class="info-value">${safe(student.Address)}</span>
+                                    <span class="info-value" data-field="Address">${safe(student.Address)}</span>
+                                    <textarea class="info-textarea" data-field="Address" style="display: none;">${safe(student.Address)}</textarea>
                                 </div>
                                 <div class="info-item">
                                     <span class="info-label">Contact Number</span>
-                                    <span class="info-value contact-number">${formatContactNumber(student.Contact_No)}</span>
+                                    <span class="info-value contact-number" data-field="Contact_No">${safe(student.Contact_No)}</span>
+                                    <input type="tel" class="info-input" data-field="Contact_No" value="${safe(student.Contact_No)}" style="display: none;">
                                 </div>
                             </div>
                         </div>
 
                         <div class="info-section fees-section">
                             <h4><i class="fas fa-money-bill-wave"></i> Fee Details</h4>
-                            <div class="fees-summary">
-                                <div class="fee-breakdown">
-                                    <div class="fee-row">
-                                        <span class="fee-type">Transportation Fees</span>
-                                        <span class="fee-amount">${formatCurrency(student.Transportaion_fees || student.Transportaion_Fees)}</span>
-                                    </div>
-                                    <div class="fee-row">
-                                        <span class="fee-type">Tuition Fees</span>
-                                        <span class="fee-amount">${formatCurrency(student.Tution_fees || student['Tution_fees '])}</span>
-                                    </div>
-                                    <div class="fee-row total-row">
-                                        <span class="fee-type">Total Fees</span>
-                                        <span class="fee-amount total-amount">${formatCurrency(student.Total_fees)}</span>
-                                    </div>
-                                    <div class="fee-row deposited-row">
-                                        <span class="fee-type">Deposited Amount</span>
-                                        <span class="fee-amount deposited-amount">${formatCurrency(student.Deposited_fees)}</span>
-                                    </div>
-                                    <div class="fee-row pending-row">
-                                        <span class="fee-type">Pending Amount</span>
-                                        <span class="fee-amount pending-amount">${formatCurrency(student.Pending_fees || student['Pending_fees '])}</span>
-                                    </div>
-                                    ${student.Discount_Amt && student.Discount_Amt > 0 ? `
-                                        <div class="fee-row discount-row">
-                                            <span class="fee-type">Discount Applied</span>
-                                            <span class="fee-amount discount-amount">${formatCurrency(student.Discount_Amt)}</span>
-                                        </div>
-                                        ${student.Disc_reason && student.Disc_reason !== 'NA' ? `
-                                            <div class="discount-reason-row">
-                                                <span class="fee-type">Discount Reason</span>
-                                                <span class="discount-reason">${student.Disc_reason}</span>
-                                            </div>
-                                        ` : ''}
-                                    ` : ''}
+                            <div class="info-grid">
+                                <div class="info-item">
+                                    <span class="info-label">Transportation Fees</span>
+                                    <span class="info-value" data-field="Transportaion_fees">₹${formatCurrency(student.Transportaion_fees || student.Transportaion_Fees)}</span>
+                                    <input type="number" class="info-input" data-field="Transportaion_fees" value="${formatCurrency(student.Transportaion_fees || student.Transportaion_Fees)}" style="display: none;">
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Tuition Fees</span>
+                                    <span class="info-value" data-field="Tution_fees">₹${formatCurrency(student.Tution_fees || student['Tution_fees '])}</span>
+                                    <input type="number" class="info-input" data-field="Tution_fees" value="${formatCurrency(student.Tution_fees || student['Tution_fees '])}" style="display: none;">
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Total Fees</span>
+                                    <span class="info-value" data-field="Total_fees">₹${formatCurrency(student.Total_fees)}</span>
+                                    <input type="number" class="info-input" data-field="Total_fees" value="${formatCurrency(student.Total_fees)}" style="display: none;">
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Deposited Amount</span>
+                                    <span class="info-value read-only-field" data-field="Deposited_fees">₹${formatCurrency(student.Deposited_fees)}</span>
+                                    <input type="number" class="info-input" data-field="Deposited_fees" value="${formatCurrency(student.Deposited_fees)}" style="display: none;">
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Pending Amount</span>
+                                    <span class="info-value read-only-field" data-field="Pending_fees">₹${formatCurrency(student.Pending_fees || student['Pending_fees '])}</span>
+                                    <input type="number" class="info-input" data-field="Pending_fees" value="${formatCurrency(student.Pending_fees || student['Pending_fees '])}" style="display: none;">
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Discount Amount</span>
+                                    <span class="info-value" data-field="Discount_Amt">₹${formatCurrency(student.Discount_Amt)}</span>
+                                    <input type="number" class="info-input" data-field="Discount_Amt" value="${formatCurrency(student.Discount_Amt)}" style="display: none;">
+                                </div>
+                                <div class="info-item discount-reason-item full-width" style="display: none;">
+                                    <span class="info-label">Discount Reason</span>
+                                    <input type="text" class="info-input" data-field="Disc_reason" value="${safe(student.Disc_reason !== 'NA' ? student.Disc_reason : '')}" placeholder="Enter discount reason">
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    </form>
                 </div>
                 
                 <div class="popup-footer">
-                    <button class="action-btn primary-btn" onclick="window.contactsManager.sendNotificationToStudent('${student.Serial_No || student.row_number}')">
-                        <i class="fas fa-bell"></i>
-                        Send Notification
+                    <button class="action-btn edit-btn" id="edit-student-btn" onclick="window.contactsManager.toggleEditMode()">
+                        <i class="fas fa-edit"></i>
+                        Edit
+                    </button>
+                    <button class="action-btn primary-btn" id="submit-student-btn" onclick="window.contactsManager.submitStudentEdit('${student.Serial_No || student.row_number}')" style="display: none;">
+                        <i class="fas fa-save"></i>
+                        Submit
                     </button>
                     <button class="action-btn secondary-btn" onclick="this.closest('.student-popup-overlay').remove()">
                         <i class="fas fa-times"></i>
@@ -522,6 +446,9 @@ class ContactsManager {
 
         // Add to document
         document.body.appendChild(popupOverlay);
+
+        // Store original student data for reference
+        this.editingStudent = { ...student };
 
         // Add click outside to close
         popupOverlay.addEventListener('click', (e) => {
@@ -543,6 +470,176 @@ class ContactsManager {
         setTimeout(() => {
             popupOverlay.classList.add('show');
         }, 10);
+    }
+
+    // Method to toggle edit mode
+    toggleEditMode() {
+        const popup = document.querySelector('.student-popup-overlay');
+        if (!popup) return;
+
+        const isEditing = popup.classList.contains('editing');
+        
+        if (isEditing) {
+            // Cancel edit mode
+            popup.classList.remove('editing');
+            this.showEditFields(false);
+            document.getElementById('edit-student-btn').style.display = 'inline-flex';
+            document.getElementById('submit-student-btn').style.display = 'none';
+            document.querySelector('.discount-reason-item').style.display = 'none';
+        } else {
+            // Enter edit mode
+            popup.classList.add('editing');
+            this.showEditFields(true);
+            document.getElementById('edit-student-btn').style.display = 'none';
+            document.getElementById('submit-student-btn').style.display = 'inline-flex';
+            document.querySelector('.discount-reason-item').style.display = 'block';
+        }
+    }
+
+    // Method to show/hide edit fields
+    showEditFields(show) {
+        const popup = document.querySelector('.student-popup-overlay');
+        if (!popup) return;
+
+        const values = popup.querySelectorAll('.info-value');
+        const inputs = popup.querySelectorAll('.info-input, .info-textarea');
+
+        values.forEach(value => {
+            const field = value.getAttribute('data-field');
+            // Keep deposited amount and pending amount fields always visible (read-only)
+            if (field === 'Deposited_fees' || field === 'Pending_fees') {
+                value.style.display = 'block';
+            } else {
+                value.style.display = show ? 'none' : 'block';
+            }
+        });
+
+        inputs.forEach(input => {
+            const field = input.getAttribute('data-field');
+            // Never show edit inputs for deposited amount and pending amount
+            if (field === 'Deposited_fees' || field === 'Pending_fees') {
+                input.style.display = 'none';
+            } else {
+                input.style.display = show ? 'block' : 'none';
+            }
+        });
+    }
+
+    // Method to submit student edit
+    async submitStudentEdit(studentId) {
+        const popup = document.querySelector('.student-popup-overlay');
+        if (!popup) return;
+
+        const submitBtn = document.getElementById('submit-student-btn');
+        const originalText = submitBtn.innerHTML;
+        
+        try {
+            // Show loading state
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
+
+            // Collect form data
+            const formData = {};
+            const inputs = popup.querySelectorAll('.info-input, .info-textarea');
+            
+            inputs.forEach(input => {
+                const field = input.getAttribute('data-field');
+                
+                // Skip deposited amount and pending amount fields - they should not be editable
+                if (field === 'Deposited_fees' || field === 'Pending_fees') {
+                    return;
+                }
+                
+                let value = input.value.trim();
+                
+                // Convert numeric fields
+                if (['Roll_No', 'Serial_No', 'Transportaion_fees', 'Tution_fees', 'Total_fees', 'Discount_Amt'].includes(field)) {
+                    value = value ? Number(value) : 0;
+                }
+                
+                formData[field] = value;
+            });
+
+            // Add original student ID for reference
+            formData.row_number = this.editingStudent.row_number;
+            formData.original_Serial_No = this.editingStudent.Serial_No;
+
+            console.log('Submitting student edit:', formData);
+
+            // Send to webhook
+            const response = await fetch('https://primary-production-4a6d8.up.railway.app/webhook/contact_edit', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-n8n-apiKey': '2025@urikaDeep@km@lik$$'
+                },
+                body: JSON.stringify(formData)
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            // Check if response has content before parsing JSON
+            let result = null;
+            const responseText = await response.text();
+            
+            if (responseText && responseText.trim()) {
+                try {
+                    result = JSON.parse(responseText);
+                    console.log('Edit response:', result);
+                } catch (parseError) {
+                    console.log('✅ Student edit submitted successfully (invalid JSON response)');
+                }
+            } else {
+                console.log('✅ Student edit submitted successfully (empty response)');
+            }
+
+            // Show success message
+            this.showMessage('Student details updated successfully!', 'success');
+            
+            // Close popup
+            popup.remove();
+            
+            // Refresh student list
+            await this.refresh();
+
+        } catch (error) {
+            console.error('Error submitting student edit:', error);
+            this.showMessage('Failed to update student details. Please try again.', 'error');
+        } finally {
+            // Reset button state
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalText;
+        }
+    }
+
+    // Method to show success/error messages
+    showMessage(message, type = 'success') {
+        // Create or update message element
+        let messageEl = document.getElementById('student-message');
+        if (!messageEl) {
+            messageEl = document.createElement('div');
+            messageEl.id = 'student-message';
+            messageEl.className = 'student-message';
+            
+            // Insert at top of contacts section
+            const contactsSection = document.getElementById('contacts-tab');
+            if (contactsSection && contactsSection.firstChild) {
+                contactsSection.insertBefore(messageEl, contactsSection.firstChild);
+            }
+        }
+        
+        messageEl.textContent = message;
+        messageEl.className = `student-message ${type}`;
+        messageEl.style.display = 'block';
+        
+        // Auto-hide after 3 seconds
+        setTimeout(() => {
+            if (messageEl) {
+                messageEl.style.display = 'none';
+            }
+        }, 3000);
     }
 }
 

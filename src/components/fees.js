@@ -43,9 +43,14 @@ class FeesManager {
       srno: document.getElementById('fees-summary-srno'),
       name: document.getElementById('fees-summary-name'),
       total: document.getElementById('fees-summary-total'),
-      paid: document.getElementById('fees-summary-paid'),
       remaining: document.getElementById('fees-summary-remaining'),
-      status: document.getElementById('fees-summary-status'),
+    };
+    // Category breakdown display nodes
+    this.categoryBreakdown = {
+      transportation: document.getElementById('fees-breakdown-transportation'),
+      tuition: document.getElementById('fees-breakdown-tuition'),
+      miscellaneous: document.getElementById('fees-breakdown-miscellaneous'),
+      total: document.getElementById('fees-breakdown-total'),
     };
     this.submitBtn = document.getElementById('fees-submit');
     this.successEl = document.getElementById('fees-success');
@@ -73,9 +78,13 @@ class FeesManager {
     if (this.submitBtn) {
       this.submitBtn.addEventListener('click', () => this.submit());
     }
-    // Fee category handler
+    // Fee category handler - normal handling
     if (this.inputs.category) {
       this.inputs.category.addEventListener('change', () => this.onCategoryChange());
+    }
+    // Deposit amount handler - simple handling without restrictions
+    if (this.inputs.deposit) {
+      this.inputs.deposit.addEventListener('input', () => this.onDepositChange());
     }
     // Month selector
     const monthSel = document.getElementById('fees-month-select');
@@ -444,7 +453,34 @@ class FeesManager {
     this.setFetching(true);
     try {
       const res = await window.dataService.fetchFeesDetails(cls, roll);
-      const d = Array.isArray(res) ? (res[0]||{}) : (res || {});
+      
+      // Handle dynamic webhook response - expect array format
+      let d = {};
+      if (Array.isArray(res) && res.length > 0) {
+        // Find matching record by Class and Roll_No
+        d = res.find(record => 
+          String(record.Class).toLowerCase() === String(cls).toLowerCase() && 
+          Number(record.Roll_No) === Number(roll)
+        ) || res[0] || {};
+      } else if (res && typeof res === 'object') {
+        d = res;
+      }
+      
+      // Log the dynamic webhook response for debugging
+      console.log('📋 Raw webhook response:', res);
+      console.log('📋 Processed student data:', d);
+      console.log('📋 Dynamic webhook fields:');
+      console.log('  Class:', d.Class, '(searching for:', cls, ')');
+      console.log('  Roll_No:', d.Roll_No, '(searching for:', roll, ')');
+      console.log('  Serial_No:', d.Serial_No);
+      console.log('  Name:', d.Name);
+      console.log('  Total_fees:', d.Total_fees);
+      console.log('  Pending_fees :', d['Pending_fees ']);
+      console.log('  Deposited_fees:', d.Deposited_fees);
+      console.log('  Transportation_Fees_Total:', d.Transportation_Fees_Total);
+      console.log('  Tuition_Fees_Total:', d.Tuition_Fees_Total);
+      console.log('  Miscellaneous_Fees_Total:', d.Miscellaneous_Fees_Total);
+      
       // Normalize keys for robust lookups (trim, lowercase, replace spaces and hyphens with underscores)
       const normalizeKey = (k) => String(k).trim().toLowerCase().replace(/[\s\-\.]+/g, '_');
       const normMap = (() => {
@@ -462,30 +498,41 @@ class FeesManager {
         return fallback;
       };
 
-      // Serial / Sr No
+      // Map dynamic webhook fields exactly as they come from the JSON
       if (this.inputs.srno) {
-        this.inputs.srno.value = getN(['Serial_No', 'Sr_No', 'SrNo', 'Sr no']) ?? this.inputs.srno.value;
+        const serialValue = d.Serial_No || '';
+        this.inputs.srno.value = serialValue;
+        console.log('📝 Serial No (dynamic):', serialValue);
       }
-      // Name
+      
       if (this.inputs.name) {
-        this.inputs.name.value = getN(['Name', 'Student_Name']) ?? this.inputs.name.value;
+        const nameValue = d.Name || '';
+        this.inputs.name.value = nameValue;
+        console.log('📝 Name (dynamic):', nameValue);
       }
-      // Total fees - prioritize new format
+      
       if (this.inputs.total) {
-        this.inputs.total.value = getN(['Total_fees', 'Total_Fees', 'Total', 'Tution_fees ', 'Tution_fees', 'Tuition_Fees']) ?? this.inputs.total.value;
+        const totalValue = d.Total_fees || 0;
+        this.inputs.total.value = totalValue;
+        console.log('📝 Total fees (dynamic):', totalValue);
       }
-      // Fees Paid (hidden input used for submission) - prioritize new format
+      
       if (this.inputs.paid) {
-        this.inputs.paid.value = getN(['Deposited_fees', 'Fees_Paid', 'Paid', 'Deposited_Fees']) ?? this.inputs.paid.value;
+        const paidValue = d.Deposited_fees || 0;
+        this.inputs.paid.value = paidValue;
+        console.log('📝 Deposited fees (dynamic):', paidValue);
       }
-      // Deposit amount (current input default from webhook if present)
+      
       if (this.inputs.deposit) {
-        this.inputs.deposit.value = getN(['Deposit_Amount', 'Deposit']) ?? this.inputs.deposit.value;
+        // For new deposits, start with empty value (user will enter)
+        this.inputs.deposit.value = '';
+        console.log('📝 Deposit amount (for new entry): empty');
       }
-      // Remaining / Pending fees
+      
       if (this.inputs.remaining) {
-        const rem = getN(['Remaining_Fees', 'Remaining', 'Pending_fees', 'Pending_fees '], '');
-        this.inputs.remaining.value = typeof rem === 'number' ? rem : (rem || '');
+        const remValue = d['Pending_fees '] || 0;
+        this.inputs.remaining.value = remValue;
+        console.log('📝 Pending fees (dynamic):', remValue);
       }
       // Fees status
       if (this.inputs.status) {
@@ -503,7 +550,7 @@ class FeesManager {
           this.inputs.status.value = statusVal || '';
         }
       }
-      // Handle fee category from API data (replaced old remarks field)
+      // Handle fee category from API data - normal logic without restrictions
       if (d.Fee_Category || d.Remarks) {
         const categoryValue = d.Fee_Category || d.Remarks;
         if (this.inputs.category) {
@@ -557,15 +604,43 @@ class FeesManager {
       }
 
       // Update summary card text
-      // Build summary overrides based on API mapping requirements
+      // Extract dynamic category breakdown from webhook response
+      const transportationFees = Number(d.Transportation_Fees_Total || 0);
+      const tuitionFees = Number(d.Tuition_Fees_Total || 0);
+      const miscellaneousFees = Number(d.Miscellaneous_Fees_Total || 0);
+      
       const summaryOverrides = {
-        // Show Deposited_fees in Deposited Amount slot (display only)
-        paid: getN(['Deposited_fees', 'Deposited_Fees', 'Fees_Paid', 'Paid']) ?? this.inputs.paid?.value,
-        // Show Pending_fees in Remaining Fees slot (display only)
-        remaining: getN(['Pending_fees', 'Pending_fees ', 'Remaining_Fees', 'Remaining']) ?? this.inputs.remaining?.value,
-        // Show Fees_status in Fees Status slot (display only)
-        status: getN(['Fees_status', 'Fees_Status', 'Status']) ?? this.inputs.status?.value,
+        // Use dynamic remaining fees with space in field name
+        remaining: d['Pending_fees '] || 0,
+        // Dynamic category breakdown from real-time webhook data
+        categoryBreakdown: {
+          transportation: transportationFees,
+          tuition: tuitionFees,
+          miscellaneous: miscellaneousFees,
+        }
       };
+      
+      // Log dynamic category breakdown values
+      console.log('📊 Dynamic Category Breakdown:');
+      console.log('  Transportation_Fees_Total:', d.Transportation_Fees_Total, '→', transportationFees);
+      console.log('  Tuition_Fees_Total:', d.Tuition_Fees_Total, '→', tuitionFees);
+      console.log('  Miscellaneous_Fees_Total:', d.Miscellaneous_Fees_Total, '→', miscellaneousFees);
+      console.log('  Pending_fees (with space):', d['Pending_fees ']);
+      console.log('  Final breakdown object:', summaryOverrides.categoryBreakdown);
+      
+      // Log additional dynamic fields for reference
+      console.log('📋 Additional Dynamic Fields:');
+      console.log('  Father_Name:', d.Father_Name);
+      console.log('  Mother_Name:', d.Mother_Name);
+      console.log('  DOB:', d.DOB);
+      console.log('  Admission_Date:', d.Admission_Date);
+      console.log('  Address:', d.Address);
+      console.log('  Contact_No:', d.Contact_No);
+      console.log('  Transportaion_fees (raw):', d.Transportaion_fees);
+      console.log('  Tution_fees (with space):', d['Tution_fees ']);
+      console.log('  Discount_Amt:', d.Discount_Amt);
+      console.log('  Disc_reason:', d.Disc_reason);
+      
       this.updateSummaryFromInputs(summaryOverrides);
     } catch (err) {
       console.error('Fees detail fetch failed:', err);
@@ -574,6 +649,64 @@ class FeesManager {
       // enable fields and hide loader
       this.setFetching(false);
     }
+  }
+
+  updateCategoryOptions(depositedAmount) {
+    // Category options are now normal - no special logic
+    if (!this.inputs.category) return;
+    
+    // Reset any previous styling or restrictions
+    this.inputs.category.disabled = false;
+    this.inputs.category.readOnly = false;
+    this.inputs.category.style.backgroundColor = '';
+    this.inputs.category.style.color = '';
+    this.inputs.category.style.cursor = '';
+    this.inputs.category.style.pointerEvents = '';
+    this.inputs.category.title = '';
+    this.inputs.category.classList.remove('category-locked');
+  }
+
+  onDepositChange() {
+    // Simple deposit change handler - no special restrictions
+    const depositedAmount = Number(this.inputs.paid?.value || 0);
+    
+    // Update category options (now just resets any restrictions)
+    this.updateCategoryOptions(depositedAmount);
+    
+    // Hide/show miscDetail field if category changes
+    if (this.inputs.category && this.inputs.category.value !== 'Miscellaneous') {
+      this.onCategoryChange();
+    }
+  }
+
+  onCategoryChangeWrapper(event) {
+    // Normal category change handling - no restrictions
+    this.onCategoryChange();
+  }
+
+  preventCategoryChange(event) {
+    // No prevention logic - allow all category changes
+    return true;
+  }
+
+  validateDepositLimit(depositedAmount, currentDeposit) {
+    // No deposit limits - removed all restrictions
+    if (!this.inputs.deposit) return;
+    
+    // Remove any deposit limits
+    this.inputs.deposit.removeAttribute('max');
+    this.inputs.deposit.title = '';
+    this.inputs.deposit.placeholder = 'Enter deposit amount';
+  }
+
+  validateDepositOnBlur() {
+    // No validation restrictions - allow any deposit amount
+    return;
+  }
+
+  ensureTransportationFeesOption() {
+    // No longer needed - Transportation Fees is treated like any other option
+    return;
   }
 
   setDefaultDate() {
@@ -680,7 +813,9 @@ class FeesManager {
       miscGroup.style.display = 'none';
     }
     // Reset summary display
-    this.setSummaryText({ srno:'—', name:'—', total:'—', paid:'—', remaining:'—', status:'—' });
+    this.setSummaryText({ srno:'—', name:'—', total:'—', remaining:'—' });
+    // Reset category breakdown
+    this.setCategoryBreakdown({ transportation: 0, tuition: 0, miscellaneous: 0 });
   }
 
   // Sync summary card from hidden inputs
@@ -689,11 +824,14 @@ class FeesManager {
       srno: this.inputs.srno?.value ?? '—',
       name: this.inputs.name?.value ?? '—',
       total: this.inputs.total?.value ?? '—',
-      paid: overrides.paid ?? (this.inputs.paid?.value ?? '—'),
       remaining: overrides.remaining ?? (this.inputs.remaining?.value ?? '—'),
-      status: overrides.status ?? (this.inputs.status?.value ?? '—'),
     };
     this.setSummaryText(s);
+    
+    // Update category breakdown if overrides provided
+    if (overrides.categoryBreakdown) {
+      this.setCategoryBreakdown(overrides.categoryBreakdown);
+    }
   }
 
   setSummaryText(s) {
@@ -702,12 +840,67 @@ class FeesManager {
       if (typeof v === 'string' && v.trim() === '') return '—';
       return String(v);
     };
+    const displayCurrency = (v) => {
+      if (v === null || v === undefined || v === '—') return '—';
+      const num = Number(v);
+      return isNaN(num) ? display(v) : `₹${num}`;
+    };
     if (this.summary.srno) this.summary.srno.textContent = display(s.srno);
     if (this.summary.name) this.summary.name.textContent = display(s.name);
-    if (this.summary.total) this.summary.total.textContent = display(s.total);
-    if (this.summary.paid) this.summary.paid.textContent = display(s.paid);
-    if (this.summary.remaining) this.summary.remaining.textContent = display(s.remaining);
-    if (this.summary.status) this.summary.status.textContent = display(s.status);
+    if (this.summary.total) this.summary.total.textContent = displayCurrency(s.total);
+    if (this.summary.remaining) this.summary.remaining.textContent = displayCurrency(s.remaining);
+  }
+
+  setCategoryBreakdown(breakdown) {
+    console.log('🎯 setCategoryBreakdown called with:', breakdown);
+    
+    const displayCurrency = (v) => {
+      if (v === null || v === undefined || v === '—') return '₹0';
+      const num = Number(v);
+      return isNaN(num) ? '₹0' : `₹${num}`;
+    };
+    
+    const transportation = Number(breakdown.transportation ?? 0);
+    const tuition = Number(breakdown.tuition ?? 0);
+    const miscellaneous = Number(breakdown.miscellaneous ?? 0);
+    const total = transportation + tuition + miscellaneous;
+    
+    console.log('🎯 Calculated values:');
+    console.log('  Transportation:', transportation, '→', displayCurrency(transportation));
+    console.log('  Tuition:', tuition, '→', displayCurrency(tuition));
+    console.log('  Miscellaneous:', miscellaneous, '→', displayCurrency(miscellaneous));
+    console.log('  Total:', total, '→', displayCurrency(total));
+    
+    console.log('🎯 DOM Elements check:');
+    console.log('  Transportation element:', this.categoryBreakdown.transportation);
+    console.log('  Tuition element:', this.categoryBreakdown.tuition);
+    console.log('  Miscellaneous element:', this.categoryBreakdown.miscellaneous);
+    console.log('  Total element:', this.categoryBreakdown.total);
+    
+    if (this.categoryBreakdown.transportation) {
+      this.categoryBreakdown.transportation.textContent = displayCurrency(transportation);
+      console.log('✅ Transportation updated to:', displayCurrency(transportation));
+    } else {
+      console.error('❌ Transportation element not found!');
+    }
+    if (this.categoryBreakdown.tuition) {
+      this.categoryBreakdown.tuition.textContent = displayCurrency(tuition);
+      console.log('✅ Tuition updated to:', displayCurrency(tuition));
+    } else {
+      console.error('❌ Tuition element not found!');
+    }
+    if (this.categoryBreakdown.miscellaneous) {
+      this.categoryBreakdown.miscellaneous.textContent = displayCurrency(miscellaneous);
+      console.log('✅ Miscellaneous updated to:', displayCurrency(miscellaneous));
+    } else {
+      console.error('❌ Miscellaneous element not found!');
+    }
+    if (this.categoryBreakdown.total) {
+      this.categoryBreakdown.total.textContent = displayCurrency(total);
+      console.log('✅ Total updated to:', displayCurrency(total));
+    } else {
+      console.error('❌ Total element not found!');
+    }
   }
 
   async submit() {
@@ -748,7 +941,12 @@ class FeesManager {
       console.log('Submitting fees with live timestamp:', payload.Date);
       
       await window.dataService.submitFees(payload);
-      this.showMessage(`Fees submitted successfully at ${payload.Date}`, 'success');
+      
+      // Clear input fields after successful submission
+      this.clearInputFields();
+      
+      // Show success message
+      this.showMessage('Fees submitted successfully!', 'success');
       
       // Refresh analytics data after successful submission
       try {
@@ -783,6 +981,45 @@ class FeesManager {
       this.submitBtn.disabled = false;
       this.submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Submit';
     }
+  }
+
+  clearInputFields() {
+    // Clear user input fields only (not the fetched data fields)
+    if (this.inputs.deposit) this.inputs.deposit.value = '';
+    if (this.inputs.category) this.inputs.category.value = '';
+    if (this.inputs.miscDetail) this.inputs.miscDetail.value = '';
+    if (this.inputs.mode) this.inputs.mode.value = '';
+    if (this.inputs.reff) this.inputs.reff.value = '';
+    
+    // Hide miscellaneous detail field
+    const miscGroup = document.getElementById('fees-misc-group');
+    if (miscGroup) {
+      miscGroup.style.display = 'none';
+    }
+    
+    // Reset dropdown selections to default
+    if (this.classSel) this.classSel.value = '';
+    if (this.rollSel) {
+      this.rollSel.innerHTML = '<option value="">Choose roll no</option>';
+      this.rollSel.value = '';
+    }
+    
+    // Clear search input
+    if (this.searchInput) this.searchInput.value = '';
+    
+    // Reset summary display to empty state
+    this.setSummaryText({ srno: '—', name: '—', total: '—', remaining: '—' });
+    this.setCategoryBreakdown({ transportation: 0, tuition: 0, miscellaneous: 0 });
+    
+    // Reset hidden fields
+    if (this.inputs.srno) this.inputs.srno.value = '';
+    if (this.inputs.name) this.inputs.name.value = '';
+    if (this.inputs.total) this.inputs.total.value = '';
+    if (this.inputs.paid) this.inputs.paid.value = '';
+    if (this.inputs.remaining) this.inputs.remaining.value = '';
+    if (this.inputs.status) this.inputs.status.value = '';
+    
+    console.log('✅ Input fields cleared after successful submission');
   }
 
   showMessage(message, type='success') {
