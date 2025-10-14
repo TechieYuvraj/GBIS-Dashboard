@@ -11,9 +11,9 @@ class AttendanceManager {
         this.init();
     }
 
-    init() {
+    async init() {
         this.bindEvents();
-        this.initializeDropdowns();
+        await this.initializeDropdowns();
         this.setDefaultDate();
         // Fetch and render today's analytics on load
         this.loadTodayAnalytics();
@@ -38,10 +38,13 @@ class AttendanceManager {
         const classSelect = document.getElementById('attendance-class');
         if (classSelect) {
             classSelect.addEventListener('change', (e) => {
+                console.log('Class selection changed to:', e.target.value);
                 this.selectedClass = e.target.value;
                 this.populateRollNumbers();
                 this.validateForm();
             });
+        } else {
+            console.error('Class select element not found during event binding');
         }
 
         // Multi-select display
@@ -79,29 +82,69 @@ class AttendanceManager {
         }
     }
 
-    initializeDropdowns() {
-        this.populateClassDropdown();
+    async initializeDropdowns() {
+        await this.populateClassDropdown();
     }
 
-    populateClassDropdown() {
+    async populateClassDropdown() {
         const classSelect = document.getElementById('attendance-class');
-        if (!classSelect || !window.dataService) return;
+        if (!classSelect) {
+            console.error('Class select element not found');
+            return;
+        }
+
+        if (!window.dataService) {
+            console.error('Data service not available');
+            return;
+        }
 
         // Clear existing options
         classSelect.innerHTML = '<option value="">Select Class</option>';
 
+        // Ensure data is loaded
+        try {
+            if (!window.dataService.hasData || !window.dataService.hasData()) {
+                console.log('Fetching contacts data for attendance...');
+                await window.dataService.fetchContacts();
+            }
+        } catch (error) {
+            console.error('Failed to fetch contacts data:', error);
+        }
+
         const classes = window.dataService.getClasses();
-        classes.forEach(className => {
-            const option = document.createElement('option');
-            option.value = className;
-            option.textContent = className;
-            classSelect.appendChild(option);
-        });
+        console.log('Available classes for attendance:', classes);
+
+        if (classes && classes.length > 0) {
+            classes.forEach(className => {
+                const option = document.createElement('option');
+                option.value = className;
+                option.textContent = className;
+                classSelect.appendChild(option);
+            });
+        } else {
+            console.warn('No classes available for attendance dropdown');
+        }
     }
 
     populateRollNumbers() {
         const dropdown = document.getElementById('rollno-dropdown');
-        if (!dropdown || !this.selectedClass || !window.dataService) {
+        
+        if (!dropdown) {
+            console.error('Roll number dropdown element not found');
+            return;
+        }
+
+        if (!this.selectedClass) {
+            console.log('No class selected, clearing roll numbers');
+            this.availableStudents = [];
+            this.absentStudents = [];
+            this.updateDisplay();
+            this.updateStatPills();
+            return;
+        }
+
+        if (!window.dataService) {
+            console.error('Data service not available');
             this.availableStudents = [];
             this.absentStudents = [];
             this.updateDisplay();
@@ -110,7 +153,14 @@ class AttendanceManager {
         }
 
         // Get students for selected class
+        console.log('Getting students for class:', this.selectedClass);
         this.availableStudents = window.dataService.getClassRollNumbers(this.selectedClass);
+        console.log('Available students:', this.availableStudents);
+        
+        if (!this.availableStudents || this.availableStudents.length === 0) {
+            console.warn('No students found for class:', this.selectedClass);
+        }
+        
         this.absentStudents = []; // Reset absent students
 
         // Create dropdown content with search bar
@@ -231,20 +281,30 @@ class AttendanceManager {
 
     toggleDropdown() {
         const dropdown = document.getElementById('rollno-dropdown');
-        if (dropdown) {
-            if (this.selectedClass) {
-                dropdown.classList.toggle('show');
+        if (!dropdown) {
+            console.error('Dropdown element not found');
+            return;
+        }
 
-                // Focus on search input when opening dropdown
-                if (dropdown.classList.contains('show')) {
-                    setTimeout(() => {
-                        const searchInput = dropdown.querySelector('#attendance-student-search');
-                        if (searchInput) {
-                            searchInput.focus();
-                        }
-                    }, 50);
+        if (!this.selectedClass) {
+            console.warn('No class selected, cannot open dropdown');
+            return;
+        }
+
+        console.log('Toggling dropdown, current state:', dropdown.classList.contains('show'));
+        dropdown.classList.toggle('show');
+
+        // Focus on search input when opening dropdown
+        if (dropdown.classList.contains('show')) {
+            console.log('Dropdown opened, focusing search input');
+            setTimeout(() => {
+                const searchInput = dropdown.querySelector('#attendance-student-search');
+                if (searchInput) {
+                    searchInput.focus();
+                } else {
+                    console.warn('Search input not found in dropdown');
                 }
-            }
+            }, 50);
         }
     }
 
@@ -306,9 +366,12 @@ class AttendanceManager {
             markBtn.disabled = true;
             markBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Marking...';
 
-            // Format date to DD/MM/YYYY
+            // Format date to simple DD-MM-YYYY format (no time or timezone)
             const selectedDate = new Date(dateInput.value);
-            const formattedDate = window.dataService.formatDate(selectedDate);
+            const day = String(selectedDate.getDate()).padStart(2, '0');
+            const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
+            const year = selectedDate.getFullYear();
+            const formattedDate = `${day}-${month}-${year}`;
 
             // Prepare attendance data
             const attendanceData = [{
@@ -414,11 +477,13 @@ class AttendanceManager {
                 allClasses = window.dataService.sortClasses(allClasses);
             }
 
-            // Build bars list for all classes
+            // Build bars list for all classes with individual send notification buttons
             const barsHtml = allClasses.length > 0
                 ? allClasses.map(cls => {
                     const item = summaryMap.get(cls);
                     const totalFromRoster = (window.dataService.getStudentsByClass) ? window.dataService.getStudentsByClass(cls).length : (item?.total || 0);
+                    const hasAttendanceData = !!item; // Class has attendance marked
+                    
                     if (item) {
                         const present = Number(item.present ?? 0);
                         const absentFromWebhook = item.absent;
@@ -429,8 +494,17 @@ class AttendanceManager {
                         return `
                             <div class="class-bar fetched">
                                 <div class="class-bar-header">
-                                    <span class="class-name">${cls}</span>
-                                    <span class="class-ratio">${pct}%</span>
+                                    <div class="class-info">
+                                        <span class="class-name">${cls}</span>
+                                        <span class="class-ratio">${pct}%</span>
+                                    </div>
+                                    <button class="class-notification-btn btn-primary-glass" 
+                                            data-class="${cls}" 
+                                            data-date="${dateStr}"
+                                            ${hasAttendanceData ? '' : 'disabled'}>
+                                        <i class="fas fa-paper-plane"></i>
+                                        Send Alert
+                                    </button>
                                 </div>
                                 <div class="class-bar-track" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100" role="progressbar">
                                     <div class="class-bar-fill" style="width:${pct}%"></div>
@@ -448,8 +522,17 @@ class AttendanceManager {
                         return `
                             <div class="class-bar no-data">
                                 <div class="class-bar-header">
-                                    <span class="class-name">${cls}</span>
-                                    <span class="class-ratio">—</span>
+                                    <div class="class-info">
+                                        <span class="class-name">${cls}</span>
+                                        <span class="class-ratio">—</span>
+                                    </div>
+                                    <button class="class-notification-btn btn-primary-glass" 
+                                            data-class="${cls}" 
+                                            data-date="${dateStr}"
+                                            disabled>
+                                        <i class="fas fa-paper-plane"></i>
+                                        Send Alert
+                                    </button>
                                 </div>
                                 <div class="class-bar-track" aria-valuemin="0" aria-valuemax="100" role="progressbar">
                                     <div class="class-bar-fill" style="width:0%"></div>
@@ -465,53 +548,64 @@ class AttendanceManager {
                 }).join('')
                 : `<div class="analytics-empty">No classes available.</div>`;
 
-            // Determine if all bars are green (i.e., every class has webhook data)
-            const allGreen = allClasses.length > 0 && allClasses.every(cls => summaryMap.has(cls));
-
             analyticsContainer.innerHTML = `
                 <div class="analytics-header-row">
                     <div>
                         <div class="analytics-title">Attendance Analytics</div>
                         <div class="analytics-subtitle">Date: ${dateStr}</div>
                     </div>
-                    <button id="send-absent-notification-btn" class="send-btn btn-primary-glass" ${allGreen ? '' : 'disabled'}>
-                        <i class="fas fa-paper-plane"></i>
-                        Send Notification
-                    </button>
                 </div>
                 <div class="class-bars-list">${barsHtml}</div>
             `;
 
-            // Bind click handler for Send Notification button
-            const sendBtn = document.getElementById('send-absent-notification-btn');
-            if (sendBtn) {
-                sendBtn.addEventListener('click', async () => {
-                    if (sendBtn.disabled) return;
-                    const originalHtml = sendBtn.innerHTML;
+            // Bind click handlers for individual class notification buttons
+            const classNotificationBtns = analyticsContainer.querySelectorAll('.class-notification-btn');
+            classNotificationBtns.forEach(btn => {
+                btn.addEventListener('click', async (e) => {
+                    if (btn.disabled) return;
+                    
+                    const className = btn.getAttribute('data-class');
+                    const date = btn.getAttribute('data-date');
+                    const originalHtml = btn.innerHTML;
+                    
                     try {
-                        sendBtn.disabled = true;
-                        sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
-                        const todayStr = window.dataService.formatDate(new Date());
-                        await window.dataService.sendAbsentNotification(todayStr);
+                        btn.disabled = true;
+                        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+                        
+                        // Convert date format from DD/MM/YYYY to DD-MM-YYYY if needed
+                        const formattedDate = date.includes('/') ? date.replace(/\//g, '-') : date;
+                        
+                        console.log(`Sending notification for class ${className} on ${formattedDate}`);
+                        
+                        // Call data service to send notification for specific class
+                        await window.dataService.sendClassAbsentNotification(className, formattedDate);
+                        
                         if (window.Helpers && typeof window.Helpers.showToast === 'function') {
-                            window.Helpers.showToast('Absent notification sent', 'success');
+                            window.Helpers.showToast(`Notification sent for ${className}`, 'success');
                         } else {
-                            alert('Absent notification sent');
+                            alert(`Notification sent for ${className}`);
                         }
+                        
+                        // Show permanent success state and keep button disabled
+                        btn.innerHTML = '<i class="fas fa-check"></i> Notification Sent';
+                        btn.disabled = true;
+                        btn.style.opacity = '0.6';
+                        btn.style.cursor = 'not-allowed';
+                        
                     } catch (err) {
-                        console.error('Failed to send absent notification:', err);
+                        console.error(`Failed to send notification for class ${className}:`, err);
                         if (window.Helpers && typeof window.Helpers.showToast === 'function') {
-                            window.Helpers.showToast('Failed to send absent notification', 'error');
+                            window.Helpers.showToast(`Failed to send notification for ${className}`, 'error');
                         } else {
-                            alert('Failed to send absent notification');
+                            alert(`Failed to send notification for ${className}`);
                         }
-                    } finally {
-                        sendBtn.innerHTML = originalHtml;
-                        // Re-evaluate enable/disable state after send
-                        sendBtn.disabled = !(allClasses.length > 0 && allClasses.every(cls => summaryMap.has(cls)));
+                        
+                        // Reset button state
+                        btn.innerHTML = originalHtml;
+                        btn.disabled = false;
                     }
                 });
-            }
+            });
         } catch (err) {
             console.error('Failed to load analytics:', err);
             analyticsContainer.innerHTML = `
@@ -559,7 +653,11 @@ class AttendanceManager {
         if (!dateInput || !this.selectedClass) return null;
 
         const selectedDate = new Date(dateInput.value);
-        const formattedDate = window.dataService.formatDate(selectedDate);
+        // Format date to simple DD-MM-YYYY format for consistency with attendance submission
+        const day = String(selectedDate.getDate()).padStart(2, '0');
+        const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
+        const year = selectedDate.getFullYear();
+        const formattedDate = `${day}-${month}-${year}`;
 
         return {
             class: this.selectedClass,
@@ -613,7 +711,11 @@ class AttendanceManager {
 
 // Initialize attendance manager when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
+    // Wait for other components to initialize first
     setTimeout(() => {
-        window.attendanceManager = new AttendanceManager();
-    }, 100);
+        if (document.getElementById('attendance-tab')) {
+            console.log('Initializing attendance manager...');
+            window.attendanceManager = new AttendanceManager();
+        }
+    }, 200);
 });
