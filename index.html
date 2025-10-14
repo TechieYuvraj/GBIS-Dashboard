@@ -336,14 +336,14 @@
                                 </div>
                                 <div class="form-group">
                                     <label for="fees-class">Class</label>
-                                    <select id="fees-class" class="form-input">
+                                    <select id="fees-class" class="form-input" required>
                                         <option value="">Choose class</option>
                                     </select>
                                 </div>
                                 <div class="form-group" style="position: relative;">
                                     <label for="fees-roll">Roll No.</label>
                                     <div style="display:flex; align-items:center; gap:8px;">
-                                        <select id="fees-roll" class="form-input">
+                                        <select id="fees-roll" class="form-input" required>
                                             <option value="">Choose roll no</option>
                                         </select>
                                         <span id="fees-fetch-loader" style="display:none;" aria-live="polite" title="Fetching details">
@@ -354,35 +354,46 @@
 
                                 <!-- Summary preview card (replaces read-only fields) -->
                                 <div class="form-group fees-summary-group">
-                                    <div class="fees-summary-card">
-                                        <div class="fees-summary-row">
-                                            <div class="fees-summary-item">
-                                                <label>Sr. No.: </label>
-                                                <div id="fees-summary-srno">—</div>
+                                    <div class="fees-summary-table-container">
+                                        <table class="fees-summary-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Serial No.</th>
+                                                    <th>Name</th>
+                                                    <th>Total Fees</th>
+                                                    <th>Remaining Fees</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td id="fees-summary-srno">—</td>
+                                                    <td id="fees-summary-name">—</td>
+                                                    <td id="fees-summary-total">—</td>
+                                                    <td id="fees-summary-remaining">—</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    
+                                    <!-- Deposited Fees Breakdown -->
+                                    <div class="deposited-fees-breakdown">
+                                        <h4>Deposited Fees Breakdown</h4>
+                                        <div class="breakdown-table">
+                                            <div class="breakdown-row">
+                                                <span class="breakdown-label">Transportation Fees:</span>
+                                                <span class="breakdown-amount" id="fees-breakdown-transportation">₹0</span>
                                             </div>
-                                            <div class="fees-summary-item">
-                                                <label>Name: </label>
-                                                <div id="fees-summary-name">—</div>
+                                            <div class="breakdown-row">
+                                                <span class="breakdown-label">Tuition Fees:</span>
+                                                <span class="breakdown-amount" id="fees-breakdown-tuition">₹0</span>
                                             </div>
-                                        </div>
-                                        <div class="fees-summary-row">
-                                            <div class="fees-summary-item">
-                                                <label>Total Fees: </label>
-                                                <div id="fees-summary-total">—</div>
+                                            <div class="breakdown-row">
+                                                <span class="breakdown-label">Miscellaneous Fees:</span>
+                                                <span class="breakdown-amount" id="fees-breakdown-miscellaneous">₹0</span>
                                             </div>
-                                            <div class="fees-summary-item">
-                                                <label>Deposited Amount: </label>
-                                                <div id="fees-summary-paid">—</div>
-                                            </div>
-                                        </div>
-                                        <div class="fees-summary-row">
-                                            <div class="fees-summary-item">
-                                                <label>Remaining Fees: </label>
-                                                <div id="fees-summary-remaining">—</div>
-                                            </div>
-                                            <div class="fees-summary-item">
-                                                <label>Fees Status: </label>
-                                                <div id="fees-summary-status">—</div>
+                                            <div class="breakdown-row total-row">
+                                                <span class="breakdown-label">Total Deposited:</span>
+                                                <span class="breakdown-amount" id="fees-breakdown-total">₹0</span>
                                             </div>
                                         </div>
                                     </div>
@@ -396,30 +407,40 @@
                                 </div>
                                 <div class="form-group">
                                     <label for="fees-deposit">Deposit Amount</label>
-                                    <input type="number" id="fees-deposit" class="form-input" placeholder="Deposit amount" min="0" step="1">
+                                    <input type="number" id="fees-deposit" class="form-input" placeholder="Deposit amount" min="0" step="1" required>
                                 </div>
                                 <div class="form-group">
-                                    <label for="fees-remarks">Remarks</label>
-                                    <input type="text" id="fees-remarks" class="form-input" placeholder="Optional remarks">
+                                    <label for="fees-category">Fee Category</label>
+                                    <select id="fees-category" class="form-input" required>
+                                        <option value="">Select category</option>
+                                        <option value="Transportation Fees">Transportation Fees</option>
+                                        <option value="Tuition Fees">Tuition Fees</option>
+                                        <option value="Miscellaneous">Miscellaneous</option>
+                                    </select>
+                                </div>
+                                <div class="form-group" id="fees-misc-group" style="display: none;">
+                                    <label for="fees-misc-detail">Specify Category</label>
+                                    <input type="text" id="fees-misc-detail" class="form-input" placeholder="Please specify the fee category">
                                 </div>
                                 <div class="form-group">
                                     <label for="fees-mode">Payment Mode</label>
-                                    <select id="fees-mode" class="form-input">
+                                    <select id="fees-mode" class="form-input" required>
                                         <option value="">Select mode</option>
                                         <option value="Cash">Cash</option>
                                         <option value="UPI">UPI</option>
-                                        <option value="Card">Card</option>
+                                        <option value="UPI ICICI Bank">UPI ICICI Bank</option>
+                                        <option value="UPI Axis Bank">UPI Axis Bank</option>
                                         <option value="Bank Transfer">Bank Transfer</option>
                                         <option value="Cheque">Cheque</option>
                                     </select>
                                 </div>
                                 <div class="form-group">
                                     <label for="fees-reff">Reff. No.</label>
-                                    <input type="text" id="fees-reff" class="form-input" placeholder="Reference number">
+                                    <input type="text" id="fees-reff" class="form-input" placeholder="Reference number" required>
                                 </div>
                                 <div class="form-group">
-                                    <label for="fees-date">Date</label>
-                                    <input type="date" id="fees-date" class="form-input">
+                                    <label for="fees-date">Date <small style="color: #666;">(Live timestamp used on submit)</small></label>
+                                    <input type="date" id="fees-date" class="form-input" readonly title="Date is automatically set to current date/time during submission">
                                 </div>
                             </div>
                             <div style="display:flex; justify-content:center; margin-top: 10px;">
@@ -457,30 +478,7 @@
                                 <!-- Section Divider -->
                                 <hr class="section-divider" />
                                 
-                                <!-- 2. Daily Collection -->
-                                <div class="fees-analytics-daily">
-                                    <div class="analytics-header-row">
-                                        <div>
-                                            <div class="analytics-title">Daily Collection</div>
-                                            <div class="analytics-subtitle">Select a date to view collection</div>
-                                        </div>
-                                        <div class="date-filter">
-                                            <label for="fees-daily-date" style="margin-right:8px;">Date:</label>
-                                            <input type="date" id="fees-daily-date" class="form-input compact" aria-label="Select date for daily collection">
-                                        </div>
-                                    </div>
-                                    <div id="fees-daily-content" class="analytics-content">
-                                        <div class="analytics-placeholder">
-                                            <i class="fas fa-calendar-day"></i>
-                                            <p>Select a date to view daily collection</p>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <!-- Section Divider -->
-                                <hr class="section-divider" />
-                                
-                                <!-- 3. Date Range Collection -->
+                                <!-- 2. Date Range Collection -->
                                 <div class="fees-analytics-range">
                                     <div class="analytics-header-row">
                                         <div>
@@ -509,7 +507,7 @@
                                 <!-- Section Divider -->
                                 <hr class="section-divider" />
                                 
-                                <!-- 4. Monthly Collection -->
+                                <!-- 3. Monthly Collection -->
                                 <div class="fees-analytics-monthly">
                                     <div class="analytics-header-row">
                                         <div>
@@ -532,7 +530,7 @@
                                 <!-- Section Divider -->
                                 <hr class="section-divider" />
                                 
-                                <!-- 5. Yearly Collection -->
+                                <!-- 4. Yearly Collection -->
                                 <div class="fees-analytics-yearly">
                                     <div class="analytics-header-row">
                                         <div>
