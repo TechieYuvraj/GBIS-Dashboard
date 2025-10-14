@@ -656,8 +656,10 @@ class DataService {
      */
     async fetchAttendanceSummary(dateDDMMYYYY) {
         const endpoint = `${this.baseURL}/Attendance_fetch`;
-        const payload = { date: dateDDMMYYYY };
-        console.log('Fetching attendance summary for date:', dateDDMMYYYY);
+        // Convert DD/MM/YYYY to DD-MM-YYYY format for webhook
+        const webhookDate = dateDDMMYYYY.replace(/\//g, '-');
+        const payload = { date: webhookDate };
+        console.log('Fetching attendance summary for date:', dateDDMMYYYY, '-> webhook format:', webhookDate);
 
         // Add timeout to prevent hanging requests
         const controller = new AbortController();
@@ -821,6 +823,55 @@ class DataService {
             return { success: true, message: text || 'Absent notification triggered' };
         } catch (err) {
             if (err.name === 'AbortError') throw new Error('Absent notification request timeout');
+            throw err;
+        }
+    }
+
+    /**
+     * Send absent notification for a specific class
+     */
+    async sendClassAbsentNotification(className, dateDDMMYYYY) {
+        const endpoint = `${this.baseURL}/Absent_notification`;
+        const payload = {
+            chatInput: 'send absent notification',
+            class: className,
+            date: dateDDMMYYYY
+        };
+
+        // Add timeout to prevent hanging requests
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+        try {
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: this.getHeaders(),
+                body: JSON.stringify(payload),
+                signal: controller.signal
+            });
+
+            clearTimeout(timeoutId);
+
+            if (!response.ok) {
+                if (response.status === 403) {
+                    throw new Error(`Access forbidden for ${className} absent notification`);
+                } else if (response.status === 404) {
+                    throw new Error('Absent notification endpoint not found');
+                } else if (response.status >= 500) {
+                    throw new Error(`Server error while sending ${className} absent notification`);
+                } else {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+            }
+
+            const contentType = response.headers.get('content-type');
+            if (contentType && contentType.includes('application/json')) {
+                return await response.json();
+            }
+            const text = await response.text();
+            return { success: true, message: text || `${className} absent notification sent` };
+        } catch (err) {
+            if (err.name === 'AbortError') throw new Error(`${className} absent notification request timeout`);
             throw err;
         }
     }
