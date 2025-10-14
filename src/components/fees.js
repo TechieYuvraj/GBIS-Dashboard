@@ -724,7 +724,11 @@ class FeesManager {
     const roll = this.rollSel?.value || '';
     // Always use current live date and time for submission
     const currentDateTime = new Date();
-    const formattedDate = this.formatDateToIST(currentDateTime);
+    const formattedDate = this.formatDateOnly(currentDateTime); // Date only format
+    const formattedDateTime = this.formatDateToIST(currentDateTime); // Full datetime for submission time
+    
+    // Generate receipt number
+    const receiptNumber = this.generateReceiptNumber();
     
     // Build category/remarks field
     let categoryValue = '';
@@ -750,9 +754,53 @@ class FeesManager {
       Remarks: categoryValue, // Keep for backward compatibility
       Payment_Mode: this.inputs.mode?.value || '',
       Ref_No: this.inputs.reff?.value || '',
-      Date: formattedDate, // Live timestamp in IST format
-      Submission_Time: formattedDate, // Additional field for explicit submission timestamp
+      Receipt_Number: receiptNumber, // Auto-generated receipt number starting from GBIS-10001
+      Date: formattedDate, // Date only in DD-MM-YYYY format
+      Submission_Time: formattedDateTime, // Full timestamp with time for tracking
     };
+  }
+
+  // Receipt number management methods
+  generateReceiptNumber() {
+    const lastReceiptNumber = this.getLastReceiptNumber();
+    const nextNumber = this.incrementReceiptNumber(lastReceiptNumber);
+    console.log('📄 Generated receipt number:', nextNumber);
+    return nextNumber;
+  }
+
+  getLastReceiptNumber() {
+    // Try to get from localStorage first
+    const stored = localStorage.getItem('gbis_last_receipt_number');
+    if (stored) {
+      console.log('📄 Retrieved stored receipt number:', stored);
+      return stored;
+    }
+    
+    // If no stored number, start with GBIS-10000 (will be incremented to GBIS-10001)
+    const initialNumber = 'GBIS-10000';
+    console.log('📄 No stored receipt number, starting with:', initialNumber);
+    return initialNumber;
+  }
+
+  incrementReceiptNumber(receiptNumber) {
+    // Extract number part from format like "GBIS-10001"
+    const match = receiptNumber.match(/GBIS-(\d+)/);
+    if (!match) {
+      // If format doesn't match, start fresh
+      return 'GBIS-10001';
+    }
+    
+    const currentNumber = parseInt(match[1], 10);
+    const nextNumber = currentNumber + 1;
+    const newReceiptNumber = `GBIS-${nextNumber}`;
+    
+    console.log('📄 Incremented receipt number:', receiptNumber, '→', newReceiptNumber);
+    return newReceiptNumber;
+  }
+
+  saveReceiptNumber(receiptNumber) {
+    localStorage.setItem('gbis_last_receipt_number', receiptNumber);
+    console.log('📄 Saved receipt number to localStorage:', receiptNumber);
   }
 
   // Helpers to manage fetching state and input enabling
@@ -942,11 +990,14 @@ class FeesManager {
       
       await window.dataService.submitFees(payload);
       
+      // Save the receipt number after successful submission
+      this.saveReceiptNumber(payload.Receipt_Number);
+      
       // Clear input fields after successful submission
       this.clearInputFields();
       
-      // Show success message
-      this.showMessage('Fees submitted successfully!', 'success');
+      // Show success message with receipt number
+      this.showMessage(`Fees submitted successfully! Receipt: ${payload.Receipt_Number}`, 'success');
       
       // Refresh analytics data after successful submission
       try {
@@ -958,11 +1009,13 @@ class FeesManager {
             row_number: this.feesAnalytics.length + 1,
             "Serial_No.": payload.Sr_No,
             Name: payload.Name,
-            Date: payload.Date, // Already in IST format from buildPayload
+            Date: payload.Date, // Date-only format DD-MM-YYYY
             Mode: payload.Payment_Mode,
             Deposit_amount: payload.Deposit_Amount,
             Transaction_ID: Math.floor(Math.random() * 9000000000000) + 1000000000000,
-            Remark: payload.Remarks || 'Fee Payment'
+            Remark: payload.Remarks || 'Fee Payment',
+            Link: "https://drive.google.com/file/d/1ZucL8foUJHUGHEY4ZSVyZELVsPVfJWZ8/view?usp=drivesdk", // Sample receipt link
+            "Reciept_no.": payload.Receipt_Number
           });
         }
         
@@ -1065,15 +1118,20 @@ class FeesManager {
         transactionDate.setMinutes(Math.floor(Math.random() * 60));
         transactionDate.setSeconds(Math.floor(Math.random() * 60));
         
+        const receiptNumber = `GBIS-${10001 + data.length}`;
+        const hasLink = Math.random() > 0.3; // 70% chance of having a receipt link
+        
         data.push({
           row_number: i * 10 + j + 1,
           "Serial_No.": Math.floor(Math.random() * 9000) + 1000,
           Name: students[Math.floor(Math.random() * students.length)],
-          Date: this.formatDateToIST(transactionDate),
+          Date: this.formatDateOnly(transactionDate), // Use date-only format
           Mode: paymentModes[Math.floor(Math.random() * paymentModes.length)],
-          Deposit_amount: Math.floor(Math.random() * 15000) + 1000, // More realistic fee amounts
+          Deposit_amount: Math.floor(Math.random() * 15000) + 1000,
           Transaction_ID: Math.floor(Math.random() * 9000000000000) + 1000000000000,
-          Remark: remarks[Math.floor(Math.random() * remarks.length)]
+          Remark: remarks[Math.floor(Math.random() * remarks.length)],
+          Link: hasLink ? "https://drive.google.com/file/d/1ZucL8foUJHUGHEY4ZSVyZELVsPVfJWZ8/view?usp=drivesdk" : null,
+          "Reciept_no.": receiptNumber
         });
       }
     }
@@ -1107,6 +1165,15 @@ class FeesManager {
     return `${day}-${month}-${year}T${hours}:${minutes}:${seconds} IST`;
   }
 
+  // Format date only (DD-MM-YYYY) without time
+  formatDateOnly(date) {
+    const d = new Date(date);
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const year = d.getFullYear();
+    return `${day}-${month}-${year}`;
+  }
+
   // Parse DD/MM/YYYY to Date object
   parseDateFromDDMMYYYY(dateStr) {
     const [day, month, year] = dateStr.split('/');
@@ -1132,6 +1199,11 @@ class FeesManager {
       const [hours, minutes, seconds] = timePart.split(':');
       return new Date(parseInt(year), parseInt(month) - 1, parseInt(day), parseInt(hours), parseInt(minutes), parseInt(seconds));
     }
+    // Handle new date-only format: "14-10-2025"
+    else if (dateStr.includes('-') && dateStr.split('-').length === 3) {
+      const [day, month, year] = dateStr.split('-');
+      return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+    }
     // Fallback for old DD/MM/YYYY format
     else if (dateStr.includes('/')) {
       return this.parseDateFromDDMMYYYY(dateStr);
@@ -1150,7 +1222,7 @@ class FeesManager {
     ) || 0;
   }
 
-  // Get transaction date from the new JSON structure
+  // Get transaction date from the updated JSON structure
   getTransactionDate(item) {
     return item?.Date ?? 
            item?.date ?? 
@@ -1159,7 +1231,7 @@ class FeesManager {
            item?.transaction_date;
   }
 
-  // Get student name from the new JSON structure
+  // Get student name from the updated JSON structure
   getStudentName(item) {
     return item?.Name ?? 
            item?.name ?? 
@@ -1168,7 +1240,7 @@ class FeesManager {
            'N/A';
   }
 
-  // Get payment mode from the new JSON structure
+  // Get payment mode from the updated JSON structure
   getPaymentMode(item) {
     return item?.Mode ?? 
            item?.mode ?? 
@@ -1177,7 +1249,25 @@ class FeesManager {
            'N/A';
   }
 
-  // Get transaction ID/reference from the new JSON structure
+  // Get receipt number from the updated JSON structure
+  getReceiptNumber(item) {
+    return item?.['Reciept_no.'] ?? 
+           item?.Receipt_Number ?? 
+           item?.receipt_number ?? 
+           item?.Receipt_No ??
+           'N/A';
+  }
+
+  // Get receipt link from the updated JSON structure
+  getReceiptLink(item) {
+    return item?.Link ?? 
+           item?.link ?? 
+           item?.Receipt_Link ?? 
+           item?.receipt_link ?? 
+           null;
+  }
+
+  // Get transaction ID/reference from the updated JSON structure
   getTransactionRef(item) {
     return item?.Transaction_ID ?? 
            item?.transaction_id ?? 
@@ -1274,24 +1364,35 @@ class FeesManager {
             </tr>
           </thead>
           <tbody>
-            ${recentTransactions.map(transaction => `
+            ${recentTransactions.map(transaction => {
+              const receiptLink = this.getReceiptLink(transaction);
+              const receiptNumber = this.getReceiptNumber(transaction);
+              return `
               <tr>
                 <td>${this.getStudentName(transaction)}</td>
                 <td>₹${this.getDepositAmount(transaction)}</td>
                 <td>${this.getPaymentMode(transaction)}</td>
                 <td>
-                  <button class="receipt-btn" onclick="window.feesManager.downloadReceipt('${this.getTransactionRef(transaction)}')">
-                    <i class="fas fa-download"></i> Receipt
-                  </button>
+                  ${receiptLink ? 
+                    `<button class="receipt-btn" onclick="window.feesManager.openReceiptLink('${receiptLink}', '${receiptNumber}')">
+                      <i class="fas fa-external-link-alt"></i> Receipt
+                    </button>` :
+                    `<button class="receipt-btn disabled" title="Receipt not available">
+                      <i class="fas fa-file-alt"></i> N/A
+                    </button>`
+                  }
                 </td>
-              </tr>
-            `).join('')}
+              </tr>`;
+            }).join('')}
           </tbody>
         </table>
       </div>
       
       <div class="transactions-mobile">
-        ${recentTransactions.map(transaction => `
+        ${recentTransactions.map(transaction => {
+          const receiptLink = this.getReceiptLink(transaction);
+          const receiptNumber = this.getReceiptNumber(transaction);
+          return `
           <div class="transaction-card">
             <div class="transaction-header">
               <strong>${this.getStudentName(transaction)}</strong>
@@ -1299,12 +1400,17 @@ class FeesManager {
             </div>
             <div class="transaction-details">
               <span class="transaction-mode">${this.getPaymentMode(transaction)}</span>
-              <button class="receipt-btn" onclick="window.feesManager.downloadReceipt('${this.getTransactionRef(transaction)}')">
-                <i class="fas fa-download"></i> Receipt
-              </button>
+              ${receiptLink ? 
+                `<button class="receipt-btn" onclick="window.feesManager.openReceiptLink('${receiptLink}', '${receiptNumber}')">
+                  <i class="fas fa-external-link-alt"></i> Receipt
+                </button>` :
+                `<button class="receipt-btn disabled" title="Receipt not available">
+                  <i class="fas fa-file-alt"></i> N/A
+                </button>`
+              }
             </div>
-          </div>
-        `).join('')}
+          </div>`;
+        }).join('')}
       </div>
     `;
     
@@ -1453,16 +1559,27 @@ class FeesManager {
   }
 
   // Download receipt function
+  // Open receipt link in new tab
+  openReceiptLink(receiptLink, receiptNumber) {
+    if (!receiptLink) {
+      alert('Receipt link not available');
+      return;
+    }
+    
+    console.log(`📄 Opening receipt ${receiptNumber}:`, receiptLink);
+    
+    // Open the receipt link in a new tab
+    try {
+      window.open(receiptLink, '_blank', 'noopener,noreferrer');
+    } catch (error) {
+      console.error('Failed to open receipt link:', error);
+      alert(`Failed to open receipt ${receiptNumber}. Please try again later.`);
+    }
+  }
+
   downloadReceipt(refNo) {
-    // This is a placeholder function. In a real implementation, you would:
-    // 1. Fetch the receipt data from the server
-    // 2. Generate a PDF or redirect to a receipt page
-    // 3. Trigger download or open in new window
-    
+    // Kept for backward compatibility
     alert(`Receipt download for transaction ${refNo} would be implemented here.\n\nIn a real implementation, this would:\n- Fetch receipt details from server\n- Generate PDF receipt\n- Trigger download`);
-    
-    // Example implementation:
-    // window.open(`/api/receipts/${refNo}`, '_blank');
   }
 }
 

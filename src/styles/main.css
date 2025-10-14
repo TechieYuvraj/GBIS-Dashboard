@@ -1787,6 +1787,18 @@ select.category-locked:focus {
     transform: translateY(-1px);
 }
 
+.receipt-btn.disabled {
+    background: #9ca3af;
+    color: #6b7280;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.receipt-btn.disabled:hover {
+    background: #9ca3af;
+    transform: none;
+}
+
 /* Mobile transaction cards */
 .transactions-mobile {
     display: none;
