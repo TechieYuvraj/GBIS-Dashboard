@@ -366,12 +366,9 @@ class AttendanceManager {
             markBtn.disabled = true;
             markBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Marking...';
 
-            // Format date to simple DD-MM-YYYY format (no time or timezone)
+            // Format date to IST format
             const selectedDate = new Date(dateInput.value);
-            const day = String(selectedDate.getDate()).padStart(2, '0');
-            const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
-            const year = selectedDate.getFullYear();
-            const formattedDate = `${day}-${month}-${year}`;
+            const formattedDate = window.dataService.formatDateToIST(selectedDate);
 
             // Prepare attendance data
             const attendanceData = [{
