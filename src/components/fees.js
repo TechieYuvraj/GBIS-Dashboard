@@ -1,5 +1,5 @@
 /* Fees component: populates class/roll, fetches details on roll select, submits fees */
-
+// Deployed
 class FeesManager {
   constructor() {
     this.init();
