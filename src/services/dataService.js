@@ -102,21 +102,16 @@ class DataService {
      * Fetch student contacts from the API
      */
     async fetchContacts() {
-        console.log(`🔍 fetchContacts called - isFetching: ${this.isFetching}, hasData: ${this.hasData()}, isInitialized: ${this.isInitialized}`);
-        
         // If already fetching, return the existing promise
         if (this.isFetching && this.fetchPromise) {
-            console.log('⏳ Fetch already in progress, waiting for existing request...');
             return this.fetchPromise;
         }
 
         // If we already have data and not explicitly refreshing, don't fetch again
         if (this.students.length > 0 && this.isInitialized) {
-            console.log('📚 Data already available, skipping fetch');
             return this.students;
         }
 
-        console.log('🚀 Starting new fetch operation...');
         this.isFetching = true;
         
         this.fetchPromise = this._performFetch();
@@ -133,7 +128,6 @@ class DataService {
     async _performFetch() {
         const fetchId = Date.now(); // Unique ID for this fetch
         try {
-            console.log(`🔄 [${fetchId}] Starting contact fetch operation...`);
             
             // Add timeout to prevent hanging requests
             const controller = new AbortController();
@@ -176,7 +170,7 @@ class DataService {
             }
 
             const data = await response.json();
-            console.log(`✅ [${fetchId}] Contacts fetched successfully:`, data);
+            console.log(`✅ Contacts fetched successfully: ${Array.isArray(data) ? data.length : 1} records`);
 
             // Process the data
             this.students = Array.isArray(data) ? data : [data];
@@ -185,7 +179,7 @@ class DataService {
             
             return this.students;
         } catch (error) {
-            console.error(`❌ [${fetchId}] Error fetching contacts:`, error);
+            console.error('❌ Error fetching contacts:', error.message);
             
             // Try to load from localStorage if API fails
             this.loadFromLocalStorage();
@@ -695,11 +689,27 @@ class DataService {
             // Try to parse JSON; fallback to text if needed
             const contentType = response.headers.get('content-type');
             let raw = null;
-            if (contentType && contentType.includes('application/json')) {
-                raw = await response.json();
-            } else {
+            try {
                 const text = await response.text();
-                try { raw = JSON.parse(text); } catch { raw = text; }
+                if (text.trim() === '') {
+                    // Empty response, return empty array
+                    console.warn('Empty response from attendance API');
+                    return [];
+                }
+                
+                if (contentType && contentType.includes('application/json')) {
+                    raw = JSON.parse(text);
+                } else {
+                    try { 
+                        raw = JSON.parse(text); 
+                    } catch { 
+                        console.warn('Non-JSON response from attendance API:', text);
+                        return []; 
+                    }
+                }
+            } catch (parseError) {
+                console.error('Error parsing attendance response:', parseError);
+                return [];
             }
 
             // Normalize into a list of { class, present, absent, total }
@@ -920,10 +930,20 @@ class DataService {
                 if (response.status >= 500) throw new Error('Server error while fetching fees details');
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
-            const ct = response.headers.get('content-type');
-            if (ct && ct.includes('application/json')) return await response.json();
+            
+            // Check if response has content
             const text = await response.text();
-            try { return JSON.parse(text); } catch { return { raw: text }; }
+            if (!text || text.trim() === '') {
+                console.log('📝 Empty response from fees detail fetch - returning empty object');
+                return {};
+            }
+            
+            try {
+                return JSON.parse(text);
+            } catch (parseError) {
+                console.warn('⚠️ Failed to parse fees detail response as JSON:', parseError);
+                return { raw: text };
+            }
         } catch (err) {
             if (err.name === 'AbortError') throw new Error('Fees detail fetch timeout');
             if (err instanceof TypeError && err.message.includes('fetch')) {
