@@ -207,38 +207,19 @@ class FeesManager {
         monthSel.value = this.monthOrder.includes(currentLabel) ? currentLabel : 'April';
       }
 
-
-
-      // Set default date range (last 30 days)
-      const rangeFromSel = document.getElementById('fees-range-from');
-      const rangeToSel = document.getElementById('fees-range-to');
-      if (rangeFromSel && rangeToSel) {
-        const today = new Date();
-        const thirtyDaysAgo = new Date(today);
-        thirtyDaysAgo.setDate(today.getDate() - 30);
-        rangeFromSel.value = thirtyDaysAgo.toISOString().split('T')[0];
-        rangeToSel.value = today.toISOString().split('T')[0];
-      }
-
       // Fetch analytics data
       if (window.dataService && typeof window.dataService.fetchFeesAnalytics === 'function') {
         this.feesAnalytics = await window.dataService.fetchFeesAnalytics();
       } else {
-        this.feesAnalytics = this.generateSampleFeesData();
+        this.feesAnalytics = [];
       }
 
       // Normalize array
       if (!Array.isArray(this.feesAnalytics)) {
         this.feesAnalytics = this.feesAnalytics && this.feesAnalytics.data ? this.feesAnalytics.data : [];
       }
-      
-      // Ensure we have at least sample data for demonstration
-      if (this.feesAnalytics.length === 0) {
-        this.feesAnalytics = this.generateSampleFeesData();
-      }
 
-      // Render all sections
-      this.renderTransactions();
+      // Render both sections
       this.populateSessions();
       this.renderYearly();
       this.renderMonthly();
@@ -253,37 +234,25 @@ class FeesManager {
     const sessionSel = document.getElementById('fees-session-select');
     if (!sessionSel) return;
     sessionSel.innerHTML = '';
-    
-    // Collect fiscal years from analytics data using the new JSON structure
+    // Collect FYs from analytics data
     const data = Array.isArray(this.feesAnalytics) ? this.feesAnalytics : [];
-    const fiscalYears = new Set();
-    
+    const set = new Set();
     data.forEach(item => {
-      const dateStr = this.getTransactionDate(item);
-      const transactionDate = this.parseDateFromIST(dateStr);
-      if (!transactionDate) return;
-      
-      const fy = this.getFiscalYear(transactionDate.getFullYear(), transactionDate.getMonth());
-      fiscalYears.add(fy);
+      const dateStr = item.Date || item.date || item.Transaction_Date || item.txn_date;
+      const d = this.parseDateToObj(dateStr);
+      if (!d) return;
+      set.add(this.getFiscalYear(d.year, d.monthIdx));
     });
-    
-    const sessions = Array.from(fiscalYears).sort((a, b) => a.localeCompare(b));
-    
-    // Populate dropdown with available sessions
-    sessions.forEach(fy => {
-      const opt = document.createElement('option');
-      opt.value = fy; 
-      opt.textContent = fy;
-      sessionSel.appendChild(opt);
-    });
-    
-    // Default to current fiscal year if available
+    const sessions = Array.from(set).sort((a,b)=>a.localeCompare(b));
+    // Default to current FY
     const now = new Date();
     const currentFY = this.getFiscalYear(now.getFullYear(), now.getMonth());
-    
-    if (sessions.length > 0) {
-      sessionSel.value = sessions.includes(currentFY) ? currentFY : sessions[sessions.length - 1];
-    }
+    sessions.forEach(fy => {
+      const opt = document.createElement('option');
+      opt.value = fy; opt.textContent = fy;
+      sessionSel.appendChild(opt);
+    });
+    if (sessions.length) sessionSel.value = sessions.includes(currentFY) ? currentFY : sessions[sessions.length-1];
   }
 
   parseDateToObj(d) {
@@ -325,40 +294,32 @@ class FeesManager {
   renderYearly() {
     const container = document.getElementById('fees-yearly-content');
     if (!container) return;
-    
     const data = Array.isArray(this.feesAnalytics) ? this.feesAnalytics : [];
     if (data.length === 0) {
       container.innerHTML = `<div class="analytics-placeholder"><i class="fas fa-chart-line"></i><p>No yearly data</p></div>`;
       return;
     }
 
-    // Get selected session/fiscal year
+    // Compute total for selected session only
     const sessionSel = document.getElementById('fees-session-select');
     const selectedFY = sessionSel?.value;
     if (!selectedFY) {
       container.innerHTML = `<div class="analytics-placeholder"><i class="fas fa-chart-line"></i><p>No session selected</p></div>`;
       return;
     }
-
-    // Use centralized filtering method
-    const yearlyTransactions = this.filterTransactionsByDate(data, 'yearly', selectedFY);
-    const summary = this.calculateSummary(yearlyTransactions);
+    let totalDep = 0;
+    data.forEach(item => {
+      const dateStr = item.Date || item.date || item.Transaction_Date || item.txn_date;
+      const d = this.parseDateToObj(dateStr);
+      if (!d) return;
+      const fy = this.getFiscalYear(d.year, d.monthIdx);
+      if (fy === selectedFY) totalDep += this.depositAmount(item);
+    });
 
     container.innerHTML = `
-      <table class="analytics-summary-table">
-        <tr>
-          <td><strong>Session:</strong></td>
-          <td>${selectedFY}</td>
-        </tr>
-        <tr>
-          <td><strong>Total Collection:</strong></td>
-          <td class="amount">₹${summary.total.toLocaleString('en-IN')}</td>
-        </tr>
-        <tr>
-          <td><strong>Transactions:</strong></td>
-          <td>${summary.count}</td>
-        </tr>
-      </table>
+      <div class="analytics-cards">
+        <div class="analytics-card present"><div class="analytics-number">${totalDep}</div><div class="analytics-label">Total Collection</div></div>
+      </div>
     `;
   }
 
@@ -366,40 +327,34 @@ class FeesManager {
     const container = document.getElementById('fees-monthly-content');
     const monthSel = document.getElementById('fees-month-select');
     if (!container || !monthSel) return;
-    
-    const selectedMonth = monthSel.value;
+    const sel = monthSel.value;
     const data = Array.isArray(this.feesAnalytics) ? this.feesAnalytics : [];
-    
     if (data.length === 0) {
-      container.innerHTML = `<div class="analytics-placeholder"><i class="fas fa-calendar"></i><p>No monthly data</p></div>`;
+      container.innerHTML = `<div class="analytics-placeholder"><i class=\"fas fa-calendar\"></i><p>No monthly data</p></div>`;
       return;
     }
 
-    // Use centralized filtering method
-    const monthlyTransactions = this.filterTransactionsByDate(data, 'monthly', selectedMonth);
-    
-    if (monthlyTransactions.length === 0) {
-      container.innerHTML = `<div class="analytics-placeholder"><i class="fas fa-calendar"></i><p>No records in ${selectedMonth}</p></div>`;
+    // Filter by selected calendar month name using parsed date
+    const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    const filtered = data.filter(item => {
+      const dateStr = item.Date || item.date || item.Transaction_Date || item.txn_date;
+      const d = this.parseDateToObj(dateStr);
+      if (!d) return false;
+      return monthNames[d.monthIdx] === sel;
+    });
+
+    if (filtered.length === 0) {
+      container.innerHTML = `<div class="analytics-placeholder"><i class=\"fas fa-calendar\"></i><p>No records in ${sel}</p></div>`;
       return;
     }
 
-    const summary = this.calculateSummary(monthlyTransactions);
+    // Aggregate monthly total collection from Deposit_amount
+    const totalCollection = this.sumSafe(filtered.map(i => this.depositAmount(i)));
 
     container.innerHTML = `
-      <table class="analytics-summary-table">
-        <tr>
-          <td><strong>Month:</strong></td>
-          <td>${selectedMonth}</td>
-        </tr>
-        <tr>
-          <td><strong>Total Collection:</strong></td>
-          <td class="amount">₹${summary.total.toLocaleString('en-IN')}</td>
-        </tr>
-        <tr>
-          <td><strong>Transactions:</strong></td>
-          <td>${summary.count}</td>
-        </tr>
-      </table>
+      <div class="analytics-cards">
+        <div class="analytics-card present"><div class="analytics-number">${totalCollection}</div><div class="analytics-label">Total Collection</div></div>
+      </div>
     `;
   }
 
@@ -722,30 +677,14 @@ class FeesManager {
   buildPayload() {
     const cls = this.classSel?.value || '';
     const roll = this.rollSel?.value || '';
-    // Always use current live date and time for submission
-    const currentDateTime = new Date();
-    const formattedDate = this.formatDateOnly(currentDateTime); // Date only format
-    const formattedDateTime = this.formatDateToIST(currentDateTime); // Full datetime for submission time
-    
-    // Generate receipt number
-    const receiptNumber = this.generateReceiptNumber();
-    
-    // Build category/remarks field
-    let categoryValue = '';
-    if (this.inputs.category && this.inputs.category.value) {
-      if (this.inputs.category.value === 'Miscellaneous' && this.inputs.miscDetail && this.inputs.miscDetail.value) {
-        categoryValue = this.inputs.miscDetail.value;
-      } else {
-        categoryValue = this.inputs.category.value;
-      }
-    }
-    
+    const dateStr = this.inputs.date?.value;
+    const formattedDate = dateStr ? window.dataService.formatDate(new Date(dateStr)) : window.dataService.formatDate(new Date());
     return {
       Sr_No: Number(this.inputs.srno?.value || 0),
       Name: this.inputs.name?.value || '',
       Class: cls,
       Roll_No: roll ? Number(roll) : null,
-      total_fees: Number(this.inputs.total?.value || 0),
+  total_fees: Number(this.inputs.total?.value || 0),
       Fees_Paid: Number(this.inputs.paid?.value || 0),
       Deposit_Amount: Number(this.inputs.deposit?.value || 0),
       Remaining_Fees: this.inputs.remaining ? Number(this.inputs.remaining.value || 0) : undefined,
@@ -989,44 +928,7 @@ class FeesManager {
       console.log('Submitting fees with live timestamp:', payload.Date);
       
       await window.dataService.submitFees(payload);
-      
-      // Save the receipt number after successful submission
-      this.saveReceiptNumber(payload.Receipt_Number);
-      
-      // Clear input fields after successful submission
-      this.clearInputFields();
-      
-      // Show success message with receipt number
-      this.showMessage(`Fees submitted successfully! Receipt: ${payload.Receipt_Number}`, 'success');
-      
-      // Refresh analytics data after successful submission
-      try {
-        if (window.dataService && typeof window.dataService.fetchFeesAnalytics === 'function') {
-          this.feesAnalytics = await window.dataService.fetchFeesAnalytics();
-        } else {
-          // Add the new transaction to sample data with new JSON structure
-          this.feesAnalytics.unshift({
-            row_number: this.feesAnalytics.length + 1,
-            "Serial_No.": payload.Sr_No,
-            Name: payload.Name,
-            Date: payload.Date, // Date-only format DD-MM-YYYY
-            Mode: payload.Payment_Mode,
-            Deposit_amount: payload.Deposit_Amount,
-            Transaction_ID: Math.floor(Math.random() * 9000000000000) + 1000000000000,
-            Remark: payload.Remarks || 'Fee Payment',
-            Link: "https://drive.google.com/file/d/1ZucL8foUJHUGHEY4ZSVyZELVsPVfJWZ8/view?usp=drivesdk", // Sample receipt link
-            "Reciept_no.": payload.Receipt_Number
-          });
-        }
-        
-        // Re-render all analytics sections
-        this.renderTransactions();
-        this.renderDateRange();
-        this.renderMonthly();
-        this.renderYearly();
-      } catch (analyticsError) {
-        console.warn('Failed to refresh analytics after submission:', analyticsError);
-      }
+      this.showMessage('Fees submitted successfully', 'success');
     } catch (err) {
       console.error('Submit fees failed:', err);
       this.showMessage(err.message || 'Failed to submit fees', 'error');
@@ -1093,493 +995,6 @@ class FeesManager {
       this.inputs.status,
     ].filter(Boolean);
     ro.forEach(el => { el.readOnly = true; });
-  }
-
-  // Generate sample fees data for development/testing
-  generateSampleFeesData() {
-    const data = [];
-    const today = new Date();
-    const students = ['Garvit Sunda', 'AAHIL KHAN', 'SARA ALI', 'AMIT SINGH', 'RIYA PATEL', 'RAJESH KUMAR', 'PRIYA SHARMA', 'ARJUN VERMA', 'ANAYA GUPTA'];
-    const paymentModes = ['UPI', 'Cash', 'Card', 'Bank Transfer'];
-    const remarks = ['Tution', 'Transport', 'Books', 'Exam Fee', 'Annual Fee', 'Sports Fee'];
-    
-    // Generate data for last 90 days to cover multiple months
-    for (let i = 0; i < 90; i++) {
-      const date = new Date(today);
-      date.setDate(today.getDate() - i);
-      
-      // Random number of transactions per day (0-8 for more variety)
-      const numTransactions = Math.floor(Math.random() * 9);
-      
-      for (let j = 0; j < numTransactions; j++) {
-        // Add random hours/minutes/seconds to make it more realistic
-        const transactionDate = new Date(date);
-        transactionDate.setHours(Math.floor(Math.random() * 10) + 8); // 8 AM to 6 PM
-        transactionDate.setMinutes(Math.floor(Math.random() * 60));
-        transactionDate.setSeconds(Math.floor(Math.random() * 60));
-        
-        const receiptNumber = `GBIS-${10001 + data.length}`;
-        const hasLink = Math.random() > 0.3; // 70% chance of having a receipt link
-        
-        data.push({
-          row_number: i * 10 + j + 1,
-          "Serial_No.": Math.floor(Math.random() * 9000) + 1000,
-          Name: students[Math.floor(Math.random() * students.length)],
-          Date: this.formatDateOnly(transactionDate), // Use date-only format
-          Mode: paymentModes[Math.floor(Math.random() * paymentModes.length)],
-          Deposit_amount: Math.floor(Math.random() * 15000) + 1000,
-          Transaction_ID: Math.floor(Math.random() * 9000000000000) + 1000000000000,
-          Remark: remarks[Math.floor(Math.random() * remarks.length)],
-          Link: hasLink ? "https://drive.google.com/file/d/1ZucL8foUJHUGHEY4ZSVyZELVsPVfJWZ8/view?usp=drivesdk" : null,
-          "Reciept_no.": receiptNumber
-        });
-      }
-    }
-    
-    // Sort by date descending (newest first)
-    return data.sort((a, b) => {
-      const dateA = this.parseDateFromIST(a.Date);
-      const dateB = this.parseDateFromIST(b.Date);
-      return dateB - dateA;
-    });
-  }
-
-  // Format date to DD/MM/YYYY (for display purposes)
-  formatDateToDDMMYYYY(date) {
-    const d = new Date(date);
-    const day = String(d.getDate()).padStart(2, '0');
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const year = d.getFullYear();
-    return `${day}/${month}/${year}`;
-  }
-
-  // Format date to DD-MM-YYYYTHH:mm:ss IST (for JSON data)
-  formatDateToIST(date) {
-    const d = new Date(date);
-    const day = String(d.getDate()).padStart(2, '0');
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const year = d.getFullYear();
-    const hours = String(d.getHours()).padStart(2, '0');
-    const minutes = String(d.getMinutes()).padStart(2, '0');
-    const seconds = String(d.getSeconds()).padStart(2, '0');
-    return `${day}-${month}-${year}T${hours}:${minutes}:${seconds} IST`;
-  }
-
-  // Format date only (DD-MM-YYYY) without time
-  formatDateOnly(date) {
-    const d = new Date(date);
-    const day = String(d.getDate()).padStart(2, '0');
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const year = d.getFullYear();
-    return `${day}-${month}-${year}`;
-  }
-
-  // Parse DD/MM/YYYY to Date object
-  parseDateFromDDMMYYYY(dateStr) {
-    const [day, month, year] = dateStr.split('/');
-    return new Date(year, month - 1, day);
-  }
-
-  // Parse DD-MM-YYYYTHH:mm:ss IST to Date object
-  parseDateFromIST(dateStr) {
-    if (!dateStr) return null;
-    
-    // Handle the new IST format: "02-10-2025T05:30:00 IST"
-    if (dateStr.includes('T') && dateStr.includes('IST')) {
-      const [datePart, timePart] = dateStr.split('T');
-      const [day, month, year] = datePart.split('-');
-      const [time] = timePart.split(' IST');
-      const [hours, minutes, seconds] = time.split(':');
-      return new Date(parseInt(year), parseInt(month) - 1, parseInt(day), parseInt(hours), parseInt(minutes), parseInt(seconds));
-    } 
-    // Handle ISO format without IST suffix
-    else if (dateStr.includes('T') && !dateStr.includes('IST')) {
-      const [datePart, timePart] = dateStr.split('T');
-      const [day, month, year] = datePart.split('-');
-      const [hours, minutes, seconds] = timePart.split(':');
-      return new Date(parseInt(year), parseInt(month) - 1, parseInt(day), parseInt(hours), parseInt(minutes), parseInt(seconds));
-    }
-    // Handle new date-only format: "14-10-2025"
-    else if (dateStr.includes('-') && dateStr.split('-').length === 3) {
-      const [day, month, year] = dateStr.split('-');
-      return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-    }
-    // Fallback for old DD/MM/YYYY format
-    else if (dateStr.includes('/')) {
-      return this.parseDateFromDDMMYYYY(dateStr);
-    }
-    
-    return new Date(dateStr);
-  }
-
-  // Get deposit amount from the new JSON structure
-  getDepositAmount(item) {
-    return Number(
-      item?.Deposit_amount ??
-      item?.deposit_amount ??
-      item?.Amount ?? item?.amount ??
-      item?.Deposited_fees ?? item?.Fees_Paid ?? item?.Paid ?? 0
-    ) || 0;
-  }
-
-  // Get transaction date from the updated JSON structure
-  getTransactionDate(item) {
-    return item?.Date ?? 
-           item?.date ?? 
-           item?.Transaction_Date ?? 
-           item?.txn_date ?? 
-           item?.transaction_date;
-  }
-
-  // Get student name from the updated JSON structure
-  getStudentName(item) {
-    return item?.Name ?? 
-           item?.name ?? 
-           item?.Student_Name ?? 
-           item?.student_name ?? 
-           'N/A';
-  }
-
-  // Get payment mode from the updated JSON structure
-  getPaymentMode(item) {
-    return item?.Mode ?? 
-           item?.mode ?? 
-           item?.Payment_Mode ?? 
-           item?.payment_mode ?? 
-           'N/A';
-  }
-
-  // Get receipt number from the updated JSON structure
-  getReceiptNumber(item) {
-    return item?.['Reciept_no.'] ?? 
-           item?.Receipt_Number ?? 
-           item?.receipt_number ?? 
-           item?.Receipt_No ??
-           'N/A';
-  }
-
-  // Get receipt link from the updated JSON structure
-  getReceiptLink(item) {
-    return item?.Link ?? 
-           item?.link ?? 
-           item?.Receipt_Link ?? 
-           item?.receipt_link ?? 
-           null;
-  }
-
-  // Get transaction ID/reference from the updated JSON structure
-  getTransactionRef(item) {
-    return item?.Transaction_ID ?? 
-           item?.transaction_id ?? 
-           item?.Ref_No ?? 
-           item?.ref_no ?? 
-           item?.Reference ?? 
-           'N/A';
-  }
-
-  // Centralized data filtering method for all analytics
-  filterTransactionsByDate(data, filterType, filterValue) {
-    if (!Array.isArray(data)) return [];
-    
-    return data.filter(item => {
-      const dateStr = this.getTransactionDate(item);
-      if (!dateStr) return false;
-      
-      const transactionDate = this.parseDateFromIST(dateStr);
-      if (!transactionDate) return false;
-      
-      switch (filterType) {
-        case 'range':
-          // filterValue is {from: "YYYY-MM-DD", to: "YYYY-MM-DD"}
-          if (!filterValue.from || !filterValue.to) return false;
-          const fromDate = new Date(filterValue.from);
-          const toDate = new Date(filterValue.to);
-          toDate.setHours(23, 59, 59, 999); // Include full end day
-          return transactionDate >= fromDate && transactionDate <= toDate;
-          
-        case 'monthly':
-          // filterValue is month name like "October"
-          if (!filterValue) return false;
-          const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-          const monthIndex = monthNames.indexOf(filterValue);
-          if (monthIndex === -1) return false;
-          return transactionDate.getMonth() === monthIndex;
-          
-        case 'yearly':
-          // filterValue is fiscal year like "2024-2025"
-          if (!filterValue) return false;
-          const fiscalYear = this.getFiscalYear(transactionDate.getFullYear(), transactionDate.getMonth());
-          return fiscalYear === filterValue;
-          
-        default:
-          return true;
-      }
-    });
-  }
-
-  // Calculate summary statistics for filtered transactions
-  calculateSummary(transactions) {
-    if (!Array.isArray(transactions)) return { total: 0, count: 0, average: 0 };
-    
-    const total = this.sumSafe(transactions.map(t => this.getDepositAmount(t)));
-    const count = transactions.length;
-    const average = count > 0 ? Math.round(total / count) : 0;
-    
-    return { total, count, average };
-  }
-
-  // Render recent transactions
-  renderTransactions() {
-    const container = document.getElementById('fees-transactions-content');
-    if (!container) return;
-    
-    const data = Array.isArray(this.feesAnalytics) ? this.feesAnalytics : [];
-    if (data.length === 0) {
-      container.innerHTML = `<div class="analytics-placeholder"><i class="fas fa-receipt"></i><p>No transactions found</p></div>`;
-      return;
-    }
-
-    // Sort all transactions by date and time (most recent first) and get top 5
-    const sortedTransactions = data
-      .filter(item => this.getTransactionDate(item)) // Only include items with valid dates
-      .sort((a, b) => {
-        const dateA = this.parseDateFromIST(this.getTransactionDate(a));
-        const dateB = this.parseDateFromIST(this.getTransactionDate(b));
-        if (!dateA || !dateB) return 0;
-        return dateB - dateA; // Descending order (newest first)
-      });
-    
-    const recentTransactions = sortedTransactions.slice(0, 5);
-    
-    // Desktop table view
-    const tableHTML = `
-      <div class="transactions-desktop">
-        <table class="fees-transactions-table">
-          <thead>
-            <tr>
-              <th>Student Name</th>
-              <th>Fee Submit</th>
-              <th>Payment Mode</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${recentTransactions.map(transaction => {
-              const receiptLink = this.getReceiptLink(transaction);
-              const receiptNumber = this.getReceiptNumber(transaction);
-              return `
-              <tr>
-                <td>${this.getStudentName(transaction)}</td>
-                <td>₹${this.getDepositAmount(transaction)}</td>
-                <td>${this.getPaymentMode(transaction)}</td>
-                <td>
-                  ${receiptLink ? 
-                    `<button class="receipt-btn" onclick="window.feesManager.openReceiptLink('${receiptLink}', '${receiptNumber}')">
-                      <i class="fas fa-external-link-alt"></i> Receipt
-                    </button>` :
-                    `<button class="receipt-btn disabled" title="Receipt not available">
-                      <i class="fas fa-file-alt"></i> N/A
-                    </button>`
-                  }
-                </td>
-              </tr>`;
-            }).join('')}
-          </tbody>
-        </table>
-      </div>
-      
-      <div class="transactions-mobile">
-        ${recentTransactions.map(transaction => {
-          const receiptLink = this.getReceiptLink(transaction);
-          const receiptNumber = this.getReceiptNumber(transaction);
-          return `
-          <div class="transaction-card">
-            <div class="transaction-header">
-              <strong>${this.getStudentName(transaction)}</strong>
-              <span class="transaction-amount">₹${this.getDepositAmount(transaction)}</span>
-            </div>
-            <div class="transaction-details">
-              <span class="transaction-mode">${this.getPaymentMode(transaction)}</span>
-              ${receiptLink ? 
-                `<button class="receipt-btn" onclick="window.feesManager.openReceiptLink('${receiptLink}', '${receiptNumber}')">
-                  <i class="fas fa-external-link-alt"></i> Receipt
-                </button>` :
-                `<button class="receipt-btn disabled" title="Receipt not available">
-                  <i class="fas fa-file-alt"></i> N/A
-                </button>`
-              }
-            </div>
-          </div>`;
-        }).join('')}
-      </div>
-    `;
-    
-    container.innerHTML = tableHTML;
-  }
-
-
-
-  // Render date range collection
-  renderDateRange() {
-    const container = document.getElementById('fees-range-content');
-    const fromInput = document.getElementById('fees-range-from');
-    const toInput = document.getElementById('fees-range-to');
-    if (!container || !fromInput || !toInput) return;
-    
-    const fromDate = fromInput.value;
-    const toDate = toInput.value;
-    
-    if (!fromDate || !toDate) {
-      container.innerHTML = `<div class="analytics-placeholder"><i class="fas fa-calendar-alt"></i><p>Please select both from and to dates</p></div>`;
-      return;
-    }
-
-    if (new Date(fromDate) > new Date(toDate)) {
-      container.innerHTML = `<div class="analytics-placeholder"><i class="fas fa-exclamation-triangle"></i><p>From date cannot be later than to date</p></div>`;
-      return;
-    }
-
-    // Use centralized filtering method
-    const data = Array.isArray(this.feesAnalytics) ? this.feesAnalytics : [];
-    const rangeTransactions = this.filterTransactionsByDate(data, 'range', { from: fromDate, to: toDate });
-    const summary = this.calculateSummary(rangeTransactions);
-
-    // Calculate number of days in range
-    const daysDiff = Math.ceil((new Date(toDate) - new Date(fromDate)) / (1000 * 60 * 60 * 24)) + 1;
-    const avgDaily = summary.count > 0 ? Math.round(summary.total / daysDiff) : 0;
-
-    // Format dates for display
-    const fromDisplay = new Date(fromDate).toLocaleDateString('en-IN', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric'
-    });
-    const toDisplay = new Date(toDate).toLocaleDateString('en-IN', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric'
-    });
-
-    container.innerHTML = `
-      <table class="analytics-summary-table">
-        <tr>
-          <td><strong>Date Range:</strong></td>
-          <td>${fromDisplay} - ${toDisplay}</td>
-        </tr>
-        <tr>
-          <td><strong>Total Collection:</strong></td>
-          <td class="amount">₹${summary.total.toLocaleString('en-IN')}</td>
-        </tr>
-        <tr>
-          <td><strong>Transactions:</strong></td>
-          <td>${summary.count}</td>
-        </tr>
-        <tr>
-          <td><strong>Average Daily:</strong></td>
-          <td class="amount">₹${avgDaily.toLocaleString('en-IN')}</td>
-        </tr>
-      </table>
-    `;
-  }
-
-  // Refresh analytics data and re-render all sections
-  async refreshAnalytics() {
-    const refreshBtn = document.getElementById('fees-analytics-refresh');
-    if (!refreshBtn) return;
-    
-    try {
-      // Show loading state
-      refreshBtn.classList.add('refreshing');
-      refreshBtn.disabled = true;
-      
-      // Fetch fresh analytics data
-      if (window.dataService && typeof window.dataService.fetchFeesAnalytics === 'function') {
-        this.feesAnalytics = await window.dataService.fetchFeesAnalytics();
-      } else {
-        // Regenerate sample data with current timestamp
-        this.feesAnalytics = this.generateSampleFeesData();
-      }
-
-      // Normalize array
-      if (!Array.isArray(this.feesAnalytics)) {
-        this.feesAnalytics = this.feesAnalytics && this.feesAnalytics.data ? this.feesAnalytics.data : [];
-      }
-      
-      // Ensure we have at least sample data for demonstration
-      if (this.feesAnalytics.length === 0) {
-        this.feesAnalytics = this.generateSampleFeesData();
-      }
-
-      // Re-render all analytics sections
-      this.renderTransactions();
-      this.renderDateRange();
-      this.populateSessions();
-      this.renderMonthly();
-      this.renderYearly();
-      
-      // Show success feedback
-      this.showMessage('Analytics refreshed successfully', 'success');
-      
-    } catch (error) {
-      console.error('Failed to refresh analytics:', error);
-      this.showMessage('Failed to refresh analytics', 'error');
-    } finally {
-      // Remove loading state
-      refreshBtn.classList.remove('refreshing');
-      refreshBtn.disabled = false;
-    }
-  }
-
-  // Show user feedback messages
-  showMessage(message, type = 'info') {
-    // Create or update message element
-    let messageEl = document.getElementById('fees-message');
-    if (!messageEl) {
-      messageEl = document.createElement('div');
-      messageEl.id = 'fees-message';
-      messageEl.className = 'fees-message';
-      
-      // Insert at top of fees section
-      const feesSection = document.getElementById('fees-section');
-      if (feesSection && feesSection.firstChild) {
-        feesSection.insertBefore(messageEl, feesSection.firstChild);
-      }
-    }
-    
-    messageEl.textContent = message;
-    messageEl.className = `fees-message ${type}`;
-    messageEl.style.display = 'block';
-    
-    // Auto-hide after 3 seconds
-    setTimeout(() => {
-      if (messageEl) {
-        messageEl.style.display = 'none';
-      }
-    }, 3000);
-  }
-
-  // Download receipt function
-  // Open receipt link in new tab
-  openReceiptLink(receiptLink, receiptNumber) {
-    if (!receiptLink) {
-      alert('Receipt link not available');
-      return;
-    }
-    
-    console.log(`📄 Opening receipt ${receiptNumber}:`, receiptLink);
-    
-    // Open the receipt link in a new tab
-    try {
-      window.open(receiptLink, '_blank', 'noopener,noreferrer');
-    } catch (error) {
-      console.error('Failed to open receipt link:', error);
-      alert(`Failed to open receipt ${receiptNumber}. Please try again later.`);
-    }
-  }
-
-  downloadReceipt(refNo) {
-    // Kept for backward compatibility
-    alert(`Receipt download for transaction ${refNo} would be implemented here.\n\nIn a real implementation, this would:\n- Fetch receipt details from server\n- Generate PDF receipt\n- Trigger download`);
   }
 }
 

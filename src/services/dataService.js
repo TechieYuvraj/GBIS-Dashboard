@@ -753,7 +753,7 @@ class DataService {
     }
 
     /**
-     * Format date to DD/MM/YYYY (legacy format for display)
+     * Format date to DD/MM/YYYY
      */
     formatDate(date) {
         const d = new Date(date);
@@ -761,20 +761,6 @@ class DataService {
         const month = String(d.getMonth() + 1).padStart(2, '0');
         const year = d.getFullYear();
         return `${day}/${month}/${year}`;
-    }
-
-    /**
-     * Format date to DD-MM-YYYYTHH:mm:ss IST (for JSON data)
-     */
-    formatDateToIST(date) {
-        const d = new Date(date);
-        const day = String(d.getDate()).padStart(2, '0');
-        const month = String(d.getMonth() + 1).padStart(2, '0');
-        const year = d.getFullYear();
-        const hours = String(d.getHours()).padStart(2, '0');
-        const minutes = String(d.getMinutes()).padStart(2, '0');
-        const seconds = String(d.getSeconds()).padStart(2, '0');
-        return `${day}-${month}-${year}T${hours}:${minutes}:${seconds} IST`;
     }
 
     /**
