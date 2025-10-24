@@ -145,8 +145,10 @@ class ContactsManager {
                 <div class="meta"><span class="meta-label">Mother</span><span class="meta-value">${safe(student.Mother_Name)}</span></div>
                 <div class="meta"><span class="meta-label">DOB</span><span class="meta-value">${safe(student.DOB)}</span></div>
                 <div class="meta"><span class="meta-label">Admission</span><span class="meta-value">${safe(student.Admission_Date)}</span></div>
-                <div class="meta" style="grid-column: span 2"><span class="meta-label">Address</span><span class="meta-value">${safe(student.Address)}</span></div>
-                <div class="meta"><span class="meta-label">Contact</span><span class="meta-value em">${formatContactNumber(student.Contact_No)}</span></div>
+                <div class="meta-row address-contact">
+                    <div class="meta"><span class="meta-label">Address</span><span class="meta-value">${safe(student.Address)}</span></div>
+                    <div class="meta"><span class="meta-label">Contact</span><span class="meta-value em">${formatContactNumber(student.Contact_No)}</span></div>
+                </div>
             </div>
             
             <div class="student-actions-center">
