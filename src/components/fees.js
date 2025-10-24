@@ -644,7 +644,7 @@ class FeesManager {
       this.updateSummaryFromInputs(summaryOverrides);
     } catch (err) {
       console.error('Fees detail fetch failed:', err);
-      this.showMessage(err.message || 'Failed to fetch fees details', 'error');
+  this.showBannerMessage(err.message || 'Failed to fetch fees details', 'error');
     } finally {
       // enable fields and hide loader
       this.setFetching(false);
@@ -970,7 +970,7 @@ class FeesManager {
     
     for (const { field, name } of requiredFields) {
       if (!field || !field.value || field.value.trim() === '') {
-        this.showMessage(`Please fill in ${name}.`, 'error');
+  this.showSubmitStatus(`Please fill in ${name}.`, 'error');
         if (field && field.focus) field.focus();
         return;
       }
@@ -978,7 +978,7 @@ class FeesManager {
     
     const payload = this.buildPayload();
     if (!payload.Class || !payload.Roll_No) {
-      this.showMessage('Please select Class and Roll No.', 'error');
+  this.showSubmitStatus('Please select Class and Roll No.', 'error');
       return;
     }
     try {
@@ -997,39 +997,53 @@ class FeesManager {
       this.clearInputFields();
       
       // Show success message with receipt number
-      this.showMessage(`Fees submitted successfully! Receipt: ${payload.Receipt_Number}`, 'success');
-      
-      // Refresh analytics data after successful submission
+      this.showSubmitStatus(`Fees submitted successfully! Receipt: ${payload.Receipt_Number}`, 'success');
+
+      // Seamlessly append the new transaction locally without refetching the whole analytics
       try {
-        if (window.dataService && typeof window.dataService.fetchFeesAnalytics === 'function') {
-          this.feesAnalytics = await window.dataService.fetchFeesAnalytics();
-        } else {
-          // Add the new transaction to sample data with new JSON structure
-          this.feesAnalytics.unshift({
-            row_number: this.feesAnalytics.length + 1,
-            "Serial_No.": payload.Sr_No,
-            Name: payload.Name,
-            Date: payload.Date, // Date-only format DD-MM-YYYY
-            Mode: payload.Payment_Mode,
-            Deposit_amount: payload.Deposit_Amount,
-            Transaction_ID: Math.floor(Math.random() * 9000000000000) + 1000000000000,
-            Remark: payload.Remarks || 'Fee Payment',
-            Link: "https://drive.google.com/file/d/1ZucL8foUJHUGHEY4ZSVyZELVsPVfJWZ8/view?usp=drivesdk", // Sample receipt link
-            "Reciept_no.": payload.Receipt_Number
-          });
-        }
-        
-        // Re-render all analytics sections
+        if (!Array.isArray(this.feesAnalytics)) this.feesAnalytics = [];
+        const newTxn = {
+          row_number: this.feesAnalytics.length + 1,
+          "Serial_No.": payload.Sr_No,
+          Name: payload.Name,
+          Date: payload.Date, // DD-MM-YYYY
+          Mode: payload.Payment_Mode,
+          Deposit_amount: payload.Deposit_Amount,
+          Transaction_ID: payload.Ref_No || (Math.floor(Math.random() * 9000000000000) + 1000000000000),
+          Remark: payload.Remarks || 'Fee Payment',
+          Link: null,
+          "Reciept_no.": payload.Receipt_Number
+        };
+        // Add to the front so it appears in recent transactions immediately
+        this.feesAnalytics.unshift(newTxn);
+
+        // Re-render analytics sections incrementally
         this.renderTransactions();
         this.renderDateRange();
         this.renderMonthly();
+
+        // Recompute sessions safely and keep user selection if possible
+        const sessionSel = document.getElementById('fees-session-select');
+        const prevFY = sessionSel ? sessionSel.value : null;
+        this.populateSessions();
+        if (sessionSel && prevFY) {
+          const hasPrev = Array.from(sessionSel.options).some(o => o.value === prevFY);
+          if (hasPrev) sessionSel.value = prevFY;
+        }
         this.renderYearly();
+
+        // Also perform a background refresh from webhook to ensure server truth without UI disruption
+        try {
+          await this.refreshAnalytics(true);
+        } catch (bgErr) {
+          console.warn('Background analytics refresh failed:', bgErr);
+        }
       } catch (analyticsError) {
-        console.warn('Failed to refresh analytics after submission:', analyticsError);
+        console.warn('Failed to update analytics after submission:', analyticsError);
       }
     } catch (err) {
       console.error('Submit fees failed:', err);
-      this.showMessage(err.message || 'Failed to submit fees', 'error');
+  this.showSubmitStatus(err.message || 'Failed to submit fees', 'error');
     } finally {
       this.submitBtn.disabled = false;
       this.submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Submit';
@@ -1075,12 +1089,23 @@ class FeesManager {
     console.log('✅ Input fields cleared after successful submission');
   }
 
-  showMessage(message, type='success') {
+  // Inline status below the Submit button (green/red) shown for 5 seconds
+  showSubmitStatus(message, type = 'success') {
     const el = this.successEl;
     if (!el) return;
     el.textContent = message;
-    el.className = `success-message show ${type}`;
-    setTimeout(() => el.classList.remove('show'), 3000);
+    // Reset base class, then apply variant and show
+    el.className = 'success-message';
+    if (type === 'error') {
+      el.classList.add('error');
+    }
+    el.classList.add('show');
+    // Auto-hide after 5 seconds
+    clearTimeout(this._submitStatusTimer);
+    this._submitStatusTimer = setTimeout(() => {
+      el.classList.remove('show');
+      el.classList.remove('error');
+    }, 5000);
   }
 
   enforceReadOnly() {
@@ -1100,7 +1125,7 @@ class FeesManager {
     const data = [];
     const today = new Date();
     const students = ['Garvit Sunda', 'AAHIL KHAN', 'SARA ALI', 'AMIT SINGH', 'RIYA PATEL', 'RAJESH KUMAR', 'PRIYA SHARMA', 'ARJUN VERMA', 'ANAYA GUPTA'];
-    const paymentModes = ['UPI', 'Cash', 'Card', 'Bank Transfer'];
+  const paymentModes = ['UPI SBI Bank', 'Cash', 'Card', 'Bank Transfer'];
     const remarks = ['Tution', 'Transport', 'Books', 'Exam Fee', 'Annual Fee', 'Sports Fee'];
     
     // Generate data for last 90 days to cover multiple months
@@ -1358,8 +1383,10 @@ class FeesManager {
           <thead>
             <tr>
               <th>Student Name</th>
+              <th>Date</th>
               <th>Fee Submit</th>
               <th>Payment Mode</th>
+              <th>Receipt No.</th>
               <th>Action</th>
             </tr>
           </thead>
@@ -1367,11 +1394,16 @@ class FeesManager {
             ${recentTransactions.map(transaction => {
               const receiptLink = this.getReceiptLink(transaction);
               const receiptNumber = this.getReceiptNumber(transaction);
+              const txnDateRaw = this.getTransactionDate(transaction);
+              const txnDateObj = this.parseDateFromIST(txnDateRaw);
+              const dateDisplay = txnDateObj ? this.formatDateToDDMMYYYY(txnDateObj) : (txnDateRaw || '—');
               return `
               <tr>
                 <td>${this.getStudentName(transaction)}</td>
+                <td>${dateDisplay}</td>
                 <td>₹${this.getDepositAmount(transaction)}</td>
                 <td>${this.getPaymentMode(transaction)}</td>
+                <td>${receiptNumber}</td>
                 <td>
                   ${receiptLink ? 
                     `<button class="receipt-btn" onclick="window.feesManager.openReceiptLink('${receiptLink}', '${receiptNumber}')">
@@ -1392,6 +1424,9 @@ class FeesManager {
         ${recentTransactions.map(transaction => {
           const receiptLink = this.getReceiptLink(transaction);
           const receiptNumber = this.getReceiptNumber(transaction);
+          const txnDateRaw = this.getTransactionDate(transaction);
+          const txnDateObj = this.parseDateFromIST(txnDateRaw);
+          const dateDisplay = txnDateObj ? this.formatDateToDDMMYYYY(txnDateObj) : (txnDateRaw || '—');
           return `
           <div class="transaction-card">
             <div class="transaction-header">
@@ -1400,6 +1435,8 @@ class FeesManager {
             </div>
             <div class="transaction-details">
               <span class="transaction-mode">${this.getPaymentMode(transaction)}</span>
+              <span class="transaction-date">${dateDisplay}</span>
+              <span class="transaction-receipt">${receiptNumber !== 'N/A' ? `Receipt: ${receiptNumber}` : 'Receipt: N/A'}</span>
               ${receiptLink ? 
                 `<button class="receipt-btn" onclick="window.feesManager.openReceiptLink('${receiptLink}', '${receiptNumber}')">
                   <i class="fas fa-external-link-alt"></i> Receipt
@@ -1483,15 +1520,19 @@ class FeesManager {
   }
 
   // Refresh analytics data and re-render all sections
-  async refreshAnalytics() {
+  async refreshAnalytics(silent = false) {
     const refreshBtn = document.getElementById('fees-analytics-refresh');
-    if (!refreshBtn) return;
-    
+    // Preserve currently selected session (if any) to avoid jarring UX
+    const sessionSel = document.getElementById('fees-session-select');
+    const prevFY = sessionSel ? sessionSel.value : null;
+
     try {
-      // Show loading state
-      refreshBtn.classList.add('refreshing');
-      refreshBtn.disabled = true;
-      
+      // Show loading state only when not silent
+      if (!silent && refreshBtn) {
+        refreshBtn.classList.add('refreshing');
+        refreshBtn.disabled = true;
+      }
+
       // Fetch fresh analytics data
       if (window.dataService && typeof window.dataService.fetchFeesAnalytics === 'function') {
         this.feesAnalytics = await window.dataService.fetchFeesAnalytics();
@@ -1514,24 +1555,39 @@ class FeesManager {
       this.renderTransactions();
       this.renderDateRange();
       this.populateSessions();
+
+      // Restore previous session selection if still available
+      const sessionSel2 = document.getElementById('fees-session-select');
+      if (prevFY && sessionSel2) {
+        const hasPrev = Array.from(sessionSel2.options).some(o => o.value === prevFY);
+        if (hasPrev) sessionSel2.value = prevFY;
+      }
+
       this.renderMonthly();
       this.renderYearly();
       
-      // Show success feedback
-      this.showMessage('Analytics refreshed successfully', 'success');
+      // Show success feedback only when not silent
+      if (!silent) {
+        this.showBannerMessage('Analytics refreshed successfully', 'success');
+      }
       
     } catch (error) {
       console.error('Failed to refresh analytics:', error);
-      this.showMessage('Failed to refresh analytics', 'error');
+      if (!silent) {
+        this.showBannerMessage('Failed to refresh analytics', 'error');
+      }
+      throw error; // propagate when silent callers want to handle
     } finally {
-      // Remove loading state
-      refreshBtn.classList.remove('refreshing');
-      refreshBtn.disabled = false;
+      // Remove loading state only when not silent
+      if (!silent && refreshBtn) {
+        refreshBtn.classList.remove('refreshing');
+        refreshBtn.disabled = false;
+      }
     }
   }
 
-  // Show user feedback messages
-  showMessage(message, type = 'info') {
+  // Show top-of-panel banner feedback messages (e.g., refresh status)
+  showBannerMessage(message, type = 'info') {
     // Create or update message element
     let messageEl = document.getElementById('fees-message');
     if (!messageEl) {
@@ -1539,10 +1595,10 @@ class FeesManager {
       messageEl.id = 'fees-message';
       messageEl.className = 'fees-message';
       
-      // Insert at top of fees section
-      const feesSection = document.getElementById('fees-section');
-      if (feesSection && feesSection.firstChild) {
-        feesSection.insertBefore(messageEl, feesSection.firstChild);
+      // Insert at top of the Fees action panel
+      const feesActionPanel = document.querySelector('#fees-tab .action-section');
+      if (feesActionPanel) {
+        feesActionPanel.insertBefore(messageEl, feesActionPanel.firstChild);
       }
     }
     
@@ -1551,7 +1607,8 @@ class FeesManager {
     messageEl.style.display = 'block';
     
     // Auto-hide after 3 seconds
-    setTimeout(() => {
+    clearTimeout(this._bannerTimer);
+    this._bannerTimer = setTimeout(() => {
       if (messageEl) {
         messageEl.style.display = 'none';
       }

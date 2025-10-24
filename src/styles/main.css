@@ -1421,6 +1421,36 @@ select.category-locked:focus {
     margin-top: 2px;
 }
 
+/* Make Address and Contact appear on the same line */
+#contacts-tab .student-meta .meta-row.address-contact {
+    grid-column: 1 / -1; /* span full width in the grid */
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+}
+
+#contacts-tab .student-meta .meta-row.address-contact .meta {
+    flex: 1 1 50%;
+    min-width: 0; /* allow text to wrap within */
+}
+
+#contacts-tab .student-meta .meta-row.address-contact .meta .meta-value {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+@media (max-width: 520px) {
+    /* On very small screens, allow wrap to next line gracefully */
+    #contacts-tab .student-meta .meta-row.address-contact {
+        flex-wrap: wrap;
+        gap: 8px 12px;
+    }
+    #contacts-tab .student-meta .meta-row.address-contact .meta {
+        flex: 1 1 100%;
+    }
+}
+
 #contacts-tab .meta {
     display: flex;
     flex-direction: column;
@@ -1673,6 +1703,13 @@ select.category-locked:focus {
     font-size: 1.25rem;
     font-weight: 600;
     color: var(--text-primary);
+}
+
+/* Right-aligned compact actions for analytics headers */
+.analytics-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
 .refresh-btn {
@@ -3763,6 +3800,13 @@ select.category-locked:focus {
     align-items: center;
     gap: 8px;
     transition: all 0.2s ease;
+}
+
+.primary-btn.compact {
+    padding: 8px 12px; /* match header refresh button */
+    font-size: 0.9rem;
+    border-radius: 8px;
+    line-height: 1;
 }
 
 .primary-btn:hover {
