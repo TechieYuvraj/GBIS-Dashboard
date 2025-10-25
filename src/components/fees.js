@@ -1041,24 +1041,21 @@ class FeesManager {
         }
         this.renderYearly();
 
+        // After submit, refresh analytics after 2 seconds (as requested)
+        try {
+          clearTimeout(this._silentRefreshTimer);
+          this._silentRefreshTimer = setTimeout(async () => {
+            try {
+              await this.refreshAnalytics(true);
+            } catch (refreshErr) {
+              console.warn('Post-submit analytics refresh failed:', refreshErr);
+            }
+          }, 2000);
+        } catch (timerErr) {
+          console.warn('Failed to schedule post-submit analytics refresh:', timerErr);
+        }
       } catch (analyticsError) {
         console.warn('Failed to update analytics after submission:', analyticsError);
-      }
-      // Always schedule a delayed silent refresh after submit, even if local update failed
-      try {
-        clearTimeout(this._silentRefreshTimer);
-        this._silentRefreshTimer = setTimeout(async () => {
-          try {
-            this.showTinyRefreshOverlay();
-            await this.refreshAnalytics(true);
-          } catch (refreshErr) {
-            console.warn('Post-submit analytics refresh failed:', refreshErr);
-          } finally {
-            this.hideTinyRefreshOverlay();
-          }
-        }, 3000);
-      } catch (timerErr) {
-        console.warn('Failed to schedule post-submit analytics refresh:', timerErr);
       }
     } catch (err) {
       console.error('Submit fees failed:', err);
