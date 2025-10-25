@@ -1050,7 +1050,7 @@ class FeesManager {
             } catch (refreshErr) {
               console.warn('Post-submit analytics refresh failed:', refreshErr);
             }
-          }, 2000);
+          }, 1000);
         } catch (timerErr) {
           console.warn('Failed to schedule post-submit analytics refresh:', timerErr);
         }
