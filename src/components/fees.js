@@ -220,11 +220,11 @@ class FeesManager {
         rangeToSel.value = today.toISOString().split('T')[0];
       }
 
-      // Fetch analytics data
+      // Fetch analytics data (no dummy fallback)
       if (window.dataService && typeof window.dataService.fetchFeesAnalytics === 'function') {
         this.feesAnalytics = await window.dataService.fetchFeesAnalytics();
       } else {
-        this.feesAnalytics = this.generateSampleFeesData();
+        this.feesAnalytics = [];
       }
 
       // Normalize array
@@ -232,11 +232,6 @@ class FeesManager {
         this.feesAnalytics = this.feesAnalytics && this.feesAnalytics.data ? this.feesAnalytics.data : [];
       }
       
-      // Ensure we have at least sample data for demonstration
-      if (this.feesAnalytics.length === 0) {
-        this.feesAnalytics = this.generateSampleFeesData();
-      }
-
       // Render all sections
       this.renderTransactions();
       this.populateSessions();
@@ -244,8 +239,12 @@ class FeesManager {
       this.renderMonthly();
     } catch (err) {
       console.error('Failed to init fees analytics:', err);
-      const root = document.getElementById('fees-analytics');
-      if (root) root.innerHTML = `<div class="analytics-error">Failed to load fees analytics. ${err.message || ''}</div>`;
+      // Ensure sections render placeholders instead of wiping the analytics root
+      this.feesAnalytics = [];
+      this.renderTransactions();
+      this.populateSessions();
+      this.renderYearly();
+      this.renderMonthly();
     }
   }
 
@@ -988,7 +987,7 @@ class FeesManager {
       // Log the live timestamp being sent
       console.log('Submitting fees with live timestamp:', payload.Date);
       
-      await window.dataService.submitFees(payload);
+  await window.dataService.submitFees(payload);
       
       // Save the receipt number after successful submission
       this.saveReceiptNumber(payload.Receipt_Number);
@@ -1007,9 +1006,11 @@ class FeesManager {
           "Serial_No.": payload.Sr_No,
           Name: payload.Name,
           Date: payload.Date, // DD-MM-YYYY
+          Submission_Time: payload.Submission_Time, // Full timestamp for precise ordering
           Mode: payload.Payment_Mode,
           Deposit_amount: payload.Deposit_Amount,
           Transaction_ID: payload.Ref_No || (Math.floor(Math.random() * 9000000000000) + 1000000000000),
+          "Reff. No.": payload.Ref_No || '',
           Remark: payload.Remarks || 'Fee Payment',
           Link: null,
           "Reciept_no.": payload.Receipt_Number
@@ -1032,11 +1033,18 @@ class FeesManager {
         }
         this.renderYearly();
 
-        // Also perform a background refresh from webhook to ensure server truth without UI disruption
+        // Schedule a silent background refresh after 4 seconds to allow receipt link generation
         try {
-          await this.refreshAnalytics(true);
-        } catch (bgErr) {
-          console.warn('Background analytics refresh failed:', bgErr);
+          clearTimeout(this._silentRefreshTimer);
+          this._silentRefreshTimer = setTimeout(async () => {
+            try {
+              await this.refreshAnalytics(true);
+            } catch (bgErr) {
+              console.warn('Background analytics refresh failed:', bgErr);
+            }
+          }, 3000);
+        } catch (timerErr) {
+          console.warn('Failed to schedule silent analytics refresh:', timerErr);
         }
       } catch (analyticsError) {
         console.warn('Failed to update analytics after submission:', analyticsError);
@@ -1247,9 +1255,10 @@ class FeesManager {
     ) || 0;
   }
 
-  // Get transaction date from the updated JSON structure
+  // Get transaction date from the updated JSON structure (prefer precise Submission_Time)
   getTransactionDate(item) {
-    return item?.Date ?? 
+    return item?.Submission_Time ??
+           item?.Date ?? 
            item?.date ?? 
            item?.Transaction_Date ?? 
            item?.txn_date ?? 
@@ -1297,9 +1306,18 @@ class FeesManager {
     return item?.Transaction_ID ?? 
            item?.transaction_id ?? 
            item?.Ref_No ?? 
+           item?.['Reff. No.'] ?? 
            item?.ref_no ?? 
            item?.Reference ?? 
            'N/A';
+  }
+
+  // Extract numeric part of receipt number for sorting
+  getReceiptNumberValue(item) {
+    const r = this.getReceiptNumber(item);
+    if (!r) return -Infinity;
+    const m = String(r).match(/(\d+)$/);
+    return m ? parseInt(m[1], 10) : -Infinity;
   }
 
   // Centralized data filtering method for all analytics
@@ -1364,21 +1382,22 @@ class FeesManager {
       return;
     }
 
-    // Sort all transactions by date and time (most recent first) and get top 5
+    // Sort all transactions by receipt number (numeric suffix) descending
     const sortedTransactions = data
-      .filter(item => this.getTransactionDate(item)) // Only include items with valid dates
+      .filter(item => this.getReceiptNumber(item))
       .sort((a, b) => {
+        const nb = this.getReceiptNumberValue(b);
+        const na = this.getReceiptNumberValue(a);
+        if (nb !== na) return nb - na;
+        // Fallback to time when receipt numbers equal or missing
         const dateA = this.parseDateFromIST(this.getTransactionDate(a));
         const dateB = this.parseDateFromIST(this.getTransactionDate(b));
-        if (!dateA || !dateB) return 0;
-        return dateB - dateA; // Descending order (newest first)
+        return (dateB || 0) - (dateA || 0);
       });
-    
-    const recentTransactions = sortedTransactions.slice(0, 5);
     
     // Desktop table view
     const tableHTML = `
-      <div class="transactions-desktop">
+      <div class="transactions-desktop" style="max-height: 340px; overflow-y: auto;">
         <table class="fees-transactions-table">
           <thead>
             <tr>
@@ -1391,7 +1410,7 @@ class FeesManager {
             </tr>
           </thead>
           <tbody>
-            ${recentTransactions.map(transaction => {
+            ${sortedTransactions.map(transaction => {
               const receiptLink = this.getReceiptLink(transaction);
               const receiptNumber = this.getReceiptNumber(transaction);
               const txnDateRaw = this.getTransactionDate(transaction);
@@ -1420,8 +1439,8 @@ class FeesManager {
         </table>
       </div>
       
-      <div class="transactions-mobile">
-        ${recentTransactions.map(transaction => {
+      <div class="transactions-mobile" style="max-height: 340px; overflow-y: auto;">
+        ${sortedTransactions.map(transaction => {
           const receiptLink = this.getReceiptLink(transaction);
           const receiptNumber = this.getReceiptNumber(transaction);
           const txnDateRaw = this.getTransactionDate(transaction);
@@ -1537,8 +1556,7 @@ class FeesManager {
       if (window.dataService && typeof window.dataService.fetchFeesAnalytics === 'function') {
         this.feesAnalytics = await window.dataService.fetchFeesAnalytics();
       } else {
-        // Regenerate sample data with current timestamp
-        this.feesAnalytics = this.generateSampleFeesData();
+        this.feesAnalytics = [];
       }
 
       // Normalize array
@@ -1546,11 +1564,6 @@ class FeesManager {
         this.feesAnalytics = this.feesAnalytics && this.feesAnalytics.data ? this.feesAnalytics.data : [];
       }
       
-      // Ensure we have at least sample data for demonstration
-      if (this.feesAnalytics.length === 0) {
-        this.feesAnalytics = this.generateSampleFeesData();
-      }
-
       // Re-render all analytics sections
       this.renderTransactions();
       this.renderDateRange();
@@ -1574,7 +1587,7 @@ class FeesManager {
     } catch (error) {
       console.error('Failed to refresh analytics:', error);
       if (!silent) {
-        this.showBannerMessage('Failed to refresh analytics', 'error');
+        this.showBannerMessage('Unable to refresh analytics', 'error');
       }
       throw error; // propagate when silent callers want to handle
     } finally {
