@@ -768,31 +768,39 @@ class FeesManager {
   }
 
   getLastReceiptNumber() {
-    // Try to get from localStorage first
-    const stored = localStorage.getItem('gbis_last_receipt_number');
-    if (stored) {
-      console.log('📄 Retrieved stored receipt number:', stored);
-      return stored;
+    // Determine last receipt number from analytics data to avoid conflicts
+    const data = Array.isArray(this.feesAnalytics) ? this.feesAnalytics : [];
+    let maxNum = 0;
+    let maxDigits = 5;
+    data.forEach(item => {
+      const r = this.getReceiptNumber(item);
+      if (!r) return;
+      const m = String(r).match(/(\d+)/);
+      if (!m) return;
+      const num = parseInt(m[1], 10);
+      if (!Number.isFinite(num)) return;
+      if (num > maxNum) {
+        maxNum = num;
+        maxDigits = Math.max(m[1].length, 5);
+      }
+    });
+
+    if (maxNum > 0) {
+      const padded = String(maxNum).padStart(maxDigits, '0');
+      return `GBIS-${padded}`;
     }
-    
-    // If no stored number, start with GBIS-10000 (will be incremented to GBIS-10001)
-    const initialNumber = 'GBIS-10000';
-    console.log('📄 No stored receipt number, starting with:', initialNumber);
-    return initialNumber;
+    // No data in analytics -> start series at GBIS-00000 so increment yields GBIS-00001
+    return 'GBIS-00000';
   }
 
   incrementReceiptNumber(receiptNumber) {
-    // Extract number part from format like "GBIS-10001"
-    const match = receiptNumber.match(/GBIS-(\d+)/);
-    if (!match) {
-      // If format doesn't match, start fresh
-      return 'GBIS-10001';
-    }
-    
-    const currentNumber = parseInt(match[1], 10);
-    const nextNumber = currentNumber + 1;
-    const newReceiptNumber = `GBIS-${nextNumber}`;
-    
+    // Extract number part from formats like "GBIS-00001" or "GBIS-10026"
+    const match = String(receiptNumber).match(/GBIS-(\d+)/);
+    const currentNumber = match ? parseInt(match[1], 10) : 0;
+    const width = match ? Math.max(match[1].length, 5) : 5;
+    const nextNumber = (Number.isFinite(currentNumber) ? currentNumber : 0) + 1;
+    const padded = String(nextNumber).padStart(width, '0');
+    const newReceiptNumber = `GBIS-${padded}`;
     console.log('📄 Incremented receipt number:', receiptNumber, '→', newReceiptNumber);
     return newReceiptNumber;
   }
@@ -1033,18 +1041,18 @@ class FeesManager {
         }
         this.renderYearly();
 
-        // Schedule a silent background refresh after 4 seconds to allow receipt link generation
+        // After submit, refresh analytics after 2 seconds (as requested)
         try {
           clearTimeout(this._silentRefreshTimer);
           this._silentRefreshTimer = setTimeout(async () => {
             try {
               await this.refreshAnalytics(true);
-            } catch (bgErr) {
-              console.warn('Background analytics refresh failed:', bgErr);
+            } catch (refreshErr) {
+              console.warn('Post-submit analytics refresh failed:', refreshErr);
             }
-          }, 1000);
+          }, 2000);
         } catch (timerErr) {
-          console.warn('Failed to schedule silent analytics refresh:', timerErr);
+          console.warn('Failed to schedule post-submit analytics refresh:', timerErr);
         }
       } catch (analyticsError) {
         console.warn('Failed to update analytics after submission:', analyticsError);
@@ -1625,7 +1633,32 @@ class FeesManager {
       if (messageEl) {
         messageEl.style.display = 'none';
       }
-    }, 3000);
+          }, 2000);
+  }
+
+  // Retry silent refresh after a delay until the target receipt gets a link
+  async refreshUntilReceiptLink(targetReceipt, maxAttempts = 3, intervalMs = 2000) {
+    const sleep = (ms) => new Promise(res => setTimeout(res, ms));
+    let attempt = 0;
+    while (attempt < maxAttempts) {
+      // wait first so the server has time to create the receipt link
+      await sleep(intervalMs);
+      try {
+        await this.refreshAnalytics(true);
+      } catch (err) {
+        // continue retries even if one refresh fails
+        console.warn('Silent refresh attempt failed:', err);
+      }
+      const found = (Array.isArray(this.feesAnalytics) ? this.feesAnalytics : [])
+        .find(item => this.getReceiptNumber(item) === targetReceipt);
+      if (found && this.getReceiptLink(found)) {
+        // make sure transactions reflect the new link immediately
+        this.renderTransactions();
+        return true;
+      }
+      attempt++;
+    }
+    return false;
   }
 
   // Download receipt function
