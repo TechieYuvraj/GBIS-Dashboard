@@ -1712,6 +1712,7 @@ select.category-locked:focus {
     gap: 10px;
 }
 
+
 .refresh-btn {
     background: var(--accent-50);
     border: 1px solid var(--accent-200);

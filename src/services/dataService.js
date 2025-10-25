@@ -7,9 +7,9 @@ class DataService {
     constructor() {
         this.baseURL = 'https://primary-production-4a6d8.up.railway.app/webhook';
         this.apiKey = '2025@urikaDeep@km@lik$$'; // n8n API Key for authentication
-        this.students = [];
-        this.classes = [];
-        this.isInitialized = false;
+    this.students = [];
+    this.classes = [];
+    this.isInitialized = false;
         this.isFetching = false; // Add fetching state
         this.fetchPromise = null; // Store ongoing fetch promise
         // Remove automatic init() call from constructor
@@ -107,10 +107,7 @@ class DataService {
             return this.fetchPromise;
         }
 
-        // If we already have data and not explicitly refreshing, don't fetch again
-        if (this.students.length > 0 && this.isInitialized) {
-            return this.students;
-        }
+        // Always fetch fresh; no caching
 
         this.isFetching = true;
         
@@ -145,28 +142,7 @@ class DataService {
             clearTimeout(timeoutId);
 
             if (!response.ok) {
-                // Handle specific HTTP status codes
-                if (response.status === 403) {
-                    console.warn('API access forbidden (403) - using sample data for development');
-                    this.students = this.getSampleStudentData();
-                    this.extractClasses();
-                    this.saveToLocalStorage();
-                    return this.students;
-                } else if (response.status === 404) {
-                    console.warn('API endpoint not found (404) - using sample data for development');
-                    this.students = this.getSampleStudentData();
-                    this.extractClasses();
-                    this.saveToLocalStorage();
-                    return this.students;
-                } else if (response.status >= 500) {
-                    console.warn(`Server error (${response.status}) - using sample data for development`);
-                    this.students = this.getSampleStudentData();
-                    this.extractClasses();
-                    this.saveToLocalStorage();
-                    return this.students;
-                } else {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
+                throw new Error(`HTTP error! status: ${response.status}`);
             }
 
             const data = await response.json();
@@ -175,53 +151,13 @@ class DataService {
             // Process the data
             this.students = Array.isArray(data) ? data : [data];
             this.extractClasses();
-            this.saveToLocalStorage();
             
             return this.students;
         } catch (error) {
             console.error('❌ Error fetching contacts:', error.message);
-            
-            // Try to load from localStorage if API fails
-            this.loadFromLocalStorage();
-            
-            // Don't throw error if we have cached data
-            if (this.students.length > 0) {
-                console.log('Using cached student data');
-                return this.students;
-            }
-            
-            // If no cached data, provide some sample data for development
-            if (error.name === 'AbortError') {
-                console.warn('Request timeout - using sample data for development');
-                this.students = this.getSampleStudentData();
-                this.extractClasses();
-                this.saveToLocalStorage();
-                return this.students;
-            }
-            
-            // For network errors, use sample data
-            if (error instanceof TypeError && error.message.includes('fetch')) {
-                console.warn('Network error - using sample data for development');
-                this.students = this.getSampleStudentData();
-                this.extractClasses();
-                this.saveToLocalStorage();
-                return this.students;
-            }
-            
-            // For HTTP errors, use sample data
-            if (error.message.includes('HTTP error')) {
-                console.warn('HTTP error - using sample data for development');
-                this.students = this.getSampleStudentData();
-                this.extractClasses();
-                this.saveToLocalStorage();
-                return this.students;
-            }
-            
-            // Only throw error if it's a critical issue and we have no fallback
-            console.warn('Unknown error - using sample data for development');
-            this.students = this.getSampleStudentData();
-            this.extractClasses();
-            this.saveToLocalStorage();
+            // No cache, no dummy. Show global warning and return empty list
+            this.students = [];
+            this.classes = [];
             return this.students;
         }
     }
@@ -229,122 +165,7 @@ class DataService {
     /**
      * Get sample student data for development/testing
      */
-    getSampleStudentData() {
-        return [
-            {
-                "row_number": 1,
-                "Class": "NURSERY",
-                "Roll_No": 1,
-                "Serial_No": 2254,
-                "Name": "AAHIL KHAN",
-                "Father_Name": "ARSAD KHAN",
-                "Mother_Name": "REHANA BANO",
-                "DOB": "14-08-2020",
-                "Admission_Date": "02-04-2025",
-                "Address": "HODSAR",
-                "Contact_No": 7398226246,
-                "Transportaion_Fees": ""
-            },
-            {
-                "row_number": 2,
-                "Class": "NURSERY",
-                "Roll_No": 2,
-                "Serial_No": 2255,
-                "Name": "SARA ALI",
-                "Father_Name": "MOHAMMED ALI",
-                "Mother_Name": "FATIMA ALI",
-                "DOB": "22-05-2020",
-                "Admission_Date": "15-04-2025",
-                "Address": "CIVIL LINES",
-                "Contact_No": 9876543210,
-                "Transportaion_Fees": "300"
-            },
-            {
-                "row_number": 3,
-                "Class": "5TH",
-                "Roll_No": 5,
-                "Serial_No": 2256,
-                "Name": "AMIT SINGH",
-                "Father_Name": "VIJAY SINGH",
-                "Mother_Name": "KAVITA SINGH",
-                "DOB": "10-11-2014",
-                "Admission_Date": "20-03-2021",
-                "Address": "NEHRU NAGAR",
-                "Contact_No": 7654321098,
-                "Transportaion_Fees": "400"
-            },
-            {
-                "row_number": 4,
-                "Class": "5TH",
-                "Roll_No": 8,
-                "Serial_No": 2257,
-                "Name": "RIYA PATEL",
-                "Father_Name": "KIRAN PATEL",
-                "Mother_Name": "NISHA PATEL",
-                "DOB": "18-09-2014",
-                "Admission_Date": "10-05-2021",
-                "Address": "GANDHI ROAD",
-                "Contact_No": 8765432109,
-                "Transportaion_Fees": "450"
-            },
-            {
-                "row_number": 5,
-                "Class": "10TH",
-                "Roll_No": 10,
-                "Serial_No": 2258,
-                "Name": "RAJESH KUMAR",
-                "Father_Name": "SURESH KUMAR",
-                "Mother_Name": "SUNITA DEVI",
-                "DOB": "15-03-2010",
-                "Admission_Date": "01-04-2022",
-                "Address": "MAIN STREET",
-                "Contact_No": 9876543210,
-                "Transportaion_Fees": "500"
-            },
-            {
-                "row_number": 6,
-                "Class": "10TH",
-                "Roll_No": 12,
-                "Serial_No": 2259,
-                "Name": "PRIYA SHARMA",
-                "Father_Name": "RAKESH SHARMA",
-                "Mother_Name": "MEENA SHARMA",
-                "DOB": "22-07-2009",
-                "Admission_Date": "15-04-2022",
-                "Address": "CIVIL LINES",
-                "Contact_No": 8765432109,
-                "Transportaion_Fees": "600"
-            },
-            {
-                "row_number": 7,
-                "Class": "10TH",
-                "Roll_No": 15,
-                "Serial_No": 2260,
-                "Name": "ARJUN VERMA",
-                "Father_Name": "MANOJ VERMA",
-                "Mother_Name": "POOJA VERMA",
-                "DOB": "05-12-2009",
-                "Admission_Date": "25-03-2022",
-                "Address": "PARK AVENUE",
-                "Contact_No": 7654321098,
-                "Transportaion_Fees": "550"
-            },
-            {
-                "row_number": 8,
-                "Class": "8TH",
-                "Roll_No": 3,
-                "Serial_No": 2261,
-                "Name": "ANAYA GUPTA",
-                "Father_Name": "ROHIT GUPTA",
-                "Mother_Name": "PRIYANKA GUPTA",
-                "DOB": "30-01-2012",
-                "Admission_Date": "12-04-2020",
-                "Address": "SECTOR 15",
-                "Contact_No": 9988776655,
-                "Transportaion_Fees": "480"
-            }
-        ];
-    }
+    getSampleStudentData() { return []; }
 
     /**
      * Extract unique classes from student data
@@ -363,49 +184,17 @@ class DataService {
     /**
      * Save student data to localStorage
      */
-    saveToLocalStorage() {
-        try {
-            localStorage.setItem('gbis_students', JSON.stringify(this.students));
-            localStorage.setItem('gbis_classes', JSON.stringify(this.classes));
-            localStorage.setItem('gbis_last_updated', new Date().toISOString());
-        } catch (error) {
-            console.error('Error saving to localStorage:', error);
-        }
-    }
+    saveToLocalStorage() { /* caching disabled */ }
 
     /**
      * Load student data from localStorage
      */
-    loadFromLocalStorage() {
-        try {
-            const studentsData = localStorage.getItem('gbis_students');
-            const classesData = localStorage.getItem('gbis_classes');
-            
-            if (studentsData) {
-                this.students = JSON.parse(studentsData);
-            }
-            if (classesData) {
-                this.classes = JSON.parse(classesData);
-            }
-        } catch (error) {
-            console.error('Error loading from localStorage:', error);
-            this.students = [];
-            this.classes = [];
-        }
-    }
+    loadFromLocalStorage() { /* caching disabled */ }
 
     /**
      * Clear localStorage data
      */
-    clearLocalStorage() {
-        try {
-            localStorage.removeItem('gbis_students');
-            localStorage.removeItem('gbis_classes');
-            localStorage.removeItem('gbis_last_updated');
-        } catch (error) {
-            console.error('Error clearing localStorage:', error);
-        }
-    }
+    clearLocalStorage() { /* caching disabled */ }
 
     /**
      * Get all students
@@ -1045,7 +834,9 @@ class DataService {
             const text = await response.text();
             try { return JSON.parse(text); } catch { return { raw: text }; }
         } catch (err) {
-            if (err.name === 'AbortError') throw new Error('Fees analytics request timeout');
+            if (err.name === 'AbortError') {
+                throw new Error('Fees analytics request timeout');
+            }
             if (err instanceof TypeError && err.message.includes('fetch')) {
                 throw new Error('Network error while fetching fees analytics');
             }
@@ -1128,6 +919,14 @@ class DataService {
      */
     isFetchingData() {
         return this.isFetching;
+    }
+
+    /**
+     * Show a global warning banner at the top of the UI
+     */
+    showGlobalWarning(message = '') {
+        // No-op: global warning banner has been removed from the UI.
+        // Intentionally left blank to avoid displaying deprecated warnings.
     }
 }
 
