@@ -1042,7 +1042,7 @@ class FeesManager {
             } catch (bgErr) {
               console.warn('Background analytics refresh failed:', bgErr);
             }
-          }, 3000);
+          }, 1000);
         } catch (timerErr) {
           console.warn('Failed to schedule silent analytics refresh:', timerErr);
         }
