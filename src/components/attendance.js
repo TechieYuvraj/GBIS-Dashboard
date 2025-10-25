@@ -488,6 +488,7 @@ class AttendanceManager {
                         const computedTotal = present + absent;
                         const total = (typeof item.total === 'number') ? Number(item.total) : computedTotal;
                         const pct = total > 0 ? Math.round((present / total) * 100) : 0;
+                        const absentList = Array.isArray(item.absentStudents) ? item.absentStudents : [];
                         return `
                             <div class="class-bar fetched">
                                 <div class="class-bar-header">
@@ -509,7 +510,23 @@ class AttendanceManager {
                                 <div class="class-bar-details">
                                     <span>Total: ${total}</span>
                                     <span>Present: ${present}</span>
-                                    <span>Absent: ${absent}</span>
+                                    <span>
+                                        Absent: ${absent}
+                                        ${absentList.length > 0 ? `<button class="absent-toggle-btn" data-class="${cls}" title="Show absent list" style="margin-left:6px; padding:2px 6px; font-size:12px; border-radius:6px; border:1px solid #d6d9e5; background:#fff;">
+                                            <i class="fas fa-caret-down"></i>
+                                        </button>` : ''}
+                                    </span>
+                                </div>
+                                <div class="absent-list" id="absent-list-${cls}" style="display:none; margin-top:10px; background:#f8fafc; border:1px dashed #e2e8f0; border-radius:8px; padding:10px;">
+                                    ${absentList.length > 0 ? `
+                                        <div style="font-weight:600; margin-bottom:6px;">Absent Students</div>
+                                        <ul style="list-style:none; margin:0; padding:0; display:grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap:6px;">
+                                            ${absentList.map(s => `<li style="padding:6px 8px; background:#ffffff; border:1px solid #edf2f7; border-radius:6px;">
+                                                <span style="font-weight:600;">${String(s.rollNo ?? '').padStart(2,'0')}</span>
+                                                <span style="margin-left:8px;">${s.name || '—'}</span>
+                                            </li>`).join('')}
+                                        </ul>
+                                    ` : '<div style="color:#6b7280;">No absent students.</div>'}
                                 </div>
                             </div>
                         `;
@@ -601,6 +618,19 @@ class AttendanceManager {
                         btn.innerHTML = originalHtml;
                         btn.disabled = false;
                     }
+                });
+            });
+
+            // Bind toggle handlers for absent lists
+            const absentToggles = analyticsContainer.querySelectorAll('.absent-toggle-btn');
+            absentToggles.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const cls = btn.getAttribute('data-class');
+                    const panel = document.getElementById(`absent-list-${cls}`);
+                    if (!panel) return;
+                    const isOpen = panel.style.display !== 'none';
+                    panel.style.display = isOpen ? 'none' : 'block';
+                    btn.innerHTML = isOpen ? '<i class="fas fa-caret-down"></i>' : '<i class="fas fa-caret-up"></i>';
                 });
             });
         } catch (err) {

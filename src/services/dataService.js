@@ -530,6 +530,14 @@ class DataService {
                 item.present ?? item.present_count ?? item.Present ?? item.presentStudents ?? 0;
             const absent =
                 item.absent ?? item.absent_count ?? item.Absent ?? item.absentStudents ?? 0;
+            // Normalize list of absent students if provided
+            const absentRaw = item.Absent_Students || item.absent_students || item.AbsentStudents || item.absentStudents || [];
+            const absentStudents = Array.isArray(absentRaw)
+                ? absentRaw.map(s => ({
+                    rollNo: Number(s?.Roll_No ?? s?.rollNo ?? s?.roll ?? s?.['Roll No'] ?? 0) || 0,
+                    name: String(s?.Name ?? s?.name ?? '').trim()
+                })).sort((a,b) => (a.rollNo||0) - (b.rollNo||0))
+                : [];
             let total = item.total ?? item.total_students ?? item.Total ?? 0;
             if (!total && (present || absent)) total = Number(present) + Number(absent);
             if (!className) return;
@@ -537,7 +545,8 @@ class DataService {
                 class: String(className),
                 present: Number(present) || 0,
                 absent: Number(absent) || 0,
-                total: Number(total) || (Number(present) + Number(absent)) || 0
+                total: Number(total) || (Number(present) + Number(absent)) || 0,
+                absentStudents
             });
         });
         return out;
