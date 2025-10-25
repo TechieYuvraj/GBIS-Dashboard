@@ -1041,21 +1041,24 @@ class FeesManager {
         }
         this.renderYearly();
 
-        // After submit, refresh analytics after 2 seconds (as requested)
-        try {
-          clearTimeout(this._silentRefreshTimer);
-          this._silentRefreshTimer = setTimeout(async () => {
-            try {
-              await this.refreshAnalytics(true);
-            } catch (refreshErr) {
-              console.warn('Post-submit analytics refresh failed:', refreshErr);
-            }
-          }, 2000);
-        } catch (timerErr) {
-          console.warn('Failed to schedule post-submit analytics refresh:', timerErr);
-        }
       } catch (analyticsError) {
         console.warn('Failed to update analytics after submission:', analyticsError);
+      }
+      // Always schedule a delayed silent refresh after submit, even if local update failed
+      try {
+        clearTimeout(this._silentRefreshTimer);
+        this._silentRefreshTimer = setTimeout(async () => {
+          try {
+            this.showTinyRefreshOverlay();
+            await this.refreshAnalytics(true);
+          } catch (refreshErr) {
+            console.warn('Post-submit analytics refresh failed:', refreshErr);
+          } finally {
+            this.hideTinyRefreshOverlay();
+          }
+        }, 3000);
+      } catch (timerErr) {
+        console.warn('Failed to schedule post-submit analytics refresh:', timerErr);
       }
     } catch (err) {
       console.error('Submit fees failed:', err);
@@ -1634,6 +1637,48 @@ class FeesManager {
         messageEl.style.display = 'none';
       }
           }, 2000);
+  }
+
+  // Tiny overlay indicator during delayed silent refresh
+  showTinyRefreshOverlay() {
+    try {
+      const root = document.getElementById('fees-analytics');
+      if (!root) return;
+      // ensure parent can host an absolute child
+      if (!root.style.position) root.style.position = 'relative';
+      let badge = document.getElementById('fees-refresh-overlay');
+      if (!badge) {
+        badge = document.createElement('div');
+        badge.id = 'fees-refresh-overlay';
+        badge.setAttribute('aria-live', 'polite');
+        Object.assign(badge.style, {
+          position: 'absolute',
+          top: '8px',
+          right: '8px',
+          padding: '6px 10px',
+          background: 'rgba(15, 23, 42, 0.85)',
+          color: '#fff',
+          borderRadius: '999px',
+          fontSize: '12px',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '6px',
+          zIndex: '1000'
+        });
+        badge.innerHTML = `<i class="fas fa-sync-alt fa-spin"></i> Updating…`;
+        root.appendChild(badge);
+      } else {
+        badge.style.display = 'flex';
+      }
+    } catch {}
+  }
+
+  hideTinyRefreshOverlay() {
+    try {
+      const badge = document.getElementById('fees-refresh-overlay');
+      if (badge) badge.style.display = 'none';
+    } catch {}
   }
 
   // Retry silent refresh after a delay until the target receipt gets a link
