@@ -1041,16 +1041,19 @@ class FeesManager {
         }
         this.renderYearly();
 
-        // After submit, refresh analytics after 2 seconds (as requested)
+        // After submit, refresh analytics after 2.5 seconds (as requested)
         try {
           clearTimeout(this._silentRefreshTimer);
           this._silentRefreshTimer = setTimeout(async () => {
             try {
+              this.showTinyRefreshOverlay();
               await this.refreshAnalytics(true);
             } catch (refreshErr) {
               console.warn('Post-submit analytics refresh failed:', refreshErr);
+            } finally {
+              this.hideTinyRefreshOverlay();
             }
-          }, 2000);
+          }, 2500);
         } catch (timerErr) {
           console.warn('Failed to schedule post-submit analytics refresh:', timerErr);
         }
@@ -1679,7 +1682,7 @@ class FeesManager {
   }
 
   // Retry silent refresh after a delay until the target receipt gets a link
-  async refreshUntilReceiptLink(targetReceipt, maxAttempts = 3, intervalMs = 2000) {
+  async refreshUntilReceiptLink(targetReceipt, maxAttempts = 3, intervalMs = 2500) {
     const sleep = (ms) => new Promise(res => setTimeout(res, ms));
     let attempt = 0;
     while (attempt < maxAttempts) {
